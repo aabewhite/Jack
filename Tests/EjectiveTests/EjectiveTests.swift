@@ -3,6 +3,6 @@ import XCTest
 
 final class EjectiveTests: XCTestCase {
     func testEjectiveModule() {
-        XCTAssertEqual(EjectiveModule().internalEjectiveData, "Bye Ejective!")
+        XCTAssertEqual(EjectiveModule().internalEjectiveData, "Hi Ejective!")
     }
 }
