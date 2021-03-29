@@ -107,7 +107,7 @@ jobs:
       - name: Install swift-DEVELOPMENT-SNAPSHOT
         if: steps.swift-winsnap-cache.outputs.cache-hit != 'true'
         run: |
-          Install-Binary -Url "https://swift.org/builds/development/windows10/${{ env:SWIFT_WINSNAP }}/${{ env:SWIFT_WINSNAP }}-windows10.exe" -Name "installer.exe" -ArgumentList ("-q")
+          Install-Binary -Url "https://swift.org/builds/development/windows10/${Env:SWIFT_WINSNAP}/${Env:SWIFT_WINSNAP}-windows10.exe" -Name "installer.exe" -ArgumentList ("-q")
 
       - name: Set Environment Variables
         run: |
