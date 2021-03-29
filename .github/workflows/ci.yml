@@ -102,7 +102,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: "./installer.exe"
-          key: "${{ Env:SWIFT_WINSNAP }}" # doesn't work
+          key: "${Env:SWIFT_WINSNAP}"
 
       - name: Install swift-DEVELOPMENT-SNAPSHOT
         if: steps.swift-winsnap-cache.outputs.cache-hit != 'true'
