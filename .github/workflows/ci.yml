@@ -84,13 +84,27 @@ jobs:
       - uses: actions/checkout@v2
       - uses: seanmiddleditch/gha-setup-vsdevenv@master
 
-      - name: Install swift-DEVELOPMENT-SNAPSHOT
+      - name: Configure Swift Windows Snapshot
         run: |
-          Install-Binary -Url "https://swift.org/builds/development/windows10/swift-DEVELOPMENT-SNAPSHOT-2021-03-21-a/swift-DEVELOPMENT-SNAPSHOT-2021-03-21-a-windows10.exe" -Name "installer.exe" -ArgumentList ("-q")
+          echo "SWIFT_WINSNAP=swift-DEVELOPMENT-SNAPSHOT-03-21-a" >> $GITHUB_ENV
+
+      - name: Swift Windows Download Cache
+        id: swift-winsnap-cache
+        uses: actions/cache@v2
+        with:
+          path: "./installer.exe"
+          key: "${{ env.SWIFT_WINSNAP }}"
+
+      - name: Install swift-DEVELOPMENT-SNAPSHOT
+        if: steps.swift-winsnap-cache.outputs.cache-hit != 'true'
+        run: |
+          Install-Binary -Url "https://swift.org/builds/development/windows10/${{ env.SWIFT_WINSNAP }}/${{ env.SWIFT_WINSNAP }}-windows10.exe" -Name "installer.exe" -ArgumentList ("-q")
+
       - name: Set Environment Variables
         run: |
           echo "SDKROOT=C:\Library\Developer\Platforms\Windows.platform\Developer\SDKs\Windows.sdk" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           echo "DEVELOPER_DIR=C:\Library\Developer" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
       - name: Adjust Paths
         run: |
           echo "C:\Library\Swift-development\bin;C:\Library\icu-67\usr\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
