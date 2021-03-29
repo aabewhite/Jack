@@ -97,15 +97,7 @@ jobs:
           echo "CURRENT_BRANCH: ${Env:CURRENT_BRANCH}"
           echo "SWIFT_WINSNAP: ${Env:SWIFT_WINSNAP}"
 
-      - name: Swift Windows Download Cache
-        id: swift-winsnap-cache
-        uses: actions/cache@v2
-        with:
-          path: "./installer.exe"
-          key: "${Env:SWIFT_WINSNAP}"
-
       - name: Install swift-DEVELOPMENT-SNAPSHOT
-        if: steps.swift-winsnap-cache.outputs.cache-hit != 'true'
         run: |
           Install-Binary -Url "https://swift.org/builds/development/windows10/${Env:SWIFT_WINSNAP}/${Env:SWIFT_WINSNAP}-windows10.exe" -Name "installer.exe" -ArgumentList ("-q")
 
