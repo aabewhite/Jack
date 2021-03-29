@@ -84,27 +84,21 @@ jobs:
       - uses: actions/checkout@v2
       - uses: seanmiddleditch/gha-setup-vsdevenv@master
 
-      - name: Configure Swift Windows Snapshot
+      - name: Set Environment Variables
         run: |
-          echo "Working Path: ${Env:GITHUB_WORKSPACE}"
-          $branchName = $Env:GITHUB_REF -replace 'refs/heads/', ''
-          echo "Branch: ${branchName}"
-          echo "CURRENT_BRANCH=${branchName}" >> $Env:GITHUB_ENV
-          echo "SWIFT_WINSNAP=swift-DEVELOPMENT-SNAPSHOT-03-21-a" >> $Env:GITHUB_ENV
+          echo "SWIFT_WINSNAP=swift-DEVELOPMENT-SNAPSHOT-03-21-a" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          echo "SDKROOT=C:\Library\Developer\Platforms\Windows.platform\Developer\SDKs\Windows.sdk" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          echo "DEVELOPER_DIR=C:\Library\Developer" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Show Environment
         run: |
-          echo "CURRENT_BRANCH: ${Env:CURRENT_BRANCH}"
-          echo "SWIFT_WINSNAP: ${Env:SWIFT_WINSNAP}"
+          echo "CURRENT_BRANCH: ${env:CURRENT_BRANCH}"
+          echo "SWIFT_WINSNAP: ${env:SWIFT_WINSNAP}"
 
       - name: Install swift-DEVELOPMENT-SNAPSHOT
         run: |
-          Install-Binary -Url "https://swift.org/builds/development/windows10/${Env:SWIFT_WINSNAP}/${Env:SWIFT_WINSNAP}-windows10.exe" -Name "installer.exe" -ArgumentList ("-q")
+          Install-Binary -Url "https://swift.org/builds/development/windows10/${env:SWIFT_WINSNAP}/${env:SWIFT_WINSNAP}-windows10.exe" -Name "installer.exe" -ArgumentList ("-q")
 
-      - name: Set Environment Variables
-        run: |
-          echo "SDKROOT=C:\Library\Developer\Platforms\Windows.platform\Developer\SDKs\Windows.sdk" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          echo "DEVELOPER_DIR=C:\Library\Developer" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Adjust Paths
         run: |
