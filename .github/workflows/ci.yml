@@ -86,7 +86,16 @@ jobs:
 
       - name: Configure Swift Windows Snapshot
         run: |
-          echo "SWIFT_WINSNAP=swift-DEVELOPMENT-SNAPSHOT-03-21-a" >> $GITHUB_ENV
+          echo "Working Path: ${Env:GITHUB_WORKSPACE}"
+          $branchName = $Env:GITHUB_REF -replace 'refs/heads/', ''
+          echo "Branch: ${branchName}"
+          echo "CURRENT_BRANCH=${branchName}" >> $Env:GITHUB_ENV
+          echo "SWIFT_WINSNAP=swift-DEVELOPMENT-SNAPSHOT-03-21-a" >> $Env:GITHUB_ENV
+
+      - name: Show Environment
+        run: |
+          echo "CURRENT_BRANCH: ${Env:CURRENT_BRANCH}"
+          echo "SWIFT_WINSNAP: ${Env:SWIFT_WINSNAP}"
 
       - name: Swift Windows Download Cache
         id: swift-winsnap-cache
