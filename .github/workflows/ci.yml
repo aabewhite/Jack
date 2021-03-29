@@ -93,7 +93,8 @@ jobs:
         uses: actions/cache@v2
         with:
           path: "./installer.exe"
-          key: "${{ env.SWIFT_WINSNAP }}"
+          # key: "${{ env.SWIFT_WINSNAP }}" # doesn't work
+          key: "swift-DEVELOPMENT-SNAPSHOT-03-21-a"
 
 
       - name: Install swift-DEVELOPMENT-SNAPSHOT
