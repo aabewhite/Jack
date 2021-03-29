@@ -86,21 +86,20 @@ jobs:
 
       - name: Configure Swift Windows Snapshot
         run: |
-          echo "SWIFT_WINSNAP=swift-DEVELOPMENT-SNAPSHOT-03-21-a" >> $GITHUB_ENV
+          echo "SWIFT_WINSNAP=swift-DEVELOPMENT-SNAPSHOT-03-21-a" >> $env:GITHUB_ENV
 
       - name: Swift Windows Download Cache
         id: swift-winsnap-cache
         uses: actions/cache@v2
         with:
           path: "./installer.exe"
-          # key: "${{ env.SWIFT_WINSNAP }}" # doesn't work
-          key: "swift-DEVELOPMENT-SNAPSHOT-03-21-a"
+          key: "${{ env:SWIFT_WINSNAP }}" # doesn't work
 
 
       - name: Install swift-DEVELOPMENT-SNAPSHOT
         if: steps.swift-winsnap-cache.outputs.cache-hit != 'true'
         run: |
-          Install-Binary -Url "https://swift.org/builds/development/windows10/${{ env.SWIFT_WINSNAP }}/${{ env.SWIFT_WINSNAP }}-windows10.exe" -Name "installer.exe" -ArgumentList ("-q")
+          Install-Binary -Url "https://swift.org/builds/development/windows10/${{ env:SWIFT_WINSNAP }}/${{ env:SWIFT_WINSNAP }}-windows10.exe" -Name "installer.exe" -ArgumentList ("-q")
 
       - name: Set Environment Variables
         run: |
