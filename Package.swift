@@ -20,6 +20,7 @@ let package = Package(
                 "OpenCombine",
                 .product(name: "OpenCombineFoundation", package: "OpenCombine"),
                 .product(name: "OpenCombineDispatch", package: "OpenCombine"),
+                .product(name: "OpenCombineShim", package: "OpenCombine"),
             ],
             resources: [.process("Resources")]),
         .testTarget(
