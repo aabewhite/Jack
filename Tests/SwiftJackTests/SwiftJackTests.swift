@@ -1,5 +1,7 @@
 import XCTest
 import SwiftJack
+import OpenCombineShim
+//import OpenCombine
 
 final class SwiftJackTests: XCTestCase {
     func testSwiftJackModule() {
