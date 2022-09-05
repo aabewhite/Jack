@@ -1,8 +1,8 @@
 import XCTest
-@testable import SwiftJack
+import SwiftJack
 
 final class SwiftJackTests: XCTestCase {
     func testSwiftJackModule() {
-        XCTAssertEqual(SwiftJackModule().internalSwiftJackData, "Hi SwiftJack!")
+        XCTAssertEqual(SwiftJackModule.shared.publicSwiftJackData, "Hi SwiftJack!")
     }
 }
