@@ -16,10 +16,7 @@ let package = Package(
         .target(
             name: "SwiftJack",
             dependencies: [
-                "Judo",
-                "OpenCombine",
-                .product(name: "OpenCombineFoundation", package: "OpenCombine"),
-                .product(name: "OpenCombineDispatch", package: "OpenCombine"),
+                .product(name: "Judo", package: "Judo"),
                 .product(name: "OpenCombineShim", package: "OpenCombine"),
             ],
             resources: [.process("Resources")]),

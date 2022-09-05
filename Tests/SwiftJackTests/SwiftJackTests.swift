@@ -1,8 +1,9 @@
 import XCTest
 import SwiftJack
-import OpenCombineShim
 //import OpenCombine
+import protocol OpenCombineShim.ObservableObject
 
+@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
 final class SwiftJackTests: XCTestCase {
     func testSwiftJackModule() {
         XCTAssertEqual(SwiftJackModule.shared.swiftJackName, "SwiftJack")

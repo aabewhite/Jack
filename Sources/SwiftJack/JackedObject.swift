@@ -1,8 +1,6 @@
-
 import OpenCombineShim
-//import OpenCombine
 
-/// A ``Jackable`` instance can be passed back and forth to a ``JXContext``.
+/// A ``Jackable`` instance can be passed back and forth to a ``JXContext`` through serialization.
 public typealias Jackable = Hashable & Codable & Sendable
 
 
