@@ -1,0 +1,34 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "Judo",
+        "repositoryURL": "https://github.com/jectivex/Judo.git",
+        "state": {
+          "branch": "HEAD",
+          "revision": "6c41ae50cd4300471744892e96e714b4ec860507",
+          "version": null
+        }
+      },
+      {
+        "package": "JXKit",
+        "repositoryURL": "https://github.com/jectivex/JXKit.git",
+        "state": {
+          "branch": "main",
+          "revision": "0700489b2eab9288b8ea369aa2d82aac5da6e5db",
+          "version": null
+        }
+      },
+      {
+        "package": "OpenCombine",
+        "repositoryURL": "https://github.com/OpenCombine/OpenCombine.git",
+        "state": {
+          "branch": null,
+          "revision": "9cf67e363738dbab61b47fb5eaed78d3db31e5ee",
+          "version": "0.13.0"
+        }
+      }
+    ]
+  },
+  "version": 1
+}

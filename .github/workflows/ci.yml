@@ -1,4 +1,4 @@
-name: Ejective CI
+name: SwiftJack CI
 
 on:
   push:
@@ -7,99 +7,88 @@ on:
     branches:
       - '*'
   schedule:
-    - cron: '0 6,18 * * *'
-
-# construct CI latticeflow with cheaper platforms first: Linux & Windows then macOS10, macOS11, iOS, tvOS, watchOS
+    # run at 9AM & 9PM UTC
+    - cron:  '0 9,21 * * *'
 
 jobs:
-  Linux:
+  linux:
     runs-on: ubuntu-latest
     steps:
+      - run: sudo apt-get update
+      - name: Install dependencies
+        run: sudo apt-get install -y libjavascriptcoregtk-4.0-dev
+      - run: pkg-config --libs javascriptcoregtk-4.0
       - uses: actions/checkout@v2
-      - run: swift test --enable-test-discovery
+      - name: Test (Debug)
+        run: swift test -v --configuration debug
+      - name: Test (Release)
+        run: swift test -v --configuration release -Xswiftc -enable-testing
 
-  watchOS:
-    if: false # disabled until we can work around missing XCTest in non-xcodeproj SPM module
+  ios:
     runs-on: macos-latest
-    needs: [Linux] # Linux must pass first
-
-    steps:
-      - uses: actions/checkout@v2
-      # note that we just build rather than test because:
-      # “XCTest is not available when building for watchOS Simulator”
-      - run: |
-            xcodebuild clean build \
-              -scheme "Ejective" \
-              -sdk "watchsimulator7.2" \
-              -destination "OS=7.2,name=Apple Watch Series 6 - 44mm" \
-              ONLY_ACTIVE_ARCH=YES CODE_SIGNING_REQUIRED=NO
-
-  iOS:
-    runs-on: macos-latest
-    needs: [Linux] # watchOS must pass first
-
     steps:
       - uses: actions/checkout@v2
       - run: |
             xcodebuild clean test \
-              -scheme "Ejective" \
-              -sdk "iphonesimulator14.4" \
-              -destination "OS=14.4,name=iPhone 12 Mini" \
-              ONLY_ACTIVE_ARCH=YES CODE_SIGNING_REQUIRED=NO
+              -configuration Release \
+              -scheme "SwiftJack" \
+              -sdk "iphonesimulator" \
+              -destination "platform=iOS Simulator,name=iPod touch (7th generation)" \
+              ONLY_ACTIVE_ARCH=NO CODE_SIGNING_REQUIRED=NO
 
-  tvOS:
+  tvos:
     runs-on: macos-latest
-    needs: [iOS] # iOS must pass first
-
     steps:
       - uses: actions/checkout@v2
       - run: |
             xcodebuild clean test \
-              -scheme "Ejective" \
-              -sdk "appletvsimulator14.3" \
-              -destination "OS=14.3,name=Apple TV" \
-              ONLY_ACTIVE_ARCH=YES CODE_SIGNING_REQUIRED=NO
+              -configuration Release \
+              -scheme "SwiftJack" \
+              -sdk "appletvsimulator" \
+              -destination "platform=tvOS Simulator,name=Apple TV" \
+              ONLY_ACTIVE_ARCH=NO CODE_SIGNING_REQUIRED=NO
 
-  macOS10:
-    runs-on: macos-10.15
-    needs: [Linux] # Linux must pass first
+  macos:
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Run tests
-        run: swift test
+      - name: Test (Debug)
+        run: swift test -v --configuration debug
+      - name: Test (Release)
+        run: swift test -v --configuration release -Xswiftc -enable-testing
 
-  macOS11:
-    if: false # macos-11.0 not yet public
-    runs-on: macos-11.0
-    needs: [macOS10] # macOS10 must pass first
-    steps:
-      - uses: actions/checkout@v2
-      - name: Run tests
-        run: swift test
-
-  Windows10:
+  windows:
+    # installer seems to no longer work as of Swift 5.6
+    if: false
     runs-on: windows-latest
-    needs: [Linux] # Linux must pass first
     steps:
       - uses: actions/checkout@v2
+
       - uses: seanmiddleditch/gha-setup-vsdevenv@master
+        # not needed anymore?
+        if: true
+
+      # https://www.swift.org/download/#windows
+      - name: Install Required Dependencies
+        # winget not installed?
+        if: false
+        run: |
+          winget install Git.Git
+          winget install Python.Python.3 --version 3.10.2150.0
+
+          curl -sOL https://aka.ms/vs/16/release/vs_community.exe
+          start /w vs_community.exe --passive --wait --norestart --nocache --installPath "%ProgramFiles(x86)%\Microsoft Visual Studio\2019\Community" --add Microsoft.VisualStudio.Component.Windows10SDK.19041 --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64
+          del /q vs_community.exe
+          pip install six
+
+      - name: Install Install swift-5.6.3-RELEASE
+        run: |
+          Install-Binary -Url "https://swift.org/builds/swift-5.6.3-release/windows10/swift-5.6.3-RELEASE/swift-5.6.3-RELEASE-windows10.exe" -Name "installer.exe" -ArgumentList ("-q")
 
       - name: Set Environment Variables
         run: |
-          echo "SWIFT_WINSNAP=swift-DEVELOPMENT-SNAPSHOT-03-21-a" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           echo "SDKROOT=C:\Library\Developer\Platforms\Windows.platform\Developer\SDKs\Windows.sdk" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           echo "DEVELOPER_DIR=C:\Library\Developer" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-
-      - name: Show Environment
-        run: |
-          echo "CURRENT_BRANCH: ${env:CURRENT_BRANCH}"
-          echo "SWIFT_WINSNAP: ${env:SWIFT_WINSNAP}"
-
-      - name: Install swift-DEVELOPMENT-SNAPSHOT
-        run: |
-          Install-Binary -Url "https://swift.org/builds/development/windows10/${env:SWIFT_WINSNAP}/${env:SWIFT_WINSNAP}-windows10.exe" -Name "installer.exe" -ArgumentList ("-q")
-
-
       - name: Adjust Paths
         run: |
           echo "C:\Library\Swift-development\bin;C:\Library\icu-67\usr\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
@@ -113,6 +102,11 @@ jobs:
 
       - name: Swift Version
         run: swift --version
+
+      - name: Install JavaScriptCore.dll
+        run: |
+          Install-Binary -Url "https://secure-appldnld.apple.com/itunes12/001-97787-20210421-F0E5A3C2-A2C9-11EB-A40B-A128318AD179/iTunes64Setup.exe" -Name "iTunes64Setup.exe" -ArgumentList ("-q")
+
       - name: Build (Debug)
         run: swift build -v -c debug
       - name: Build (Release)
@@ -121,20 +115,3 @@ jobs:
         run: swift test -v --configuration debug --enable-test-discovery
       - name: Test (Release)
         run: swift test -v --configuration release -Xswiftc -enable-testing --enable-test-discovery
-
-  Release:
-    runs-on: ubuntu-latest
-    needs: [Linux, macOS10, iOS, tvOS, watchOS, Windows10]
-
-    steps:
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          files: |
-            CHANGELOG.md
-            RELEASE_NOTES.md
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-

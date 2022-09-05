@@ -2,20 +2,29 @@
 import PackageDescription
 
 let package = Package(
-    name: "Ejective",
+    name: "SwiftJack",
     products: [
         .library(
-            name: "Ejective",
-            targets: ["Ejective"]),
+            name: "SwiftJack",
+            targets: ["SwiftJack"]),
     ],
     dependencies: [
+        .package(url: "https://github.com/jectivex/Judo.git", .branch("HEAD")),
+        .package(url: "https://github.com/OpenCombine/OpenCombine.git", from: "0.13.0"),
     ],
     targets: [
         .target(
-            name: "Ejective",
-            dependencies: []),
+            name: "SwiftJack",
+            dependencies: [
+                "Judo",
+                "OpenCombine",
+                .product(name: "OpenCombineFoundation", package: "OpenCombine"),
+                .product(name: "OpenCombineDispatch", package: "OpenCombine"),
+            ],
+            resources: [.process("Resources")]),
         .testTarget(
-            name: "EjectiveTests",
-            dependencies: ["Ejective"]),
+            name: "SwiftJackTests",
+            dependencies: ["SwiftJack"],
+            resources: [.copy("TestResources")]),
     ]
 )
