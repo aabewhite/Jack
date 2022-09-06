@@ -2,6 +2,7 @@ import XCTest
 import SwiftJack
 //import OpenCombine
 import protocol OpenCombineShim.ObservableObject
+import struct OpenCombineShim.Published
 
 @available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
 final class SwiftJackTests: XCTestCase {
