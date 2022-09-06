@@ -23,6 +23,6 @@ let package = Package(
         .testTarget(
             name: "SwiftJackTests",
             dependencies: ["SwiftJack"],
-            resources: [.copy("Resources")]),
+            resources: [.copy("TestResources")]),
     ]
 )
