@@ -1,7 +1,7 @@
 import OpenCombineShim
 
 /// A ``Jackable`` instance can be passed back and forth to a ``JXContext`` through serialization.
-public typealias Jackable = Hashable & Codable & Sendable
+public typealias Jackable = Codable
 
 
 /// A JackedObject is an ObservableObject with the ability to share their properties automatically with a ``JXJit\\JXContext``
