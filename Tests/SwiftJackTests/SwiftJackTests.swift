@@ -36,6 +36,7 @@ final class SwiftJackTests: XCTestCase {
     func testJacked() throws {
         class JackedObj : JackedObject {
             @Jacked("n") var number = 0
+            @Jacked("f") var float = 0.0
             @Jacked("b") var bool = false
             @Jacked("s") var string = ""
 //            @Jacked("a") var array = [1, 2, 3]
@@ -137,28 +138,20 @@ final class SwiftJackTests: XCTestCase {
         }
     }
 
-    func testJXExport() {
-        let context = JXContext()
+    func testJackSelf() throws {
+        class JackedObj : JackedObject {
+            @Jacked var dbl = 0.0
+            lazy var ctx = jack()
+        }
 
-        context.global["obj"] = JXValue(newObjectIn: context)
-
-        let desc = JXProperty(
-            getter: { this in this["number_container"] },
-            setter: { this, newValue in this["number_container"] = newValue }
-        )
-
-        context.global["obj"].defineProperty("number", desc)
-
-        context.evaluateScript("obj.number = 5")
-        XCTAssertNil(context.currentError, "\(context.currentError!)")
-
-        XCTAssertEqual(context.global["obj"]["number"].numberValue, 5)
-        XCTAssertEqual(context.global["obj"]["number_container"].numberValue, 5)
-
-        context.evaluateScript("obj.number = 3")
-        XCTAssertNil(context.currentError, "\(context.currentError!)")
-
-        XCTAssertEqual(context.global["obj"]["number"].numberValue, 3)
-        XCTAssertEqual(context.global["obj"]["number_container"].numberValue, 3)
+        let obj = JackedObj()
+        _ = try obj.ctx.eval("dbl = Math.PI")
+        XCTAssertEqual(3.141592653589793, obj.dbl)
+        _ = try obj.ctx.eval("dbl = Math.E")
+        XCTAssertEqual(2.718281828459045, obj.dbl)
+        _ = try obj.ctx.eval("dbl = Math.sqrt(2)")
+        XCTAssertEqual(1.4142135623730951, obj.dbl)
+        _ = try obj.ctx.eval("dbl = Math.sqrt(-1)")
+        XCTAssertTrue(obj.dbl.isNaN)
     }
 }

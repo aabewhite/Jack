@@ -41,18 +41,18 @@ extension BinaryInteger where Self : _ExpressibleByBuiltinIntegerLiteral {
     }
 }
 
-//extension BinaryFloatingPoint where Self : ExpressibleByFloatLiteral {
-//    public func getJX(from context: JXContext) -> JXValue {
-//        JXValue(double: Double(self), in: context)
-//    }
-//
-//    mutating func setJX(value: JXValue, in context: JXContext) throws {
-//        guard let num = value.numberValue else {
-//            throw JackableError.valueWasNotANumber
-//        }
-//        self = .init(floatLiteral: .init(num))
-//    }
-//}
+extension BinaryFloatingPoint where Self : ExpressibleByFloatLiteral {
+    public func getJX(from context: JXContext) -> JXValue {
+        JXValue(double: Double(self), in: context)
+    }
+
+    public mutating func setJX(value: JXValue, in context: JXContext) throws {
+        guard let num = value.numberValue else {
+            throw JackableError.valueWasNotANumber
+        }
+        self = .init(num)
+    }
+}
 
 enum JackableError : Error {
     case valueWasNotANumber
@@ -63,6 +63,6 @@ extension Int : Jackable { }
 extension Int16 : Jackable { }
 extension Int32 : Jackable { }
 extension Int64 : Jackable { }
-//extension Double : Jackable { }
-//extension Float : Jackable { }
+extension Double : Jackable { }
+extension Float : Jackable { }
 

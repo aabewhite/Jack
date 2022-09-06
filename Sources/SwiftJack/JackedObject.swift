@@ -1,6 +1,6 @@
 import OpenCombineShim
 
-/// A JackedObject is an ObservableObject with the ability to share their properties automatically with a ``JXJit\\JXContext``
+/// A JackedObject is an ObservableObject with the ability to share their properties automatically with a ``JXKit\\JXContext``
 ///
 /// This type extends from ``JackedObject``, which is a type of object with a publisher that emits before the object has changed.
 ///
@@ -40,16 +40,17 @@ public extension JackedObject {
     /// Jack into the given context, exposing all this instance's `@Jacked` properties into the given `JXContext`.
     ///
     /// - Parameters:
-    ///   - context: the context to jack into; will create a new context if needed
-    ///   - object: the object to use for exporting the properties and functions
+    ///   - into context: the context to jack into; will create a new context if needed
+    ///   - as object: the object to use for exporting the properties and functions
     /// - Returns: the context
-    func jack(context: JXContext = JXContext(), into object: JXValue? = nil) -> JXContext {
+    func jack(into context: JXContext = JXContext(), as object: JXValue? = nil) -> JXContext {
         for (_, label, prop) in props() {
             guard let prop = prop as? _JackableProperty else {
                 continue
             }
 
-            guard let key = prop.exportedKey ?? label else {
+            // use the key or else the label (which is preceeded with an underscore, and so is dropped)
+            guard let key = prop.exportedKey ?? label?.dropFirst().description else {
                 continue
             }
 
@@ -73,7 +74,6 @@ public extension JackedObject {
                     }
             }
     }
-
 }
 
 // MARK: Jacked
@@ -179,7 +179,7 @@ public struct Jacked<Value : Jackable> {
     ///     @Jacked var lastUpdated: Date = Date()
     ///
     /// - Parameter wrappedValue: The publisher's initial value.
-    public init(initialValue: Value, _ key: String?) {
+    public init(initialValue: Value, _ key: String? = nil) {
         self.init(wrappedValue: initialValue, key)
     }
 
@@ -191,7 +191,7 @@ public struct Jacked<Value : Jackable> {
     ///     @Jacked var lastUpdated: Date = Date()
     ///
     /// - Parameter initialValue: The publisher's initial value.
-    public init(wrappedValue: Value, _ key: String?) {
+    public init(wrappedValue: Value, _ key: String? = nil) {
         _storage = Box(wrappedValue: .value(wrappedValue))
         self.key = key
     }
