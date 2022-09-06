@@ -146,7 +146,8 @@ public struct JackedCodable<Value : Codable> {
 
 
 /// The shared default encoder for `JackedCodable` types
-let defaultEncoder : JSONEncoder = {
+@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+private let defaultEncoder : JSONEncoder = {
     let encoder = JSONEncoder()
     encoder.dateEncodingStrategy = .iso8601
     return encoder
