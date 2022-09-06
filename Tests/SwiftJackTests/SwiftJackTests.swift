@@ -290,4 +290,36 @@ final class SwiftJackTests: XCTestCase {
         try obj.ctx.eval("dbl = Math.sqrt(-1)")
         XCTAssertTrue(obj.dbl.isNaN)
     }
+
+    func testJackedCodable() throws {
+        class JackedCode : JackedObject {
+            @JackedCodable var info = SomeInfo(str: "XYZ", int: 123, extra: SomeInfo.ExtraInfo(dbl: 1.2, strs: ["A", "B", "C"]))
+            lazy var ctx = jack()
+
+            struct SomeInfo : Codable {
+                var str: String
+                var int: Int
+                var extra: ExtraInfo
+
+                struct ExtraInfo : Codable {
+                    var dbl: Double
+                    var strs: [String]
+                }
+            }
+        }
+
+        let obj = JackedCode()
+
+        XCTAssertEqual("XYZ", obj.info.str)
+        XCTAssertEqual("XYZ", try obj.ctx.eval("info.str").stringValue)
+
+        XCTAssertEqual(123, obj.info.int)
+        XCTAssertEqual(123, try obj.ctx.eval("info.int").numberValue)
+
+        XCTAssertEqual("A", obj.info.extra.strs[0])
+        XCTAssertEqual("A", try obj.ctx.eval("info.extra.strs[0]").stringValue)
+
+//        XCTAssertEqual("qrs", try obj.ctx.eval("info.str = 'QRS'").stringValue)
+//        XCTAssertEqual("QRS", obj.info.str)
+    }
 }
