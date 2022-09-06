@@ -2,21 +2,12 @@
   "object": {
     "pins": [
       {
-        "package": "Judo",
-        "repositoryURL": "https://github.com/jectivex/Judo.git",
-        "state": {
-          "branch": "HEAD",
-          "revision": "6c41ae50cd4300471744892e96e714b4ec860507",
-          "version": null
-        }
-      },
-      {
         "package": "JXKit",
         "repositoryURL": "https://github.com/jectivex/JXKit.git",
         "state": {
-          "branch": "main",
-          "revision": "0700489b2eab9288b8ea369aa2d82aac5da6e5db",
-          "version": null
+          "branch": null,
+          "revision": "36f95b9dc3437fce50a850498749d010aac96484",
+          "version": "1.0.3"
         }
       },
       {

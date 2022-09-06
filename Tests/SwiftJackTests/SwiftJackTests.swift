@@ -1,6 +1,5 @@
 import XCTest
 import SwiftJack
-//import OpenCombine
 import protocol OpenCombineShim.ObservableObject
 import struct OpenCombineShim.Published
 
@@ -16,14 +15,22 @@ final class SwiftJackTests: XCTestCase {
         }
 
         let obj = ObserveObj()
+        var changes = 0
+        let obsvr1 = obj.objectWillChange.sink {
+            changes += 1
+        }
+
         var number = obj.number
-        let obsvr1 = obj.$number.sink { newValue in
+        let obsvr2 = obj.$number.sink { newValue in
             number = newValue
         }
+
+        XCTAssertEqual(0, changes)
         obj.number += 1
+        XCTAssertEqual(1, changes)
         XCTAssertEqual(number, obj.number)
 
-        let _ = (obsvr1, obsvr1)
+        let _ = (obsvr1, obsvr2)
     }
 
 
@@ -37,14 +44,25 @@ final class SwiftJackTests: XCTestCase {
         }
 
         let obj = JackedObj()
+
+        obj.objectMap()
+
+        var changes = 0
+        let obsvr1 = obj.objectWillChange.sink {
+            changes += 1
+        }
+
         var number = obj.number
-        let obsvr1 = obj.$number.sink { newValue in
+        let obsvr2 = obj.$number.sink { newValue in
             number = newValue
         }
+
+        XCTAssertEqual(0, changes)
         obj.number += 1
+//        XCTAssertEqual(1, changes)
         XCTAssertEqual(number, obj.number)
 
-        let _ = (obsvr1, obsvr1)
+        let _ = (obsvr1, obsvr2)
     }
 }
 

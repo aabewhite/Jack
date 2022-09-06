@@ -38,10 +38,19 @@ public protocol JackedObject : ObservableObject {
 
 }
 
+
+@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+public extension JackedObject {
+    func objectMap() -> Void {
+
+    }
+}
+
 // MARK: Jacked
 
 // Sadly, this is mostly just a copy & paste re-implementation of OpenCombile.Published.
 // Mostly because the types that it uses in OpenCombine are private or internal.
+
 
 /// A type that publishes a property marked with an attribute and exports that property to an associated ``JXKit\\JXContext``.
 ///
@@ -83,11 +92,8 @@ public protocol JackedObject : ObservableObject {
 public struct Jacked<Value : Jackable> {
     /// A publisher for properties marked with the `@Jacked` attribute.
     public struct JackedPublisher: Publisher {
-
         public typealias Output = Value
-
         public typealias Failure = Never
-
         fileprivate let subject: JackedSubject<Value>
 
         public func receive<Downstream: Subscriber>(subscriber: Downstream)
@@ -116,7 +122,7 @@ public struct Jacked<Value : Jackable> {
 
     @Box private var storage: Storage
 
-    fileprivate var objectWillChange: ObservableObjectPublisher? {
+    public var objectWillChange: ObservableObjectPublisher? {
         get {
             switch storage {
             case .value:
@@ -130,7 +136,7 @@ public struct Jacked<Value : Jackable> {
         }
     }
 
-    /// Creates the jacked instance with an initial wrapped value.
+    /// Creates the published instance with an initial wrapped value.
     ///
     /// Don't use this initializer directly. Instead, create a property with
     /// the `@Jacked` attribute, as shown here:
@@ -142,7 +148,7 @@ public struct Jacked<Value : Jackable> {
         self.init(wrappedValue: initialValue)
     }
 
-    /// Creates the jacked instance with an initial value.
+    /// Creates the published instance with an initial value.
     ///
     /// Don't use this initializer directly. Instead, create a property with
     /// the `@Jacked` attribute, as shown here:
@@ -213,24 +219,17 @@ public struct Jacked<Value : Jackable> {
                 publisher.subject.value = newValue
             }
         }
-        // TODO: Benchmark and explore a possibility to use _modify
     }
 }
 
 @available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
 fileprivate final class JackedSubject<Output>: Subject {
     typealias Failure = Never
-
     private let lock = UnfairLock.allocate()
-
     private var downstreams = ConduitList<Output, Failure>.empty
-
     private var currentValue: Output
-
     private var upstreamSubscriptions: [Subscription] = []
-
     private var hasAnyDownstreamDemand = false
-
     private var changePublisher: ObservableObjectPublisher?
 
     var value: Output {
@@ -320,17 +319,11 @@ extension JackedSubject {
           CustomPlaygroundDisplayConvertible
         where Downstream.Input == Output, Downstream.Failure == Never
     {
-
         fileprivate var parent: JackedSubject?
-
         fileprivate var downstream: Downstream?
-
         fileprivate var demand = Subscribers.Demand.none
-
         private var lock = UnfairLock.allocate()
-
         private var downstreamLock = UnfairRecursiveLock.allocate()
-
         private var deliveredCurrentValue = false
 
         fileprivate init(parent: JackedSubject,
