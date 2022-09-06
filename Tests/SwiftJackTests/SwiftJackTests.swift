@@ -34,20 +34,12 @@ final class SwiftJackTests: XCTestCase {
     }
 
     func testJacked() throws {
-        enum Compass : String, Jackable { case north, south, east, west }
-
         class JackedObj : JackedObject {
             @Jacked("n") var number = 0
             @Jacked("f") var float = 0.0
             @Jacked("b") var bool = false
             @Jacked("s") var string = ""
             @Jacked("d") var data = Data([1,2,3,4,5,6,7,8])
-            @Jacked("c") var cardinal = Compass.north
-//            @Jacked("a") var array = [1, 2, 3]
-//            @Jacked("d") var dict = ["A": 1, "B": 2.0]
-//            @Jacked(nil) var unexported = UUID()
-
-            //@Published var numberPub = 0 // mixed Jacked & Published not yet supported and will crash
         }
 
         let obj = JackedObj()
@@ -64,28 +56,6 @@ final class SwiftJackTests: XCTestCase {
         obj.number += 1
         XCTAssertEqual(1, changes)
         XCTAssertEqual(numberJack, obj.number)
-
-//        XCTAssertEqual(1, changes)
-//        obj.string = UUID().uuidString
-//        XCTAssertEqual(2, changes)
-//
-//        XCTAssertEqual(2, changes)
-//        obj.bool.toggle()
-//        XCTAssertEqual(3, changes)
-//
-//        XCTAssertEqual(3, changes)
-//        obj.date = .init()
-//        XCTAssertEqual(4, changes)
-
-        // mixing Jacked & Published not yet supported
-
-//        var numberPub = obj.numberPub
-//        let obsvr2 = obj.$numberPub.sink { numberPub = $0 }
-//
-//        XCTAssertEqual(4, changes)
-//        obj.numberPub += 1
-//        XCTAssertEqual(5, changes)
-//        XCTAssertEqual(numberPub, obj.numberPub)
 
         let _ = (obsvr1, obsvr3)
 
@@ -148,26 +118,6 @@ final class SwiftJackTests: XCTestCase {
         do {
             XCTAssertThrowsError(try ctx.eval("n = 'x'")) // valueWasNotANumber
         }
-
-        do {
-            try ctx.eval("c = 'north'")
-            XCTAssertEqual(.north, obj.cardinal)
-            try ctx.eval("c = 'south'")
-            XCTAssertEqual(.south, obj.cardinal)
-            try ctx.eval("c = 'east'")
-            XCTAssertEqual(.east, obj.cardinal)
-            try ctx.eval("c = 'west'")
-            XCTAssertEqual(.west, obj.cardinal)
-
-            XCTAssertThrowsError(try ctx.eval("c = 'northX'")) { error in
-                // the exception gets wrapped in a JXValue and then unwrapped as a string
-//                if case JackError.rawInitializerFailed(let value, _) = error {
-//                    XCTAssertEqual("northX", value.stringValue)
-//                } else {
-//                    XCTFail("wrong error: \(error)")
-//                }
-            }
-        }
     }
 
     func testJackedDate() throws {
@@ -190,7 +140,7 @@ final class SwiftJackTests: XCTestCase {
 
         XCTAssertEqual(Date().timeIntervalSinceReferenceDate, try obj.ctx.eval("date = new Date()").dateValue?.timeIntervalSinceReferenceDate ?? 0, accuracy: 0.001, "date should agree to the millisecond")
 
-//        XCTAssertEqual(Data([1, 2, 3]), obj.data)
+        //        XCTAssertEqual(Data([1, 2, 3]), obj.data)
     }
 
     func testJackedData() throws {
@@ -224,6 +174,65 @@ final class SwiftJackTests: XCTestCase {
         let oldData = Data(obj.data)
         XCTAssertEqual(0, try obj.ctx.eval("(new Int32Array(data))[999] = 0").numberValue)
         XCTAssertEqual(oldData, obj.data, "assignment beyond bounds should have no effect")
+    }
+
+    func testJackedEnum() throws {
+        enum Compass : String, Jackable { case north, south, east, west }
+        enum Direction : Int, Jackable { case up, down, left, right }
+
+        class JackedObj : JackedObject {
+            @Jacked("c") var stringEnum = Compass.north
+            @Jacked("d") var intEnum = Direction.left
+            lazy var ctx = jack()
+        }
+
+        let obj = JackedObj()
+
+        do {
+            XCTAssertEqual(.north, obj.stringEnum)
+
+            XCTAssertEqual("north", try obj.ctx.eval("c = 'north'").stringValue)
+            XCTAssertEqual(.north, obj.stringEnum)
+
+            XCTAssertEqual("south", try obj.ctx.eval("c = 'south'").stringValue)
+            XCTAssertEqual(.south, obj.stringEnum)
+
+            XCTAssertEqual("east", try obj.ctx.eval("c = 'east'").stringValue)
+            XCTAssertEqual(.east, obj.stringEnum)
+
+            XCTAssertEqual("west", try obj.ctx.eval("c = 'west'").stringValue)
+            XCTAssertEqual(.west, obj.stringEnum)
+
+            XCTAssertThrowsError(try obj.ctx.eval("c = 'northX'")) { error in
+                // the exception gets wrapped in a JXValue and then unwrapped as a string
+                //                if case JackError.rawInitializerFailed(let value, _) = error {
+                //                    XCTAssertEqual("northX", value.stringValue)
+                //                } else {
+                //                    XCTFail("wrong error: \(error)")
+                //                }
+            }
+        }
+
+        do {
+            XCTAssertEqual(.left, obj.intEnum)
+
+            XCTAssertEqual(3, try obj.ctx.eval("d = 3").numberValue)
+            XCTAssertEqual(.right, obj.intEnum)
+
+            XCTAssertEqual(0, try obj.ctx.eval("d = 0").numberValue)
+            XCTAssertEqual(.up, obj.intEnum)
+
+            XCTAssertEqual(2, try obj.ctx.eval("d = 2").numberValue)
+            XCTAssertEqual(.left, obj.intEnum)
+
+            XCTAssertEqual(1, try obj.ctx.eval("d = 1").numberValue)
+            XCTAssertEqual(.down, obj.intEnum)
+
+            XCTAssertThrowsError(try obj.ctx.eval("d = 4")) { error in
+            }
+            XCTAssertEqual(.down, obj.intEnum)
+        }
+
     }
 
     func testJackedNumbers() throws {
