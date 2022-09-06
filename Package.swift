@@ -1,4 +1,4 @@
-// swift-tools-version:5.3
+// swift-tools-version:5.5
 import PackageDescription
 
 let package = Package(
@@ -9,7 +9,7 @@ let package = Package(
             targets: ["SwiftJack"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/jectivex/JXKit.git", from: "1.0.0"),
+        .package(url: "https://github.com/jectivex/JXKit.git", branch: "HEAD"),
         .package(url: "https://github.com/OpenCombine/OpenCombine.git", from: "0.13.0"),
     ],
     targets: [

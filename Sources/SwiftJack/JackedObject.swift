@@ -44,7 +44,7 @@ public extension JackedObject {
     ///   - as object: the object to use for exporting the properties and functions
     /// - Returns: the context
     func jack(into context: JXContext = JXContext(), as object: JXValue? = nil) -> JXContext {
-        for (_, label, prop) in props() {
+        for (label, prop) in props() {
             guard let prop = prop as? _JackableProperty else {
                 continue
             }
@@ -64,15 +64,9 @@ public extension JackedObject {
         return context
     }
 
-    /// The list of all props in the hierarchy
-    private func props() -> [(mirror: Mirror, label: String?, prop: Any)] {
-        sequence(first: Mirror(reflecting: self), next: \.superclassMirror)
-            .flatMap { mirror in
-                mirror.children
-                    .map { (label, prop) in
-                        (mirror, label, prop)
-                    }
-            }
+    /// The lazy list of all props in the hierarchy
+    private func props() -> LazySequence<FlattenSequence<LazyMapSequence<UnfoldSequence<Mirror, (Mirror?, Bool)>, Mirror.Children>.Elements>> {
+        sequence(first: Mirror(reflecting: self), next: \.superclassMirror).lazy.map(\.children).joined()
     }
 }
 
@@ -474,7 +468,7 @@ extension Jacked: _JackableProperty where Value : Jackable {
     subscript(in context: JXContext) -> JXValue {
         get {
             switch _storage.wrappedValue {
-            case .value(let value):
+            case .value(var value):
                 return value.getJX(from: context)
             case .publisher(let publisher):
                 return publisher.subject.value.getJX(from: context)

@@ -34,11 +34,15 @@ final class SwiftJackTests: XCTestCase {
     }
 
     func testJacked() throws {
+        enum Compass : String, Jackable { case north, south, east, west }
+
         class JackedObj : JackedObject {
             @Jacked("n") var number = 0
             @Jacked("f") var float = 0.0
             @Jacked("b") var bool = false
             @Jacked("s") var string = ""
+            @Jacked("d") var data = Data([1,2,3,4,5,6,7,8])
+            @Jacked("c") var cardinal = Compass.north
 //            @Jacked("a") var array = [1, 2, 3]
 //            @Jacked("d") var dict = ["A": 1, "B": 2.0]
 //            @Jacked("t") var date = Date.distantPast
@@ -128,6 +132,15 @@ final class SwiftJackTests: XCTestCase {
         }
 
         do {
+            XCTAssertEqual("[object ArrayBuffer]", try ctx.eval("d").stringValue)
+            XCTAssertEqual(8, try ctx.eval("d.byteLength").numberValue)
+            XCTAssertEqual(false, try ctx.eval("d.isView").booleanValue)
+            XCTAssertEqual("[object DataView]", try ctx.eval("(new DataView(d))").stringValue)
+
+            try ctx.eval("")
+        }
+
+        do {
             XCTAssertEqual(true, try ctx.eval("b").booleanValue)
             obj.bool.toggle()
             XCTAssertEqual(false, try ctx.eval("b").booleanValue)
@@ -136,22 +149,79 @@ final class SwiftJackTests: XCTestCase {
         do {
             XCTAssertThrowsError(try ctx.eval("n = 'x'")) // valueWasNotANumber
         }
+
+        do {
+            try ctx.eval("c = 'north'")
+            XCTAssertEqual(.north, obj.cardinal)
+            try ctx.eval("c = 'south'")
+            XCTAssertEqual(.south, obj.cardinal)
+            try ctx.eval("c = 'east'")
+            XCTAssertEqual(.east, obj.cardinal)
+            try ctx.eval("c = 'west'")
+            XCTAssertEqual(.west, obj.cardinal)
+
+            XCTAssertThrowsError(try ctx.eval("c = 'northX'")) { error in
+                // the exception gets wrapped in a JXValue and then unwrapped as a string
+//                if case JackError.rawInitializerFailed(let value, _) = error {
+//                    XCTAssertEqual("northX", value.stringValue)
+//                } else {
+//                    XCTFail("wrong error: \(error)")
+//                }
+            }
+        }
     }
 
-    func testJackSelf() throws {
+    func testJackedData() throws {
+        class JackedData : JackedObject {
+            @Jacked var data = Data()
+            lazy var ctx = jack()
+        }
+
+        let obj = JackedData()
+
+        XCTAssertEqual(Data(), obj.data)
+        XCTAssertEqual("1,2,3", try obj.ctx.eval("data = [1, 2, 3]").stringValue)
+        XCTAssertEqual(Data([1, 2, 3]), obj.data)
+
+        XCTAssertEqual(99, try obj.ctx.eval("data[0] = 99").numberValue)
+        XCTAssertNotEqual(99, obj.data.first, "array element assignment shouldn't work")
+
+        // need to pad out the array before we can convert it to a buffer
+        XCTAssertThrowsError(try obj.ctx.eval("(new Int32Array(data))[0] = 99"))
+
+        XCTAssertEqual(3, obj.data.count)
+        obj.data.append(contentsOf: Data(repeating: 0, count: 8 - (obj.data.count % 8))) // pad the array
+        XCTAssertEqual(8, obj.data.count)
+
+        XCTAssertEqual(99, try obj.ctx.eval("(new Int32Array(data))[0] = 99").numberValue)
+        XCTAssertNotEqual(99, obj.data.first, "assignment through Int32Array should work")
+
+        XCTAssertEqual(999, try obj.ctx.eval("(new Int32Array(data))[7] = 999").numberValue)
+        XCTAssertNotEqual(255, obj.data.last, "assignment to overflow value should round to byte")
+
+        let oldData = Data(obj.data)
+        XCTAssertEqual(0, try obj.ctx.eval("(new Int32Array(data))[999] = 0").numberValue)
+        XCTAssertEqual(oldData, obj.data, "assignment beyond bounds should have no effect")
+    }
+
+    func testJackedNumbers() throws {
         class JackedObj : JackedObject {
             @Jacked var dbl = 0.0
             lazy var ctx = jack()
         }
 
         let obj = JackedObj()
-        _ = try obj.ctx.eval("dbl = Math.PI")
+
+        XCTAssertEqual(.pi, try obj.ctx.eval("dbl = Math.PI").numberValue)
         XCTAssertEqual(3.141592653589793, obj.dbl)
-        _ = try obj.ctx.eval("dbl = Math.E")
+
+        XCTAssertEqual(2.718281828459045, try obj.ctx.eval("dbl = Math.E").numberValue)
         XCTAssertEqual(2.718281828459045, obj.dbl)
-        _ = try obj.ctx.eval("dbl = Math.sqrt(2)")
+
+        XCTAssertEqual(sqrt(2.0), try obj.ctx.eval("dbl = Math.sqrt(2)").numberValue)
         XCTAssertEqual(1.4142135623730951, obj.dbl)
-        _ = try obj.ctx.eval("dbl = Math.sqrt(-1)")
+
+        try obj.ctx.eval("dbl = Math.sqrt(-1)")
         XCTAssertTrue(obj.dbl.isNaN)
     }
 }
