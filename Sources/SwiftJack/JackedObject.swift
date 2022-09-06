@@ -1,9 +1,5 @@
 import OpenCombineShim
 
-/// A ``Jackable`` instance can be passed back and forth to a ``JXContext`` through serialization.
-public typealias Jackable = Codable
-
-
 /// A JackedObject is an ObservableObject with the ability to share their properties automatically with a ``JXJit\\JXContext``
 ///
 /// This type extends from ``JackedObject``, which is a type of object with a publisher that emits before the object has changed.
@@ -41,9 +37,43 @@ public protocol JackedObject : ObservableObject {
 
 @available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
 public extension JackedObject {
-    func objectMap() -> Void {
+    /// Jack into the given context, exposing all this instance's `@Jacked` properties into the given `JXContext`.
+    ///
+    /// - Parameters:
+    ///   - context: the context to jack into; will create a new context if needed
+    ///   - object: the object to use for exporting the properties and functions
+    /// - Returns: the context
+    func jack(context: JXContext = JXContext(), into object: JXValue? = nil) -> JXContext {
+        for (_, label, prop) in props() {
+            guard let prop = prop as? _JackableProperty else {
+                continue
+            }
 
+            guard let key = prop.exportedKey ?? label else {
+                continue
+            }
+
+            let jprop = JXProperty(
+                getter: { this in prop[in: context] },
+                setter: { this, newValue in prop[in: context] = newValue  }
+            )
+
+            (object ?? context.global).defineProperty(key, jprop)
+        }
+        return context
     }
+
+    /// The list of all props in the hierarchy
+    private func props() -> [(mirror: Mirror, label: String?, prop: Any)] {
+        sequence(first: Mirror(reflecting: self), next: \.superclassMirror)
+            .flatMap { mirror in
+                mirror.children
+                    .map { (label, prop) in
+                        (mirror, label, prop)
+                    }
+            }
+    }
+
 }
 
 // MARK: Jacked
@@ -195,9 +225,7 @@ public struct Jacked<Value : Jackable> {
         }
     }
     // swiftlint:disable let_var_whitespace
-    @available(*, unavailable, message: """
-               @Jacked is only available on properties of classes
-               """)
+    @available(*, unavailable, message: "@Jacked is only available on properties of classes")
     public var wrappedValue: Value {
         get { fatalError() }
         set { fatalError() } // swiftlint:disable:this unused_setter_value
@@ -430,12 +458,45 @@ private protocol _ObservableObjectProperty {
 @available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
 private protocol _JackableProperty : _ObservableObjectProperty {
     var objectWillChange: ObservableObjectPublisher? { get nonmutating set }
+
+    var exportedKey: String? { get }
+
+    subscript(in context: JXContext) -> JXValue { get nonmutating set }
 }
 
-// This is identical to the OpenCombine implementation except for notifications we handle both `*Combine.Published` and `SwiftJack.Jacked`
+
+// This is close to the OpenCombine implementation except we handle both `*Combine.Published` and `SwiftJack.Jacked`
 
 @available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
-extension Jacked: _JackableProperty {}
+extension Jacked: _JackableProperty where Value : Jackable {
+    var exportedKey: String? { key }
+
+    subscript(in context: JXContext) -> JXValue {
+        get {
+            switch _storage.wrappedValue {
+            case .value(let value):
+                return value.getJX(from: context)
+            case .publisher(let publisher):
+                return publisher.subject.value.getJX(from: context)
+            }
+        }
+
+        nonmutating set {
+            do {
+                switch _storage.wrappedValue {
+                case .value(let value):
+                    var v = value
+                    try v.setJX(value: newValue, in: context)
+                    storage = .publisher(JackedPublisher(v))
+                case .publisher(let publisher):
+                    try publisher.subject.value.setJX(value: newValue, in: context)
+                }
+            } catch {
+                context.currentError = JXValue(string: "\(error)", in: context)
+            }
+        }
+    }
+}
 
 @available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
 extension Published: _ObservableObjectProperty {
