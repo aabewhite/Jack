@@ -25,9 +25,10 @@ public enum JackError : Error {
     /// As associated values, this case contains the attempted type and context
     /// for debugging.
 
-    case valueWasNotANumber
-    case valueWasNotAString
-    case valueWasNotADate
+    case valueWasNotANumber(_ value: JXValue, Context)
+    case valueWasNotAString(_ value: JXValue, Context)
+    case valueWasNotABoolean(_ value: JXValue, Context)
+    case valueWasNotADate(_ value: JXValue, Context)
 
     /// Tried to set a raw value but couldn't initialize
     case rawInitializerFailed(_ value: JXValue, Context)
