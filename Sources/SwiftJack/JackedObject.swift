@@ -9,11 +9,11 @@ public typealias Jackable = Hashable & Codable & Sendable
 /// This type extends from ``JackedObject``, which is a type of object with a publisher that emits before the object has changed.
 ///
 /// By default an `JackedObject` synthesizes an `objectWillChange` publisher that
-/// emits the changed value before any of its `@Published` properties changes.
+/// emits the changed value before any of its `@Jacked` properties changes.
 ///
 ///     class Contact : JackedObject {
-///         @Published var name: String
-///         @Published var age: Int
+///         @Jacked var name: String
+///         @Jacked var age: Int
 ///
 ///         init(name: String, age: Int) {
 ///             self.name = name
@@ -49,7 +49,7 @@ public extension JackedObject {
 // MARK: Jacked
 
 // Sadly, this is mostly just a copy & paste re-implementation of OpenCombile.Published.
-// Mostly because the types that it uses in OpenCombine are private or internal.
+// This is because the Combine & OpenCombine type implementations are private or internal, and so cannot be re-used.
 
 
 /// A type that publishes a property marked with an attribute and exports that property to an associated ``JXKit\\JXContext``.
@@ -90,6 +90,11 @@ public extension JackedObject {
 @available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
 @propertyWrapper
 public struct Jacked<Value : Jackable> {
+    /// The key that will be used to export the instance; a nil key will prevent export.
+    private let key: String?
+
+    // private let defaultValue: Value
+
     /// A publisher for properties marked with the `@Jacked` attribute.
     public struct JackedPublisher: Publisher {
         public typealias Output = Value
@@ -144,8 +149,8 @@ public struct Jacked<Value : Jackable> {
     ///     @Jacked var lastUpdated: Date = Date()
     ///
     /// - Parameter wrappedValue: The publisher's initial value.
-    public init(initialValue: Value) {
-        self.init(wrappedValue: initialValue)
+    public init(initialValue: Value, _ key: String?) {
+        self.init(wrappedValue: initialValue, key)
     }
 
     /// Creates the published instance with an initial value.
@@ -156,8 +161,9 @@ public struct Jacked<Value : Jackable> {
     ///     @Jacked var lastUpdated: Date = Date()
     ///
     /// - Parameter initialValue: The publisher's initial value.
-    public init(wrappedValue: Value) {
+    public init(wrappedValue: Value, _ key: String?) {
         _storage = Box(wrappedValue: .value(wrappedValue))
+        self.key = key
     }
 
     /// The property for which this instance exposes a publisher.
@@ -416,6 +422,94 @@ extension JackedSubject {
     }
 }
 
+@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+private protocol _ObservableObjectProperty {
+    //var objectWillChange: ObservableObjectPublisher? { get nonmutating set }
+}
+
+@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+private protocol _JackableProperty : _ObservableObjectProperty {
+    var objectWillChange: ObservableObjectPublisher? { get nonmutating set }
+}
+
+// This is identical to the OpenCombine implementation except for notifications we handle both `*Combine.Published` and `SwiftJack.Jacked`
+
+@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+extension Jacked: _JackableProperty {}
+
+@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+extension Published: _ObservableObjectProperty {
+}
+
+// this is what we need to be able to suport both @Jacked and @Published, but it relies on internal Published details
+
+//@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+//extension Published: _JackableProperty {
+//    internal var objectWillChange: ObservableObjectPublisher? {
+//        get {
+//            switch storage {
+//            case .value:
+//                return nil
+//            case .publisher(let publisher):
+//                return publisher.subject.objectWillChange
+//            }
+//        }
+//        nonmutating set {
+//            getPublisher().subject.objectWillChange = newValue
+//        }
+//    }
+//
+//}
+
+@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+extension JackedObject where ObjectWillChangePublisher == ObservableObjectPublisher {
+
+    /// A publisher that emits before the object has changed.
+    public var objectWillChange: ObservableObjectPublisher {
+        var installedPublisher: ObservableObjectPublisher?
+        var reflection: Mirror? = Mirror(reflecting: self)
+        while let aClass = reflection {
+            for (_, property) in aClass.children {
+
+                guard let property = property as? _ObservableObjectProperty else {
+                    // Visit other fields until we meet a @Published field
+                    continue
+                }
+
+                guard let property = property as? _JackableProperty else {
+                    // TODO: how can we implemnent support for both 
+                    fatalError("instances may not currently have both @Published and @Jacked properties")
+                }
+
+                // Now we know that the field is @Jacked.
+                if let alreadyInstalledPublisher = property.objectWillChange {
+                    installedPublisher = alreadyInstalledPublisher
+                    // Don't visit other fields, as all @Jacked and @Published fields
+                    // already have a publisher installed.
+                    break
+                }
+
+                // Okay, this field doesn't have a publisher installed.
+                // This means that other fields don't have it either
+                // (because we install it only once and fields can't be added at runtime).
+                var lazilyCreatedPublisher: ObjectWillChangePublisher {
+                    if let publisher = installedPublisher {
+                        return publisher
+                    }
+                    let publisher = ObservableObjectPublisher()
+                    installedPublisher = publisher
+                    return publisher
+                }
+
+                property.objectWillChange = lazilyCreatedPublisher
+
+                // Continue visiting other fields.
+            }
+            reflection = aClass.superclassMirror
+        }
+        return installedPublisher ?? ObservableObjectPublisher()
+    }
+}
 
 #if canImport(COpenCombineHelpers)
 import COpenCombineHelpers
