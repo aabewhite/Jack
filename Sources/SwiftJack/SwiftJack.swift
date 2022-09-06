@@ -27,6 +27,7 @@ public enum JackError : Error {
 
     case valueWasNotANumber
     case valueWasNotAString
+    case valueWasNotADate
 
     /// Tried to set a raw value but couldn't initialize
     case rawInitializerFailed(_ value: JXValue, Context)

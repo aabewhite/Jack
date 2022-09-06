@@ -45,7 +45,6 @@ final class SwiftJackTests: XCTestCase {
             @Jacked("c") var cardinal = Compass.north
 //            @Jacked("a") var array = [1, 2, 3]
 //            @Jacked("d") var dict = ["A": 1, "B": 2.0]
-//            @Jacked("t") var date = Date.distantPast
 //            @Jacked(nil) var unexported = UUID()
 
             //@Published var numberPub = 0 // mixed Jacked & Published not yet supported and will crash
@@ -169,6 +168,29 @@ final class SwiftJackTests: XCTestCase {
 //                }
             }
         }
+    }
+
+    func testJackedDate() throws {
+        class JackedDate : JackedObject {
+            @Jacked var date = Date(timeIntervalSince1970: 0)
+            lazy var ctx = jack()
+        }
+
+        let obj = JackedDate()
+
+        XCTAssertEqual(Date(timeIntervalSince1970: 0), obj.date)
+        XCTAssertEqual("Wed Dec 31 1969 19:00:00 GMT-0500 (Eastern Standard Time)", try obj.ctx.eval("date").stringValue)
+        XCTAssertEqual(0, try obj.ctx.eval("date").numberValue)
+
+        obj.date = .distantPast
+        XCTAssertEqual(-62135596800000, try obj.ctx.eval("date").numberValue)
+
+        obj.date = .distantFuture
+        XCTAssertEqual(64092211200000, try obj.ctx.eval("date").numberValue)
+
+        XCTAssertEqual(Date().timeIntervalSinceReferenceDate, try obj.ctx.eval("date = new Date()").dateValue?.timeIntervalSinceReferenceDate ?? 0, accuracy: 0.001, "date should agree to the millisecond")
+
+//        XCTAssertEqual(Data([1, 2, 3]), obj.data)
     }
 
     func testJackedData() throws {

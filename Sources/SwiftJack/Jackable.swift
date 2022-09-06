@@ -60,6 +60,15 @@ extension BinaryInteger where Self : _ExpressibleByBuiltinIntegerLiteral {
     }
 }
 
+extension Int : Jackable { }
+extension Int16 : Jackable { }
+extension Int32 : Jackable { }
+extension Int64 : Jackable { }
+extension UInt : Jackable { }
+extension UInt16 : Jackable { }
+extension UInt32 : Jackable { }
+extension UInt64 : Jackable { }
+
 extension BinaryFloatingPoint where Self : ExpressibleByFloatLiteral {
     public func getJX(from context: JXContext) -> JXValue {
         JXValue(double: Double(self), in: context)
@@ -74,16 +83,32 @@ extension BinaryFloatingPoint where Self : ExpressibleByFloatLiteral {
 }
 
 
-extension Int : Jackable { }
-extension Int16 : Jackable { }
-extension Int32 : Jackable { }
-extension Int64 : Jackable { }
 extension Double : Jackable { }
 extension Float : Jackable { }
 
 #if canImport(Foundation)
+import struct Foundation.Date
+
+extension Date : Jackable {
+    public mutating func getJX(from context: JXContext) -> JXValue {
+        JXValue(date: self, in: context)
+    }
+
+    public mutating func setJX(value: JXValue, in context: JXContext) throws {
+        guard let date = value.dateValue else {
+            throw JackError.valueWasNotADate
+        }
+        self = date
+
+    }
+}
+#endif
+
+
+#if canImport(Foundation)
 import struct Foundation.Data
 
+@available(macOS 10.12, iOS 10.0, tvOS 10.0, *)
 extension Data : Jackable {
     public mutating func getJX(from context: JXContext) -> JXValue {
         withUnsafeMutableBytes { bytes in
