@@ -1,34 +1,75 @@
 import OpenCombineShim
 
-/// A JackedObject is an ObservableObject with the ability to share their properties automatically with a ``JXKit\\JXContext``
+/// A ``JackedObject`` is an ``ObservableObject`` with the ability to share their properties automatically with a ``JXKit\\JXContext``.
+/// This allows an embedded JavaScript context to access the properties and invoke the functions of the containing object.
 ///
 /// This type extends from ``JackedObject``, which is a type of object with a publisher that emits before the object has changed.
 ///
-/// By default an `JackedObject` synthesizes an `objectWillChange` publisher that
-/// emits the changed value before any of its `@Jacked` properties changes.
 ///
-///     class Contact : JackedObject {
-///         @Jacked var name: String
-///         @Jacked var age: Int
+///     class EnhancedObj : JackedObject {
+///         @UnJacked var x = 0 // unexported to jsc
+///         @Jacked var i = 1 // exported as number
+///         @Jacked("B") var b = false // exported as bool
+///         @Juggled var id = UUID() // exported (via codability) as string
+///         @Jumped("now") private var _now = now // exported as function
+///         func now() -> Date { Date(timeIntervalSince1970: 1_234) }
 ///
-///         init(name: String, age: Int) {
-///             self.name = name
-///             self.age = age
-///         }
-///
-///         func haveBirthday() -> Int {
-///             age += 1
-///         }
+///         lazy var jsc = jack()
 ///     }
 ///
+///     let obj = EnhancedObj()
+///
+///     XCTAssertEqual("undefined", try obj.jsc.eval("typeof x").stringValue)
+///     XCTAssertEqual("number", try obj.jsc.eval("typeof i").stringValue)
+///     XCTAssertEqual("undefined", try obj.jsc.eval("typeof b").stringValue) // aliased away
+///     XCTAssertEqual("boolean", try obj.jsc.eval("typeof B").stringValue) // aliased
+///     XCTAssertEqual("string", try obj.jsc.eval("typeof id").stringValue)
+///     XCTAssertEqual("function", try obj.jsc.eval("typeof now").stringValue)
+///     XCTAssertEqual("object", try obj.jsc.eval("typeof now()").stringValue)
+///     XCTAssertEqual(1_234_000, try obj.jsc.eval("now()").numberValue)
+///
+/// In addition, a `JackedObject` synthesizes an `objectWillChange` publisher that
+/// emits the changed value before any of its wrapped properties changes.
+///
+///      class Contact : JackedObject {
+///          @Jacked var name: String
+///          @Jacked var age: Int
+///
+///          lazy var jsc = jack()
+///
+///          init(name: String, age: Int) {
+///             self.name = name
+///             self.age = age
+///          }
+///
+///          @Jumped("haveBirthday") var _haveBirthday = haveBirthday
+///          func haveBirthday() -> Int {
+///             age += 1
+///             return age
+///          }
+///      }
+///
 ///     let john = Contact(name: "John Appleseed", age: 24)
-///     cancellable = john.objectWillChange
-///         .sink { _ in
-///             print("\(john.age) will change")
-///         }
-///     print(john.haveBirthday())
-///     // Prints "24 will change"
-///     // Prints "25"
+///
+///     var changes = 0
+///     let cancellable = john.objectWillChange
+///     .sink { _ in
+///         changes += 1
+///     }
+///
+///     XCTAssertEqual(25, john.haveBirthday())
+///     XCTAssertEqual(1, changes)
+///
+///     XCTAssertEqual(26, try john.jsc.eval("haveBirthday()").numberValue)
+///     XCTAssertEqual(2, changes)
+///
+///     let _ = cancellable
+///
+/// Note: even though ``JackedObject`` extends ``ObservableObject``, and can be used
+/// in its place in SwiftUI hierarchies with ``@EnvironmentObject``, it is *not* possible to
+/// mix ``@Published`` and ``@Jacked`` properties in the same object. Doing so will
+/// result in a crash at initialization time. In order to support ``@Published``behavior
+/// without needing to export the property to the JSC, use the equivalent ``@UnJacked`` wrapper.
 @available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
 public protocol JackedObject : ObservableObject {
 
@@ -55,8 +96,8 @@ public extension JackedObject {
             }
 
             let jprop = JXProperty(
-                getter: { this in prop[in: context] },
-                setter: { this, newValue in prop[in: context] = newValue  }
+                getter: { [weak self] this in prop[in: context, self] },
+                setter: { [weak self] this, newValue in prop[in: context, self] = newValue  }
             )
 
             (object ?? context.global).defineProperty(key, jprop)
@@ -82,10 +123,10 @@ internal protocol _TrackableProperty : _ObservableObjectProperty {
 }
 
 @available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
-internal protocol _JackableProperty : _TrackableProperty {
+internal protocol _JackableProperty : _ObservableObjectProperty {
     var exportedKey: String? { get }
 
-    subscript(in context: JXContext) -> JXValue { get nonmutating set }
+    subscript(in context: JXContext, owner: AnyObject?) -> JXValue { get nonmutating set }
 }
 
 @available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
@@ -127,34 +168,37 @@ extension JackedObject where ObjectWillChangePublisher == ObservableObjectPublis
                     continue
                 }
 
-                guard let property = property as? _TrackableProperty else {
+                if property is Published<ObjectWillChangePublisher.Output> {
                     // TODO: how can we implement support for @Published and @Jacked at the same time?
                     fatalError("instances may not currently have both @Published and @Jacked properties (use @UnJacked instead)")
                 }
 
-                // Now we know that the field is @Jacked.
-                if let alreadyInstalledPublisher = property.objectWillChange {
-                    installedPublisher = alreadyInstalledPublisher
-                    // Don't visit other fields, as all @Jacked and @Published fields
-                    // already have a publisher installed.
-                    break
-                }
+                if let property = property as? _TrackableProperty {
+                    // Now we know that the field is @Jacked.
+                    if let alreadyInstalledPublisher = property.objectWillChange {
+                        installedPublisher = alreadyInstalledPublisher
+                        // Don't visit other fields, as all @Jacked and @Published fields
+                        // already have a publisher installed.
+                        break
+                    }
 
-                // Okay, this field doesn't have a publisher installed.
-                // This means that other fields don't have it either
-                // (because we install it only once and fields can't be added at runtime).
-                var lazilyCreatedPublisher: ObjectWillChangePublisher {
-                    if let publisher = installedPublisher {
+                    // Okay, this field doesn't have a publisher installed.
+                    // This means that other fields don't have it either
+                    // (because we install it only once and fields can't be added at runtime).
+                    var lazilyCreatedPublisher: ObjectWillChangePublisher {
+                        if let publisher = installedPublisher {
+                            return publisher
+                        }
+                        let publisher = ObservableObjectPublisher()
+                        installedPublisher = publisher
                         return publisher
                     }
-                    let publisher = ObservableObjectPublisher()
-                    installedPublisher = publisher
-                    return publisher
+
+                    property.objectWillChange = lazilyCreatedPublisher
                 }
 
-                property.objectWillChange = lazilyCreatedPublisher
 
-                // Continue visiting other fields.
+                // other read-only types (e.g., Jumped, UnJacked) are left un-tracked but tolerated
             }
             reflection = aClass.superclassMirror
         }

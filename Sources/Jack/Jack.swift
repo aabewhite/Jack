@@ -1,9 +1,6 @@
 @_exported import JXKit
 
 public struct JackModule {
-    public static let version = "1.0.0"
-    public var swiftJackName = "Jack"
-
     public static let shared = Self()
 }
 
@@ -39,8 +36,6 @@ public enum JackError : Error {
     case dataElementNotNumber(_ index: Int, _ value: JXValue, Context)
 
     case dataElementOutOfRange(_ index: Int, _ value: JXValue, Context)
-
-
 }
 
 

@@ -5,32 +5,40 @@ import struct OpenCombineShim.Published
 
 @available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
 final class JackTests: XCTestCase {
-    func testJackModule() {
-        XCTAssertEqual(JackModule.shared.swiftJackName, "Jack")
-    }
-
     func testObservation() {
-        class ObserveObj : ObservableObject {
-            @Published var number = 0
+        class Contact : JackedObject {
+            @Jacked var name: String
+            @Jacked var age: Int
+
+            lazy var jsc = jack()
+
+            init(name: String, age: Int) {
+                self.name = name
+                self.age = age
+            }
+
+            @Jumped("haveBirthday") var _haveBirthday = haveBirthday
+            func haveBirthday() -> Int {
+                age += 1
+                return age
+            }
         }
 
-        let obj = ObserveObj()
+        let john = Contact(name: "John Appleseed", age: 24)
+
         var changes = 0
-        let obsvr1 = obj.objectWillChange.sink {
-            changes += 1
-        }
+        let cancellable = john.objectWillChange
+            .sink { _ in
+                changes += 1
+            }
 
-        var number = obj.number
-        let obsvr2 = obj.$number.sink { newValue in
-            number = newValue
-        }
-
-        XCTAssertEqual(0, changes)
-        obj.number += 1
+        XCTAssertEqual(25, john.haveBirthday())
         XCTAssertEqual(1, changes)
-        XCTAssertEqual(number, obj.number)
 
-        let _ = (obsvr1, obsvr2)
+        XCTAssertEqual(26, try john.jsc.eval("haveBirthday()").numberValue)
+        XCTAssertEqual(2, changes)
+
+        let _ = cancellable
     }
 
     func testPingPongExample() throws {
@@ -65,11 +73,11 @@ final class JackTests: XCTestCase {
 
         var server: AnyObject = Bool.random() ? playerA : playerB
 
-        #if !os(Linux) // no combineLatest
+#if !os(Linux) // no combineLatest
         let announcer = playerA.$score.combineLatest(playerB.$score).sink { scoreA, scoreB in
             print("SCORE:", scoreA, scoreB, "Serving:", server === playerA ? "SWIFT" : "JAVASCRIPT")
         }
-        #endif
+#endif
 
         while playerA.score < 21 && playerB.score < 21 {
             if server === playerA {
@@ -84,9 +92,9 @@ final class JackTests: XCTestCase {
         }
 
         print("Winner: ", playerA.score > playerB.score ? "Swift" : "JavaScript")
-        #if !os(Linux) // no combineLatest
+#if !os(Linux) // no combineLatest
         _ = announcer // no longer needed
-        #endif
+#endif
     }
 
     func testPingPongPerformance() {
@@ -321,11 +329,11 @@ final class JackTests: XCTestCase {
 
         obj.date = .distantPast
 
-        #if os(Linux) // sigh
+#if os(Linux) // sigh
         XCTAssertEqual(-62104233600000, try obj.jsc.eval("date").numberValue)
-        #else
+#else
         XCTAssertEqual(-62135596800000, try obj.jsc.eval("date").numberValue)
-        #endif
+#endif
 
         obj.date = .distantFuture
         XCTAssertEqual(64092211200000, try obj.jsc.eval("date").numberValue)
@@ -448,9 +456,9 @@ final class JackTests: XCTestCase {
         XCTAssertTrue(obj.dbl.isNaN)
     }
 
-    func testJackedCodable() throws {
+    func testJugglable() throws {
         class JackedCode : JackedObject {
-            @JackedCodable var info = SomeInfo(str: "XYZ", int: 123, extra: SomeInfo.ExtraInfo(dbl: 1.2, strs: ["A", "B", "C"]))
+            @Juggled var info = SomeInfo(str: "XYZ", int: 123, extra: SomeInfo.ExtraInfo(dbl: 1.2, strs: ["A", "B", "C"]))
             lazy var jsc = jack()
 
             struct SomeInfo : Codable, Equatable {
@@ -496,34 +504,73 @@ final class JackTests: XCTestCase {
 
     }
 
-    func testJackedFunction() throws {
-        class JackedObj : JackedObject {
-            @JackedFunction("a") var add = { $0 + $1 as Int }
-            @JackedFunction var concat = { $0 + $1 as String }
-            @JackedFunction var hj = helloJack
+    func testJumped() throws {
+        class JumpedObj : JackedObject {
+            @Jumped private var h0 = hi
+            func hi() -> Date { Date(timeIntervalSince1970: 1234) }
+
+            @Jumped private var h1 = hello // expose the 1-arg function
+            func hello(name: String) -> String { "Hello \(name)!" }
+
+            @Jumped("H2") private var h2 = happyBirthday // expose the 2-arg function
+            func happyBirthday(name: String, age: Int) -> String { "Happy Birthday \(name), you are \(age)!" }
+
+            @Jumped("replicate") private var _replicate = replicate
+            func replicate(_ coded: Coded, count: Int) -> [Coded] { Array(Array(repeating: coded, count: count)) }
 
             lazy var jsc = jack()
-
-            func helloJack() -> String { "Hello Jack" }
         }
 
-        let obj = JackedObj()
+        /// A sample of codable passing
+        struct Coded : Jugglable, Equatable {
+            var id = UUID()
+            var str = ""
+            var num: Int?
+        }
 
-        XCTAssertEqual("function", try obj.jsc.eval("typeof a").stringValue)
-        XCTAssertEqual("function", try obj.jsc.eval("typeof concat").stringValue)
-        XCTAssertEqual("function", try obj.jsc.eval("typeof hj").stringValue)
+        let obj = JumpedObj()
 
-        XCTAssertEqual("Hello Jack", obj.hj(obj)())
-        XCTAssertEqual(3, try obj.jsc.eval("function f2(x, y) { return x + y }; f2(1, 2)").numberValue)
+        XCTAssertEqual("function", try obj.jsc.eval("typeof h0").stringValue)
+        XCTAssertEqual("function", try obj.jsc.eval("typeof h1").stringValue)
+        XCTAssertEqual("undefined", try obj.jsc.eval("typeof h2").stringValue)
+        XCTAssertEqual("function", try obj.jsc.eval("typeof H2").stringValue)
 
-//        XCTAssertEqual("Hello Jack", try obj.jsc.eval("hj()").stringValue)
-//        XCTAssertEqual(3, try obj.jsc.eval("a(1, 2)").numberValue)
-//        XCTAssertEqual("xyz", try obj.jsc.eval("concat('x', 'yz')").stringValue)
+        XCTAssertEqual(1_234_000, try obj.jsc.eval("h0()").numberValue)
+        XCTAssertEqual("Hello x!", try obj.jsc.eval("h1('x')").stringValue)
+        XCTAssertEqual("Happy Birthday x, you are 9!", try obj.jsc.eval("H2('x', 9)").stringValue)
+
+        let c = Coded(id: UUID(uuidString: "4991E2A0-DE05-4BB3-B502-42F7584C9973")!, str: "abc", num: 9)
+        XCTAssertEqual([c, c, c], try obj.jsc.eval("replicate({ id: '4991E2A0-DE05-4BB3-B502-42F7584C9973', str: 'abc', num: 9 }, 3)").toDecodable(ofType: Array<Coded>.self))
 
         // make sure we are blocked from setting the function property from JS
-        XCTAssertThrowsError(try obj.jsc.eval("hj = null")) { error in
+        XCTAssertThrowsError(try obj.jsc.eval("h0 = null")) { error in
             XCTAssertEqual(#"evaluationErrorString("cannot set a function from JS")"#, "\(error)")
         }
 
     }
+
+    func testAllPropertyWrappers() throws {
+        class EnhancedObj : JackedObject {
+            @UnJacked var x = 0 // unexported to jsc
+            @Jacked var i = 1 // exported as number
+            @Jacked("B") var b = false // exported as bool
+            @Juggled var id = UUID() // exported (via codability) as string
+            @Jumped("now") private var _now = now // exported as function
+            func now() -> Date { Date(timeIntervalSince1970: 1_234) }
+
+            lazy var jsc = jack()
+        }
+
+        let obj = EnhancedObj()
+
+        XCTAssertEqual("undefined", try obj.jsc.eval("typeof x").stringValue)
+        XCTAssertEqual("number", try obj.jsc.eval("typeof i").stringValue)
+        XCTAssertEqual("undefined", try obj.jsc.eval("typeof b").stringValue) // aliased away
+        XCTAssertEqual("boolean", try obj.jsc.eval("typeof B").stringValue) // aliased
+        XCTAssertEqual("string", try obj.jsc.eval("typeof id").stringValue)
+        XCTAssertEqual("function", try obj.jsc.eval("typeof now").stringValue)
+        XCTAssertEqual("object", try obj.jsc.eval("typeof now()").stringValue)
+        XCTAssertEqual(1_234_000, try obj.jsc.eval("now()").numberValue)
+    }
+
 }
