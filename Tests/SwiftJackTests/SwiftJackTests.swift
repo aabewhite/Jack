@@ -63,7 +63,7 @@ final class SwiftJackTests: XCTestCase {
         let playerA = PingPongNative()
         let playerB = PingPongScripted()
 
-        var server: any ObservableObject = Bool.random() ? playerA : playerB
+        var server: AnyObject = Bool.random() ? playerA : playerB
 
         let announcer = playerA.$score.combineLatest(playerB.$score).sink { scoreA, scoreB in
             print("SCORE:", scoreA, scoreB, "Serving:", server === playerA ? "SWIFT" : "JAVASCRIPT")
