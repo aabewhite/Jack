@@ -170,17 +170,18 @@ extension JackedCodable : _JackableProperty where Value : Codable {
                     return try context.encode(publisher.subject.value)
                 }
             } catch {
-                return JXValue(newErrorFromMessage: "\(error)", in: wip(context))
+                context.currentError = JXValue(string: "\(error)", in: context)
+                return JXValue(newErrorFromMessage: "\(error)", in: context)
             }
         }
 
         nonmutating set {
             do {
                 switch _storage.wrappedValue {
-                case .value(let value):
-                    fatalError(wip("how to decode the value"))
+                case .value(_):
+                    storage = .publisher(JackedPublisher(try newValue.toDecodable(ofType: Value.self)))
                 case .publisher(let publisher):
-                    fatalError(wip("how to decode the value"))
+                    publisher.subject.value = try newValue.toDecodable(ofType: Value.self)
                 }
             } catch {
                 context.currentError = JXValue(string: "\(error)", in: context)
@@ -188,5 +189,3 @@ extension JackedCodable : _JackableProperty where Value : Codable {
         }
     }
 }
-
-
