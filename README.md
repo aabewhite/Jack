@@ -1,7 +1,8 @@
 SwiftJack
 ========
 
-[![Swift5 compatible][Swift5Badge]][Swift5Link] ![Build Status][GitHubActionBadge] 
+[![Swift5 compatible][Swift5Badge]][Swift5Link] ![Build Status][GitHubActionBadge] [![Platform](https://img.shields.io/badge/Platforms-macOS%20|%20iOS%20|%20tvOS%20|%20Linux-lightgreen.svg)](https://github.com/jectivex/JXKit)
+[![](https://tokei.rs/b1/github/jectivex/SwiftJack)](https://github.com/jectivex/SwiftJack)
 
 SwiftJack is a cross-platform Swift framework that enables a Combine (or OpenCombine) `ObservableObject` to expose and share its properties and functionality with an embedded JavaScriptCore runtime. 
 

@@ -65,9 +65,11 @@ final class SwiftJackTests: XCTestCase {
 
         var server: AnyObject = Bool.random() ? playerA : playerB
 
+        #if !os(Linux) // no combineLatest
         let announcer = playerA.$score.combineLatest(playerB.$score).sink { scoreA, scoreB in
             print("SCORE:", scoreA, scoreB, "Serving:", server === playerA ? "SWIFT" : "JAVASCRIPT")
         }
+        #endif
 
         while playerA.score < 21 && playerB.score < 21 {
             if server === playerA {
@@ -82,7 +84,9 @@ final class SwiftJackTests: XCTestCase {
         }
 
         print("Winner: ", playerA.score > playerB.score ? "Swift" : "JavaScript")
+        #if !os(Linux) // no combineLatest
         _ = announcer // no longer needed
+        #endif
     }
 
     func testPingPongPerformance() {
