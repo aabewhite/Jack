@@ -1,12 +1,12 @@
 import XCTest
-import SwiftJack
+import Jack
 import protocol OpenCombineShim.ObservableObject
 import struct OpenCombineShim.Published
 
 @available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
-final class SwiftJackTests: XCTestCase {
-    func testSwiftJackModule() {
-        XCTAssertEqual(SwiftJackModule.shared.swiftJackName, "SwiftJack")
+final class JackTests: XCTestCase {
+    func testJackModule() {
+        XCTAssertEqual(JackModule.shared.swiftJackName, "Jack")
     }
 
     func testObservation() {
@@ -122,6 +122,11 @@ final class SwiftJackTests: XCTestCase {
 
         let jsc = obj.jack()
 
+        XCTAssertEqual("number", try jsc.eval("typeof n").stringValue)
+        XCTAssertEqual("number", try jsc.eval("typeof f").stringValue)
+        XCTAssertEqual("boolean", try jsc.eval("typeof b").stringValue)
+        XCTAssertEqual("string", try jsc.eval("typeof s").stringValue)
+
         do {
             XCTAssertEqual(1, try jsc.eval("n").numberValue)
             try jsc.eval("n += 1")
@@ -174,6 +179,96 @@ final class SwiftJackTests: XCTestCase {
         }
     }
 
+    func testJackedSubclass() throws {
+        class JackedSuper : JackedObject {
+            @Jacked var sup = 1
+        }
+
+        class JackedSub : JackedSuper {
+            @Jacked var sub = 0
+        }
+
+        let obj = JackedSub()
+
+        var changes = 0
+        
+        let obsvr1 = obj.objectWillChange.sink {
+            changes += 1
+        }
+
+        let jsc = obj.jack()
+
+        XCTAssertEqual(0, changes)
+
+        do {
+            XCTAssertEqual(1, try jsc.eval("sup").numberValue)
+
+            XCTAssertEqual(1, changes)
+            try jsc.eval("sup += 1")
+            XCTAssertEqual(3, changes)
+
+            XCTAssertEqual(2, obj.sup)
+            try jsc.eval("sup += 1")
+            XCTAssertEqual(3, obj.sup)
+            XCTAssertEqual(3, try jsc.eval("sup").numberValue)
+
+            XCTAssertEqual(6, changes)
+        }
+
+
+        changes = 0
+
+        do {
+            XCTAssertEqual(0, try jsc.eval("sub").numberValue)
+
+            XCTAssertEqual(1, changes)
+            try jsc.eval("sub += 1")
+            XCTAssertEqual(1, obj.sub)
+            try jsc.eval("sub += 1")
+            XCTAssertEqual(2, obj.sub)
+            XCTAssertEqual(2, try jsc.eval("sub").numberValue)
+
+            XCTAssertEqual(6, changes)
+        }
+
+
+        let _ = obsvr1
+    }
+
+    func testUnJacked() throws {
+
+        class UnJackedObj : JackedObject {
+            @UnJacked("n") var integer = 0
+            @UnJacked("f") var float = 0.0
+
+            @Jacked("b") var bool = false
+            @Jacked("s") var string = ""
+
+            //@Published var published = 0 // this would crash: we cannot mix Jacked and Published properties
+        }
+
+        let obj = UnJackedObj()
+
+        var changes = 0
+        let obsvr1 = obj.objectWillChange.sink {
+            changes += 1
+        }
+
+        var integerJack = obj.integer
+        let obsvr3 = obj.$integer.sink { integerJack = $0 }
+
+        XCTAssertEqual(0, changes)
+        XCTAssertEqual(0, integerJack)
+        obj.integer += 1
+        XCTAssertEqual(1, changes)
+        XCTAssertEqual(1, integerJack)
+        XCTAssertEqual(obj.integer, integerJack)
+        XCTAssertEqual(integerJack, obj.integer)
+
+        let _ = (obsvr1, obsvr3)
+
+    }
+
     func testJackedArray() throws {
         class JackedObj : JackedObject {
             @Jacked("sa") var stringArray = ["a", "b", "c"]
@@ -218,7 +313,7 @@ final class SwiftJackTests: XCTestCase {
 
         XCTAssertEqual(Date(timeIntervalSince1970: 0), obj.date)
 
-        // /home/runner/work/SwiftJack/SwiftJack/Tests/SwiftJackTests/SwiftJackTests.swift:132: error: SwiftJackTests.testJackedDate : XCTAssertEqual failed: ("Optional("Wed Dec 31 1969 19:00:00 GMT-0500 (Eastern Standard Time)")") is not equal to ("Optional("Thu Jan 01 1970 00:00:00 GMT+0000 (UTC)")") -
+        // /home/runner/work/Jack/Jack/Tests/JackTests/JackTests.swift:132: error: JackTests.testJackedDate : XCTAssertEqual failed: ("Optional("Wed Dec 31 1969 19:00:00 GMT-0500 (Eastern Standard Time)")") is not equal to ("Optional("Thu Jan 01 1970 00:00:00 GMT+0000 (UTC)")") -
         // XCTAssertEqual("Wed Dec 31 1969 19:00:00 GMT-0500 (Eastern Standard Time)", try obj.jsc.eval("date").stringValue)
 
 
@@ -398,6 +493,37 @@ final class SwiftJackTests: XCTestCase {
 
         XCTAssertEqual(3, try obj.jsc.eval("info = { str: 'abc', int: 2, extra: { strs: [ 'q', 'r', 's' ] } }").dictionary?.keys.count)
         XCTAssertEqual(.init(str: "abc", int: 2, extra: .init(strs: ["q", "r", "s"])), obj.info)
+
+    }
+
+    func testJackedFunction() throws {
+        class JackedObj : JackedObject {
+            @JackedFunction("a") var add = { $0 + $1 as Int }
+            @JackedFunction var concat = { $0 + $1 as String }
+            @JackedFunction var hj = helloJack
+
+            lazy var jsc = jack()
+
+            func helloJack() -> String { "Hello Jack" }
+        }
+
+        let obj = JackedObj()
+
+        XCTAssertEqual("function", try obj.jsc.eval("typeof a").stringValue)
+        XCTAssertEqual("function", try obj.jsc.eval("typeof concat").stringValue)
+        XCTAssertEqual("function", try obj.jsc.eval("typeof hj").stringValue)
+
+        XCTAssertEqual("Hello Jack", obj.hj(obj)())
+        XCTAssertEqual(3, try obj.jsc.eval("function f2(x, y) { return x + y }; f2(1, 2)").numberValue)
+
+//        XCTAssertEqual("Hello Jack", try obj.jsc.eval("hj()").stringValue)
+//        XCTAssertEqual(3, try obj.jsc.eval("a(1, 2)").numberValue)
+//        XCTAssertEqual("xyz", try obj.jsc.eval("concat('x', 'yz')").stringValue)
+
+        // make sure we are blocked from setting the function property from JS
+        XCTAssertThrowsError(try obj.jsc.eval("hj = null")) { error in
+            XCTAssertEqual(#"evaluationErrorString("cannot set a function from JS")"#, "\(error)")
+        }
 
     }
 }

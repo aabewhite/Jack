@@ -75,15 +75,18 @@ internal protocol _ObservableObjectProperty {
     //var objectWillChange: ObservableObjectPublisher? { get nonmutating set }
 }
 
+/// A marker for a property that can trigger a state change
 @available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
-internal protocol _JackableProperty : _ObservableObjectProperty {
+internal protocol _TrackableProperty : _ObservableObjectProperty {
     var objectWillChange: ObservableObjectPublisher? { get nonmutating set }
+}
 
+@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+internal protocol _JackableProperty : _TrackableProperty {
     var exportedKey: String? { get }
 
     subscript(in context: JXContext) -> JXValue { get nonmutating set }
 }
-
 
 @available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
 extension Published: _ObservableObjectProperty {
@@ -124,9 +127,9 @@ extension JackedObject where ObjectWillChangePublisher == ObservableObjectPublis
                     continue
                 }
 
-                guard let property = property as? _JackableProperty else {
-                    // TODO: how can we implemnent support for both 
-                    fatalError("instances may not currently have both @Published and @Jacked properties")
+                guard let property = property as? _TrackableProperty else {
+                    // TODO: how can we implement support for @Published and @Jacked at the same time?
+                    fatalError("instances may not currently have both @Published and @Jacked properties (use @UnJacked instead)")
                 }
 
                 // Now we know that the field is @Jacked.

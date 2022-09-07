@@ -1,19 +1,19 @@
-SwiftJack
+Jack
 ========
 
 [![Build Status][GitHubActionBadge]][ActionsLink]
 [![Swift5 compatible][Swift5Badge]][Swift5Link] 
 ![Platform][SwiftPlatforms]
-<!-- [![](https://tokei.rs/b1/github/jectivex/SwiftJack)](https://github.com/jectivex/SwiftJack) -->
+<!-- [![](https://tokei.rs/b1/github/jectivex/Jack)](https://github.com/jectivex/Jack) -->
 
-SwiftJack is a cross-platform Swift framework that enables a Combine (or OpenCombine) `ObservableObject` to expose and share its properties and functionality with an embedded JavaScriptCore runtime. 
+Jack is a cross-platform Swift framework that enables a Combine (or OpenCombine) `ObservableObject` to expose and share its properties and functionality with an embedded JavaScriptCore runtime. 
 
 This framework integrates transparently with SwiftUI's `EnvironmentObject` pattern, and so can be used to enhance existing `ObservableObject` instances with scriptable app-specific plug-ins.
 
 Consider an example ping-pong game between Swift and JavaScript:
 
 ```swift
-import SwiftJack
+import Jack
 
 // A standard Combine-based ObservableObject
 class PingPongNative : ObservableObject {
@@ -98,11 +98,11 @@ Winner:  JavaScript
 The [Swift Package Manager][] is a tool for managing the distribution of
 Swift code.
 
-1. Add the following to your `Package.swift` file:
+Add the following to your `Package.swift` file:
 
   ```swift
   dependencies: [
-      .package(url: "https://github.com/jectivex/SwiftJack", from: "0.1.3")
+      .package(url: "https://github.com/jectivex/Jack", from: "0.1.3")
   ]
   ```
 
@@ -120,26 +120,26 @@ Swift code.
 [See the planning document]: /Documentation/Planning.md
 [Read the contributing guidelines]: ./CONTRIBUTING.md#contributing
 [Ask on Stack Overflow]: https://stackoverflow.com/questions/tagged/swiftjack
-[Open an issue]: https://github.com/jectivex/SwiftJack/issues/new
-[Submit a pull request]: https://github.com/jectivex/SwiftJack/fork
+[Open an issue]: https://github.com/jectivex/Jack/issues/new
+[Submit a pull request]: https://github.com/jectivex/Jack/fork
 
 ## Related
 
-These projects are used by SwiftJack:
+These projects are used by Jack:
 
  - [OpenCombine][] provides Combine on Linux
  - [JXKit][] Cross-platform Swift interface to JavaScriptCore
 
 
-[ProjectLink]: https://github.com/jectivex/SwiftJack
-[ActionsLink]: https://github.com/jectivex/SwiftJack/actions
+[ProjectLink]: https://github.com/jectivex/Jack
+[ActionsLink]: https://github.com/jectivex/Jack/actions
 
 [Swift]: https://swift.org/
 [OpenCombine]: https://github.com/OpenCombine/OpenCombine
-[SwiftJack]: https://github.com/github/jectivex/SwiftJack
+[Jack]: https://github.com/github/jectivex/Jack
 [JXKit]: https://github.com/github/jectivex/JXKit
 
-[GitHubActionBadge]: https://img.shields.io/github/workflow/status/jectivex/SwiftJack/SwiftJack%20CI
+[GitHubActionBadge]: https://img.shields.io/github/workflow/status/jectivex/Jack/Jack%20CI
 
 [Swift5Badge]: https://img.shields.io/badge/swift-5-orange.svg?style=flat
 [Swift5Link]: https://developer.apple.com/swift/

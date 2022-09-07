@@ -5,9 +5,9 @@
         "package": "JXKit",
         "repositoryURL": "https://github.com/jectivex/JXKit.git",
         "state": {
-          "branch": null,
-          "revision": "36f95b9dc3437fce50a850498749d010aac96484",
-          "version": "1.0.3"
+          "branch": "HEAD",
+          "revision": "5edef262e05ac1d8ac72e36f928a645b9eb5acd3",
+          "version": null
         }
       },
       {

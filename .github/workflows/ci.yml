@@ -1,4 +1,4 @@
-name: SwiftJack CI
+name: Jack CI
 
 on:
   push:
@@ -31,7 +31,7 @@ jobs:
       - run: |
             xcodebuild clean test \
               -configuration Release \
-              -scheme "SwiftJack" \
+              -scheme "Jack" \
               -sdk "iphonesimulator" \
               -destination "platform=iOS Simulator,name=iPod touch (7th generation)" \
               ONLY_ACTIVE_ARCH=NO CODE_SIGNING_REQUIRED=NO
@@ -43,7 +43,7 @@ jobs:
       - run: |
             xcodebuild clean test \
               -configuration Release \
-              -scheme "SwiftJack" \
+              -scheme "Jack" \
               -sdk "appletvsimulator" \
               -destination "platform=tvOS Simulator,name=Apple TV" \
               ONLY_ACTIVE_ARCH=NO CODE_SIGNING_REQUIRED=NO

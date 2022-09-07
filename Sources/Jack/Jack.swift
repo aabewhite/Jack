@@ -1,8 +1,8 @@
 @_exported import JXKit
 
-public struct SwiftJackModule {
+public struct JackModule {
     public static let version = "1.0.0"
-    public var swiftJackName = "SwiftJack"
+    public var swiftJackName = "Jack"
 
     public static let shared = Self()
 }

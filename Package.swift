@@ -2,11 +2,11 @@
 import PackageDescription
 
 let package = Package(
-    name: "SwiftJack",
+    name: "Jack",
     products: [
         .library(
-            name: "SwiftJack",
-            targets: ["SwiftJack"]),
+            name: "Jack",
+            targets: ["Jack"]),
     ],
     dependencies: [
         .package(url: "https://github.com/jectivex/JXKit.git", branch: "HEAD"),
@@ -14,15 +14,15 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "SwiftJack",
+            name: "Jack",
             dependencies: [
                 .product(name: "JXKit", package: "JXKit"),
                 .product(name: "OpenCombineShim", package: "OpenCombine"),
             ],
             resources: [.process("Resources")]),
         .testTarget(
-            name: "SwiftJackTests",
-            dependencies: ["SwiftJack"],
+            name: "JackTests",
+            dependencies: ["Jack"],
             resources: [.copy("TestResources")]),
     ]
 )
