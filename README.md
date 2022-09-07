@@ -102,7 +102,7 @@ Add the following to your `Package.swift` file:
 
   ```swift
   dependencies: [
-      .package(url: "https://github.com/jectivex/Jack", from: "0.1.3")
+      .package(url: "https://github.com/jectivex/Jack", from: "1.0.0")
   ]
   ```
 
