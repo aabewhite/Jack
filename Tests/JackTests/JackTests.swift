@@ -593,6 +593,12 @@ final class JackTests: XCTestCase {
                 "\(number)"
             }
 
+            @Jumped("sleepTask", priority: .high) private var _sleepTask = sleepTask
+            func sleepTask(duration: TimeInterval) async throws -> TimeInterval {
+                try await Task.sleep(nanoseconds: UInt64(duration * 1_000_000_000))
+                return duration
+            }
+
             lazy var jsc = jack()
         }
 
@@ -639,6 +645,8 @@ final class JackTests: XCTestCase {
         } catch {
             XCTAssertEqual("Error: async error", "\(error)")
         }
+
+        try await obj.jsc.eval("sleepTask(0.1)", priority: .medium)
     }
 
     func testJumpeAsync() async throws {
