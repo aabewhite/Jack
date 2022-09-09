@@ -757,18 +757,18 @@ final class JackTests: XCTestCase {
     }
 
     func testJumpedSignatures() async throws {
-        try await jumpedTests(arg: Int.self, ret: Int.self)
+        try await jumpedTests(arg: Int32.self, ret: Int32.self)
         try await jumpedTests(arg: String.self, ret: String.self)
 
-        try await jumpedTests(arg: Int.self, ret: String.self)
-        try await jumpedTests(arg: String.self, ret: Int.self)
+        try await jumpedTests(arg: Int32.self, ret: String.self)
+        try await jumpedTests(arg: String.self, ret: Int32.self)
 
         try await jumpedTests(arg: UUID.self, ret: UUID.self)
         try await jumpedTests(arg: String.self, ret: UUID.self)
 
-        try await jumpedTests(arg: Int.self, ret: UUID.self)
+        try await jumpedTests(arg: Int32.self, ret: UUID.self)
         try await jumpedTests(arg: UUID.self, ret: String.self)
-        try await jumpedTests(arg: UUID.self, ret: Int.self)
+        try await jumpedTests(arg: UUID.self, ret: Int32.self)
 
         struct RandoThing : Codable, Equatable, Randomizable, Conveyable, JSConvertable {
             let str: String
@@ -784,15 +784,15 @@ final class JackTests: XCTestCase {
         }
 
         try await jumpedTests(arg: RandoThing.self, ret: RandoThing.self)
-        try await jumpedTests(arg: RandoThing.self, ret: Int.self)
-        try await jumpedTests(arg: Int.self, ret: RandoThing.self)
+        try await jumpedTests(arg: RandoThing.self, ret: Int32.self)
+        try await jumpedTests(arg: Int32.self, ret: RandoThing.self)
         try await jumpedTests(arg: RandoThing.self, ret: String.self)
         try await jumpedTests(arg: String.self, ret: RandoThing.self)
         try await jumpedTests(arg: RandoThing.self, ret: UUID.self)
         try await jumpedTests(arg: UUID.self, ret: RandoThing.self)
     }
 
-    private func jumpedTests<A: Conveyable & Randomizable & JSConvertable, R: Conveyable & Randomizable & Equatable>(arg: A.Type, ret: R.Type) async throws {
+    private func jumpedTests<A: Conveyable & Randomizable & JSConvertable & Equatable, R: Conveyable & Randomizable & Equatable>(arg: A.Type, ret: R.Type) async throws {
         let obj = RandoJack<A, R>()
 
         XCTAssertNotEqual(R.rnd(), try obj.jsc.eval("func0()").convey(in: obj.jsc))
@@ -824,6 +824,7 @@ final class JackTests: XCTestCase {
         try await obj.jsc.eval("atfunc4(\(a1.js), \(a2.js), \(a3.js), \(a4.js))", priority: p)
 
         let a5 = A.rnd()
+        //XCTAssertEqual(a5, try obj.jsc.eval("func5(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js))").convey(in: obj.jsc))
         try obj.jsc.eval("func5(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js))")
         try obj.jsc.eval("tfunc5(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js))")
         try await obj.jsc.eval("atfunc5(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js))", priority: p)
@@ -1026,10 +1027,11 @@ extension String : Randomizable, JSConvertable {
     }
 }
 
-extension Int : Randomizable, JSConvertable {
+extension Int32 : Randomizable, JSConvertable {
     static func rnd() -> Self {
-        Int.random(in: (.min)...(.max))
+        .random(in: (.min)...(.max))
     }
+
     var js: String {
         self.description
     }
