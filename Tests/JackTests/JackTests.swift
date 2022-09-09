@@ -3,7 +3,7 @@ import Jack
 import protocol OpenCombineShim.ObservableObject
 import struct OpenCombineShim.Published
 
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+@available(macOS 10.15, macCatalyst 13, iOS 13, tvOS 13, watchOS 6, *)
 final class JackTests: XCTestCase {
     func testObservation() {
         class Contact : JackedObject {
@@ -803,55 +803,55 @@ final class JackTests: XCTestCase {
 
         let p: TaskPriority = TaskPriority.userInitiated
 
-        let a1 = A.rnd().js
-        try obj.jsc.eval("func1(\(a1))")
-        try obj.jsc.eval("tfunc1(\(a1))")
-        try await obj.jsc.eval("atfunc1(\(a1))", priority: p)
+        let a1 = A.rnd()
+        try obj.jsc.eval("func1(\(a1.js))")
+        try obj.jsc.eval("tfunc1(\(a1.js))")
+        try await obj.jsc.eval("atfunc1(\(a1.js))", priority: p)
 
-        let a2 = A.rnd().js
-        try obj.jsc.eval("func2(\(a1), \(a2))")
-        try obj.jsc.eval("tfunc2(\(a1), \(a2))")
-        try await obj.jsc.eval("atfunc2(\(a1), \(a2))", priority: p)
+        let a2 = A.rnd()
+        try obj.jsc.eval("func2(\(a1.js), \(a2.js))")
+        try obj.jsc.eval("tfunc2(\(a1.js), \(a2.js))")
+        try await obj.jsc.eval("atfunc2(\(a1.js), \(a2.js))", priority: p)
 
-        let a3 = A.rnd().js
-        try obj.jsc.eval("func3(\(a1), \(a2), \(a3))")
-        try obj.jsc.eval("tfunc3(\(a1), \(a2), \(a3))")
-        try await obj.jsc.eval("atfunc3(\(a1), \(a2), \(a3))", priority: p)
+        let a3 = A.rnd()
+        try obj.jsc.eval("func3(\(a1.js), \(a2.js), \(a3.js))")
+        try obj.jsc.eval("tfunc3(\(a1.js), \(a2.js), \(a3.js))")
+        try await obj.jsc.eval("atfunc3(\(a1.js), \(a2.js), \(a3.js))", priority: p)
 
-        let a4 = A.rnd().js
-        try obj.jsc.eval("func4(\(a1), \(a2), \(a3), \(a4))")
-        try obj.jsc.eval("tfunc4(\(a1), \(a2), \(a3), \(a4))")
-        try await obj.jsc.eval("atfunc4(\(a1), \(a2), \(a3), \(a4))", priority: p)
+        let a4 = A.rnd()
+        try obj.jsc.eval("func4(\(a1.js), \(a2.js), \(a3.js), \(a4.js))")
+        try obj.jsc.eval("tfunc4(\(a1.js), \(a2.js), \(a3.js), \(a4.js))")
+        try await obj.jsc.eval("atfunc4(\(a1.js), \(a2.js), \(a3.js), \(a4.js))", priority: p)
 
-        let a5 = A.rnd().js
-        try obj.jsc.eval("func5(\(a1), \(a2), \(a3), \(a4), \(a5))")
-        try obj.jsc.eval("tfunc5(\(a1), \(a2), \(a3), \(a4), \(a5))")
-        try await obj.jsc.eval("atfunc5(\(a1), \(a2), \(a3), \(a4), \(a5))", priority: p)
+        let a5 = A.rnd()
+        try obj.jsc.eval("func5(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js))")
+        try obj.jsc.eval("tfunc5(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js))")
+        try await obj.jsc.eval("atfunc5(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js))", priority: p)
 
-        let a6 = A.rnd().js
-        try obj.jsc.eval("func6(\(a1), \(a2), \(a3), \(a4), \(a5), \(a6))")
-        try obj.jsc.eval("tfunc6(\(a1), \(a2), \(a3), \(a4), \(a5), \(a6))")
-        try await obj.jsc.eval("atfunc6(\(a1), \(a2), \(a3), \(a4), \(a5), \(a6))", priority: p)
+        let a6 = A.rnd()
+        try obj.jsc.eval("func6(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js))")
+        try obj.jsc.eval("tfunc6(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js))")
+        try await obj.jsc.eval("atfunc6(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js))", priority: p)
 
-        let a7 = A.rnd().js
-        try obj.jsc.eval("func7(\(a1), \(a2), \(a3), \(a4), \(a5), \(a6), \(a7))")
-        try obj.jsc.eval("tfunc7(\(a1), \(a2), \(a3), \(a4), \(a5), \(a6), \(a7))")
-        try await obj.jsc.eval("atfunc7(\(a1), \(a2), \(a3), \(a4), \(a5), \(a6), \(a7))", priority: p)
+        let a7 = A.rnd()
+        try obj.jsc.eval("func7(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js), \(a7.js))")
+        try obj.jsc.eval("tfunc7(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js), \(a7.js))")
+        try await obj.jsc.eval("atfunc7(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js), \(a7.js))", priority: p)
 
-        let a8 = A.rnd().js
-        try obj.jsc.eval("func8(\(a1), \(a2), \(a3), \(a4), \(a5), \(a6), \(a7), \(a8))")
-        try obj.jsc.eval("tfunc8(\(a1), \(a2), \(a3), \(a4), \(a5), \(a6), \(a7), \(a8))")
-        try await obj.jsc.eval("atfunc8(\(a1), \(a2), \(a3), \(a4), \(a5), \(a6), \(a7), \(a8))", priority: p)
+        let a8 = A.rnd()
+        try obj.jsc.eval("func8(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js), \(a7.js), \(a8.js))")
+        try obj.jsc.eval("tfunc8(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js), \(a7.js), \(a8.js))")
+        try await obj.jsc.eval("atfunc8(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js), \(a7.js), \(a8.js))", priority: p)
 
-        let a9 = A.rnd().js
-        try obj.jsc.eval("func9(\(a1), \(a2), \(a3), \(a4), \(a5), \(a6), \(a7), \(a8), \(a9))")
-        try obj.jsc.eval("tfunc9(\(a1), \(a2), \(a3), \(a4), \(a5), \(a6), \(a7), \(a8), \(a9))")
-        try await obj.jsc.eval("atfunc9(\(a1), \(a2), \(a3), \(a4), \(a5), \(a6), \(a7), \(a8), \(a9))", priority: p)
+        let a9 = A.rnd()
+        try obj.jsc.eval("func9(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js), \(a7.js), \(a8.js), \(a9.js))")
+        try obj.jsc.eval("tfunc9(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js), \(a7.js), \(a8.js), \(a9.js))")
+        try await obj.jsc.eval("atfunc9(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js), \(a7.js), \(a8.js), \(a9.js))", priority: p)
 
-        let a10 = A.rnd().js
-        try obj.jsc.eval("func10(\(a1), \(a2), \(a3), \(a4), \(a5), \(a6), \(a7), \(a8), \(a9), \(a10))")
-        try obj.jsc.eval("tfunc10(\(a1), \(a2), \(a3), \(a4), \(a5), \(a6), \(a7), \(a8), \(a9), \(a10))")
-        try await obj.jsc.eval("atfunc10(\(a1), \(a2), \(a3), \(a4), \(a5), \(a6), \(a7), \(a8), \(a9), \(a10))", priority: p)
+        let a10 = A.rnd()
+        try obj.jsc.eval("func10(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js), \(a7.js), \(a8.js), \(a9.js), \(a10.js))")
+        try obj.jsc.eval("tfunc10(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js), \(a7.js), \(a8.js), \(a9.js), \(a10.js))")
+        try await obj.jsc.eval("atfunc10(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js), \(a7.js), \(a8.js), \(a9.js), \(a10.js))", priority: p)
     }
 
     func testJumpedAsync() async throws {
@@ -1036,6 +1036,7 @@ extension Int : Randomizable, JSConvertable {
 }
 
 /// A generic jumpable type that returns or the last argument instance
+@available(macOS 10.15, macCatalyst 13, iOS 13, tvOS 13, watchOS 6, *)
 private class RandoJack<ArgType: Conveyable, ReturnType: Randomizable & Conveyable> : JackedObject {
     @Jumped("func0") private var _func0 = func0
     func func0() -> ReturnType { .rnd() }
