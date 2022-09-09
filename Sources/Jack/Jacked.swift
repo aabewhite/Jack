@@ -182,11 +182,16 @@ extension Jacked: _JackableProperty where Value : Jackable {
 
     subscript(in context: JXContext, owner: AnyObject?) -> JXValue {
         get {
-            switch _storage.wrappedValue {
-            case .value(var value):
-                return value.getJX(from: context)
-            case .publisher(let publisher):
-                return publisher.subject.value.getJX(from: context)
+            do {
+                switch _storage.wrappedValue {
+                case .value(let value):
+                    return try value.getJX(from: context)
+                case .publisher(let publisher):
+                    return try publisher.subject.value.getJX(from: context)
+                }
+            } catch {
+                context.currentError = JXValue(newErrorFromMessage: "\(error)", in: context)
+                return JXValue(undefinedIn: context)
             }
         }
 
@@ -201,7 +206,7 @@ extension Jacked: _JackableProperty where Value : Jackable {
                     try publisher.subject.value.setJX(value: newValue, in: context)
                 }
             } catch {
-                context.currentError = JXValue(string: "\(error)", in: context)
+                context.currentError = JXValue(newErrorFromMessage: "\(error)", in: context)
             }
         }
     }
@@ -217,9 +222,9 @@ extension RawRepresentable where RawValue : Jackable {
         return newSelf
     }
 
-    public mutating func getJX(from context: JXContext) -> JXValue {
+    public func getJX(from context: JXContext) throws -> JXValue {
         var rv = self.rawValue
-        return rv.getJX(from: context)
+        return try rv.getJX(from: context)
     }
 }
 
@@ -306,10 +311,13 @@ extension Array : Jackable, Jumpable where Element : Jumpable {
         })
     }
 
-    public mutating func getJX(from context: JXContext) -> JXValue {
+    public func getJX(from context: JXContext) -> JXValue {
         JXValue(newArrayIn: context, values: self.map({ x in
-            var x = x
-            return x.getJX(from: context)
+            do {
+                return try x.getJX(from: context)
+            } catch {
+                return JXValue(newErrorFromMessage: "\(error)", in: context)
+            }
         }))
     }
 
@@ -327,7 +335,7 @@ extension Date : Jackable {
         return date
     }
 
-    public mutating func getJX(from context: JXContext) -> JXValue {
+    public func getJX(from context: JXContext) -> JXValue {
         JXValue(date: self, in: context)
     }
 }
@@ -371,8 +379,9 @@ extension Data : Jackable {
         }
     }
 
-    public mutating func getJX(from context: JXContext) -> JXValue {
-        withUnsafeMutableBytes { bytes in
+    public func getJX(from context: JXContext) -> JXValue {
+        var d = self
+        return d.withUnsafeMutableBytes { bytes in
             JXValue(newArrayBufferWithBytesNoCopy: bytes,
                 deallocator: { _ in
                     //print("buffer deallocated")

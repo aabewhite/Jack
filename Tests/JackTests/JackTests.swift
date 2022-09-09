@@ -211,34 +211,32 @@ final class JackTests: XCTestCase {
         do {
             XCTAssertEqual(1, try jsc.eval("sup").numberValue)
 
-            XCTAssertEqual(1, changes)
+            XCTAssertEqual(0, changes)
             try jsc.eval("sup += 1")
-            XCTAssertEqual(3, changes)
+            XCTAssertEqual(1, changes)
 
             XCTAssertEqual(2, obj.sup)
             try jsc.eval("sup += 1")
             XCTAssertEqual(3, obj.sup)
             XCTAssertEqual(3, try jsc.eval("sup").numberValue)
 
-            XCTAssertEqual(6, changes)
+            XCTAssertEqual(2, changes)
         }
-
 
         changes = 0
 
         do {
             XCTAssertEqual(0, try jsc.eval("sub").numberValue)
 
-            XCTAssertEqual(1, changes)
+            XCTAssertEqual(0, changes)
             try jsc.eval("sub += 1")
             XCTAssertEqual(1, obj.sub)
             try jsc.eval("sub += 1")
             XCTAssertEqual(2, obj.sub)
             XCTAssertEqual(2, try jsc.eval("sub").numberValue)
 
-            XCTAssertEqual(6, changes)
+            XCTAssertEqual(2, changes)
         }
-
 
         let _ = obsvr1
     }
@@ -553,7 +551,7 @@ final class JackTests: XCTestCase {
 
         // make sure we are blocked from setting the function property from JS
         XCTAssertThrowsError(try obj.jsc.eval("f0 = null")) { error in
-            XCTAssertEqual(#"evaluationErrorString("cannot set a function from JS")"#, "\(error)")
+            XCTAssertEqual(#"evaluationErrorString("Error: cannot set a function from JS")"#, "\(error)")
         }
 
     }
@@ -709,7 +707,7 @@ final class JackTests: XCTestCase {
 
         // make sure we are blocked from setting the function property from JS
         XCTAssertThrowsError(try obj.jsc.eval("h0 = null")) { error in
-            XCTAssertEqual(#"evaluationErrorString("cannot set a function from JS")"#, "\(error)")
+            XCTAssertEqual(#"evaluationErrorString("Error: cannot set a function from JS")"#, "\(error)")
         }
 
     }

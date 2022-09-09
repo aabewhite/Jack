@@ -6,7 +6,7 @@ public protocol Jumpable {
     static func makeJX(from value: JXValue, in context: JXContext) throws -> Self
 
     /// Converts this value into a JXContext
-    mutating func getJX(from context: JXContext) -> JXValue
+    func getJX(from context: JXContext) throws -> JXValue
 }
 
 extension JXValue : Jumpable {
@@ -54,7 +54,7 @@ public struct Jumped<O: JackedObject, U : Jackable> : _JackableProperty {
             function(context, owner)
         }
         nonmutating set {
-            context.currentError = JXValue(string: "cannot set a function from JS", in: context)
+            context.currentError = JXValue(newErrorFromMessage: "cannot set a function from JS", in: context)
         }
     }
 
@@ -91,9 +91,8 @@ extension Jumped {
 
                 Task.detached(priority: priority) {
                     do {
-                        var result = try await block(ctx, owner, args)
-                        let value = result.getJX(from: ctx)
-                        promise.resolveFunction.call(withArguments: [value], this: this)
+                        let result = try await block(ctx, owner, args).getJX(from: ctx)
+                        promise.resolveFunction.call(withArguments: [result], this: this)
                     } catch {
                         promise.rejectFunction.call(withArguments: [JXValue(newErrorFromMessage: "\(error)", in: ctx)], this: this)
                     }
@@ -111,8 +110,7 @@ extension Jumped {
     public init(wrappedValue f0: @escaping (O) -> () throws -> U, _ key: String? = nil) {
         self.function = { context, owner in
             JXValue(newFunctionIn: context) { ctx, this, args in
-                var result = try f0(ctx.casting(owner))()
-                return result.getJX(from: ctx)
+                try f0(ctx.casting(owner))().getJX(from: ctx)
             }
         }
         self.exportedKey = key
@@ -120,7 +118,7 @@ extension Jumped {
 
     public init(wrappedValue af0: @escaping (O) -> () async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) {
         self.function = Self.createAsyncFunction(priority: priority) { ctx, owner, args in
-            return try await af0(ctx.casting(owner))()
+            try await af0(ctx.casting(owner))()
         }
         self.exportedKey = key
     }
@@ -131,8 +129,7 @@ extension Jumped {
     public init<X1: Jumpable>(wrappedValue f1: @escaping (O) -> (X1) throws -> U, _ key: String? = nil) {
         self.function = { context, owner in
             JXValue(newFunctionIn: context) { ctx, this, args in
-                var result = try f1(ctx.casting(owner))(ctx.jarg(0, args))
-                return result.getJX(from: ctx)
+                try f1(ctx.casting(owner))(ctx.jarg(0, args)).getJX(from: ctx)
             }
         }
         self.exportedKey = key
@@ -151,8 +148,7 @@ extension Jumped {
     public init<X1: Jumpable, X2: Jumpable>(wrappedValue f2: @escaping (O) -> (X1, X2) throws -> U, _ key: String? = nil) {
         self.function = { context, owner in
             JXValue(newFunctionIn: context) { ctx, this, args in
-                var result = try f2(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args))
-                return result.getJX(from: ctx)
+                try f2(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args)).getJX(from: ctx)
             }
         }
         self.exportedKey = key
@@ -171,10 +167,7 @@ extension Jumped {
     public init<X1: Jumpable, X2: Jumpable, X3: Jumpable>(wrappedValue f3: @escaping (O) -> (X1, X2, X3) throws -> U, _ key: String? = nil) {
         self.function = { context, owner in
             JXValue(newFunctionIn: context) { ctx, this, args in
-                JXValue(newFunctionIn: context) { ctx, this, args in
-                    var result = try f3(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args))
-                    return result.getJX(from: ctx)
-                }
+                try f3(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args)).getJX(from: ctx)
             }
         }
         self.exportedKey = key
@@ -193,12 +186,10 @@ extension Jumped {
     public init<X1: Jumpable, X2: Jumpable, X3: Jumpable, X4: Jumpable>(wrappedValue f4: @escaping (O) -> (X1, X2, X3, X4) throws -> U, _ key: String? = nil) {
         self.function = { context, owner in
             JXValue(newFunctionIn: context) { ctx, this, args in
-                JXValue(newFunctionIn: context) { ctx, this, args in
-                    var result = try f4(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args))
-                    return result.getJX(from: ctx)
-                }
+                try f4(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args)).getJX(from: ctx)
             }
         }
+
         self.exportedKey = key
     }
 

@@ -13,7 +13,7 @@ extension Jugglable {
         try value.toDecodable(ofType: Self.self)
     }
 
-    public mutating func getJX(from context: JXContext) -> JXValue {
+    public func getJX(from context: JXContext) -> JXValue {
         do {
             return try context.encode(self)
         } catch {
