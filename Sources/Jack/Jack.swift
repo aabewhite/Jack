@@ -1,9 +1,5 @@
 @_exported import JXKit
 
-public struct JackModule {
-    public static let shared = Self()
-}
-
 public enum JackError : Error {
     /// The context in which the error occurred.
     public struct Context {

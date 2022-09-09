@@ -1,13 +1,13 @@
 import OpenCombineShim
 
-// MARK: UnJacked
+// MARK: Tracked
 
 /// A value that is `@Published` but not available.
 ///
 /// - `Publisher.assign(to:)`
 @available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
 @propertyWrapper
-public struct UnJacked<Value : Jackable> {
+public struct Tracked<Value : Jackable> {
     /// The key that will be used to export the instance; a nil key will prevent export.
     internal let key: String?
 
@@ -41,9 +41,9 @@ public struct UnJacked<Value : Jackable> {
     /// Creates the published instance with an initial wrapped value.
     ///
     /// Don't use this initializer directly. Instead, create a property with
-    /// the `@UnJacked` attribute, as shown here:
+    /// the `@Tracked` attribute, as shown here:
     ///
-    ///     @UnJacked var lastUpdated: Date = Date()
+    ///     @Tracked var lastUpdated: Date = Date()
     ///
     /// - Parameter wrappedValue: The publisher's initial value.
     public init(initialValue: Value, _ key: String? = nil) {
@@ -53,9 +53,9 @@ public struct UnJacked<Value : Jackable> {
     /// Creates the published instance with an initial value.
     ///
     /// Don't use this initializer directly. Instead, create a property with
-    /// the `@UnJacked` attribute, as shown here:
+    /// the `@Tracked` attribute, as shown here:
     ///
-    ///     @UnJacked var lastUpdated: Date = Date()
+    ///     @Tracked var lastUpdated: Date = Date()
     ///
     /// - Parameter initialValue: The publisher's initial value.
     public init(wrappedValue: Value, _ key: String? = nil) {
@@ -92,7 +92,7 @@ public struct UnJacked<Value : Jackable> {
         }
     }
     // swiftlint:disable let_var_whitespace
-    @available(*, unavailable, message: "@UnJacked is only available on properties of classes")
+    @available(*, unavailable, message: "@Tracked is only available on properties of classes")
     public var wrappedValue: Value {
         get { fatalError() }
         set { fatalError() } // swiftlint:disable:this unused_setter_value
@@ -102,7 +102,7 @@ public struct UnJacked<Value : Jackable> {
     public static subscript<EnclosingSelf: AnyObject>(
         _enclosingInstance object: EnclosingSelf,
         wrapped wrappedKeyPath: ReferenceWritableKeyPath<EnclosingSelf, Value>,
-        storage storageKeyPath: ReferenceWritableKeyPath<EnclosingSelf, UnJacked<Value>>
+        storage storageKeyPath: ReferenceWritableKeyPath<EnclosingSelf, Tracked<Value>>
     ) -> Value {
         get {
             switch object[keyPath: storageKeyPath].storage {
@@ -124,5 +124,5 @@ public struct UnJacked<Value : Jackable> {
 }
 
 @available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
-extension UnJacked : _TrackableProperty {
+extension Tracked : _TrackableProperty {
 }

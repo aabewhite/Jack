@@ -5,7 +5,7 @@ import OpenCombineShim
 /// This type is used to constrain arument and return types that should be passed efficiently between the host Swift environment and the embedded JSC.
 ///
 /// To support for passing codable types through serialization, use ``Jugglable``
-public protocol Jackable : Jumpable {
+public protocol Jackable : Conveyable {
     /// Sets the value of this property
     mutating func setJX(value: JXValue, in context: JXContext) throws
 
@@ -223,8 +223,7 @@ extension RawRepresentable where RawValue : Jackable {
     }
 
     public func getJX(from context: JXContext) throws -> JXValue {
-        var rv = self.rawValue
-        return try rv.getJX(from: context)
+        try self.rawValue.getJX(from: context)
     }
 }
 
@@ -261,46 +260,86 @@ extension String : Jackable {
 }
 
 extension BinaryInteger where Self : _ExpressibleByBuiltinIntegerLiteral {
-    public static func makeJX(from value: JXValue, in context: JXContext) throws -> Self {
+    static func _makeJX(from value: JXValue, in context: JXContext) throws -> Self {
         guard let num = value.numberValue, !num.isNaN else {
             throw JackError.valueWasNotANumber(value, .init(context: context))
         }
         return .init(integerLiteral: .init(num))
     }
 
-    public func getJX(from context: JXContext) -> JXValue {
+    func _getJX(from context: JXContext) -> JXValue {
         JXValue(double: Double(self), in: context)
     }
 }
 
-extension Int : Jackable { }
-extension Int16 : Jackable { }
-extension Int32 : Jackable { }
-extension Int64 : Jackable { }
-extension UInt : Jackable { }
-extension UInt16 : Jackable { }
-extension UInt32 : Jackable { }
-extension UInt64 : Jackable { }
+extension Int : Jackable {
+    public static func makeJX(from value: JXValue, in context: JXContext) throws -> Self { try _makeJX(from: value, in: context) }
+    public func getJX(from context: JXContext) -> JXValue { _getJX(from: context) }
+}
+
+extension Int16 : Jackable {
+    public static func makeJX(from value: JXValue, in context: JXContext) throws -> Self { try _makeJX(from: value, in: context) }
+    public func getJX(from context: JXContext) -> JXValue { _getJX(from: context) }
+}
+
+extension Int32 : Jackable {
+    public static func makeJX(from value: JXValue, in context: JXContext) throws -> Self { try _makeJX(from: value, in: context) }
+    public func getJX(from context: JXContext) -> JXValue { _getJX(from: context) }
+}
+
+extension Int64 : Jackable {
+    public static func makeJX(from value: JXValue, in context: JXContext) throws -> Self { try _makeJX(from: value, in: context) }
+    public func getJX(from context: JXContext) -> JXValue { _getJX(from: context) }
+}
+
+extension UInt : Jackable {
+    public static func makeJX(from value: JXValue, in context: JXContext) throws -> Self { try _makeJX(from: value, in: context) }
+    public func getJX(from context: JXContext) -> JXValue { _getJX(from: context) }
+}
+
+extension UInt16 : Jackable {
+    public static func makeJX(from value: JXValue, in context: JXContext) throws -> Self { try _makeJX(from: value, in: context) }
+    public func getJX(from context: JXContext) -> JXValue { _getJX(from: context) }
+}
+
+extension UInt32 : Jackable {
+    public static func makeJX(from value: JXValue, in context: JXContext) throws -> Self { try _makeJX(from: value, in: context) }
+    public func getJX(from context: JXContext) -> JXValue { _getJX(from: context) }
+}
+
+extension UInt64 : Jackable {
+    public static func makeJX(from value: JXValue, in context: JXContext) throws -> Self { try _makeJX(from: value, in: context) }
+    public func getJX(from context: JXContext) -> JXValue { _getJX(from: context) }
+}
+
 
 extension BinaryFloatingPoint where Self : ExpressibleByFloatLiteral {
-    public static func makeJX(from value: JXValue, in context: JXContext) throws -> Self {
+    static func _makeJX(from value: JXValue, in context: JXContext) throws -> Self {
         guard let num = value.numberValue else {
             throw JackError.valueWasNotANumber(value, .init(context: context))
         }
         return .init(num)
     }
 
-    public func getJX(from context: JXContext) -> JXValue {
+    func _getJX(from context: JXContext) -> JXValue {
         JXValue(double: Double(self), in: context)
     }
 }
 
 
-extension Double : Jackable { }
-extension Float : Jackable { }
+extension Double : Jackable {
+    public static func makeJX(from value: JXValue, in context: JXContext) throws -> Self { try _makeJX(from: value, in: context) }
+    public func getJX(from context: JXContext) -> JXValue { _getJX(from: context) }
+}
+
+extension Float : Jackable {
+    public static func makeJX(from value: JXValue, in context: JXContext) throws -> Self { try _makeJX(from: value, in: context) }
+    public func getJX(from context: JXContext) -> JXValue { _getJX(from: context) }
+}
 
 
-extension Array : Jackable, Jumpable where Element : Jumpable {
+
+extension Array : Jackable, Conveyable where Element : Conveyable {
     public static func makeJX(from value: JXValue, in context: JXContext) throws -> Self {
         guard value.isArray, let arrayValue = value.array else {
             throw JackError.valueNotArray(value, .init(context: context))

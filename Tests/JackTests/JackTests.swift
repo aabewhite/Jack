@@ -241,11 +241,11 @@ final class JackTests: XCTestCase {
         let _ = obsvr1
     }
 
-    func testUnJacked() throws {
+    func testTracked() throws {
 
-        class UnJackedObj : JackedObject {
-            @UnJacked("n") var integer = 0
-            @UnJacked("f") var float = 0.0
+        class TrackedObj : JackedObject {
+            @Tracked("n") var integer = 0
+            @Tracked("f") var float = 0.0
 
             @Jacked("b") var bool = false
             @Jacked("s") var string = ""
@@ -253,7 +253,7 @@ final class JackTests: XCTestCase {
             //@Published var published = 0 // this would crash: we cannot mix Jacked and Published properties
         }
 
-        let obj = UnJackedObj()
+        let obj = TrackedObj()
 
         var changes = 0
         let obsvr1 = obj.objectWillChange.sink {
@@ -456,7 +456,7 @@ final class JackTests: XCTestCase {
 
     func testJugglable() throws {
         class JackedCode : JackedObject {
-            @Juggled var info = SomeInfo(str: "XYZ", int: 123, extra: SomeInfo.ExtraInfo(dbl: 1.2, strs: ["A", "B", "C"]))
+            @Coded var info = SomeInfo(str: "XYZ", int: 123, extra: SomeInfo.ExtraInfo(dbl: 1.2, strs: ["A", "B", "C"]))
             lazy var jsc = jack()
 
             struct SomeInfo : Codable, Equatable {
@@ -514,7 +514,7 @@ final class JackTests: XCTestCase {
             func happyBirthday(name: String, age: Int) -> String { "Happy Birthday \(name), you are \(age)!" }
 
             @Jumped("replicate") private var _replicate = replicate
-            func replicate(_ coded: JuggledCodable, count: Int) -> [JuggledCodable] { Array(Array(repeating: coded, count: count)) }
+            func replicate(_ coded: CodedCodable, count: Int) -> [CodedCodable] { Array(Array(repeating: coded, count: count)) }
 
             @Jumped("exceptional") private var _exceptional = exceptional
             func exceptional() throws -> Bool { throw SomeError(reason: "YOLO") }
@@ -527,7 +527,7 @@ final class JackTests: XCTestCase {
         }
 
         /// A sample of codable passing
-        struct JuggledCodable : Jugglable, Equatable {
+        struct CodedCodable : Codable, Equatable, Conveyable {
             var id = UUID()
             var str = ""
             var num: Int?
@@ -546,8 +546,8 @@ final class JackTests: XCTestCase {
         XCTAssertEqual("Hello x!", try obj.jsc.eval("f1('x')").stringValue)
         XCTAssertEqual("Happy Birthday x, you are 9!", try obj.jsc.eval("F2('x', 9)").stringValue)
 
-        let c = JuggledCodable(id: UUID(uuidString: "4991E2A0-DE05-4BB3-B502-42F7584C9973")!, str: "abc", num: 9)
-        XCTAssertEqual([c, c, c], try obj.jsc.eval("replicate({ id: '4991E2A0-DE05-4BB3-B502-42F7584C9973', str: 'abc', num: 9 }, 3)").toDecodable(ofType: Array<JuggledCodable>.self))
+        let c = CodedCodable(id: UUID(uuidString: "4991E2A0-DE05-4BB3-B502-42F7584C9973")!, str: "abc", num: 9)
+        XCTAssertEqual([c, c, c], try obj.jsc.eval("replicate({ id: '4991E2A0-DE05-4BB3-B502-42F7584C9973', str: 'abc', num: 9 }, 3)").toDecodable(ofType: Array<CodedCodable>.self))
 
         // make sure we are blocked from setting the function property from JS
         XCTAssertThrowsError(try obj.jsc.eval("f0 = null")) { error in
@@ -558,10 +558,10 @@ final class JackTests: XCTestCase {
 
     func testAllPropertyWrappers() throws {
         class EnhancedObj : JackedObject {
-            @UnJacked var x = 0 // unexported to jsc
+            @Tracked var x = 0 // unexported to jsc
             @Jacked var i = 1 // exported as number
             @Jacked("B") var b = false // exported as bool
-            @Juggled var id = UUID() // exported (via codability) as string
+            @Coded var id = UUID() // exported (via codability) as string
             @Jumped("now") private var _now = now // exported as function
             func now() -> Date { Date(timeIntervalSince1970: 1_234) }
 
@@ -580,6 +580,279 @@ final class JackTests: XCTestCase {
         XCTAssertEqual(1_234_000, try obj.jsc.eval("now()").numberValue)
     }
 
+    func testJumpedVoidSignatures() async throws {
+        class VoidReturns : JackedObject {
+            @Jumped("void0") private var _void0 = void0
+            func void0() -> Void { }
+
+            @Jumped("tvoid0") private var _tvoid0 = tvoid0
+            func tvoid0() throws -> Void { }
+
+            @Jumped("atvoid0", priority: .low) private var _atvoid0 = atvoid0
+            func atvoid0() async throws -> Void { }
+
+
+            @Jumped("void1") private var _void1 = void1
+            func void1(i0: Int) -> Void { }
+
+            @Jumped("tvoid1") private var _tvoid1 = tvoid1
+            func tvoid1(i0: Int) throws -> Void { }
+
+            @Jumped("atvoid1", priority: .low) private var _atvoid1 = atvoid1
+            func atvoid1(i0: Int) async throws -> Void { }
+
+
+            @Jumped("void2") private var _void2 = void2
+            func void2(i0: Int, i1: Int) -> Void { }
+
+            @Jumped("tvoid2") private var _tvoid2 = tvoid2
+            func tvoid2(i0: Int, i1: Int) throws -> Void { }
+
+            @Jumped("atvoid2", priority: .low) private var _atvoid2 = atvoid2
+            func atvoid2(i0: Int, i1: Int) async throws -> Void { }
+
+
+            @Jumped("void3") private var _void3 = void3
+            func void3(i0: Int, i1: Int, i2: Int) -> Void { }
+
+            @Jumped("tvoid3") private var _tvoid3 = tvoid3
+            func tvoid3(i0: Int, i1: Int, i2: Int) throws -> Void { }
+
+            @Jumped("atvoid3", priority: .low) private var _atvoid3 = atvoid3
+            func atvoid3(i0: Int, i1: Int, i2: Int) async throws -> Void { }
+
+
+            @Jumped("void4") private var _void4 = void4
+            func void4(i0: Int, i1: Int, i2: Int, i3: Int) -> Void { }
+
+            @Jumped("tvoid4") private var _tvoid4 = tvoid4
+            func tvoid4(i0: Int, i1: Int, i2: Int, i3: Int) throws -> Void { }
+
+            @Jumped("atvoid4", priority: .low) private var _atvoid4 = atvoid4
+            func atvoid4(i0: Int, i1: Int, i2: Int, i3: Int) async throws -> Void { }
+
+
+            @Jumped("void5") private var _void5 = void5
+            func void5(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int) -> Void { }
+
+            @Jumped("tvoid5") private var _tvoid5 = tvoid5
+            func tvoid5(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int) throws -> Void { }
+
+            @Jumped("atvoid5", priority: .low) private var _atvoid5 = atvoid5
+            func atvoid5(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int) async throws -> Void { }
+
+
+            @Jumped("void6") private var _void6 = void6
+            func void6(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int) -> Void { }
+
+            @Jumped("tvoid6") private var _tvoid6 = tvoid6
+            func tvoid6(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int) throws -> Void { }
+
+            @Jumped("atvoid6", priority: .low) private var _atvoid6 = atvoid6
+            func atvoid6(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int) async throws -> Void { }
+
+
+            @Jumped("void7") private var _void7 = void7
+            func void7(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int, i6: Int) -> Void { }
+
+            @Jumped("tvoid7") private var _tvoid7 = tvoid7
+            func tvoid7(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int, i6: Int) throws -> Void { }
+
+            @Jumped("atvoid7", priority: .low) private var _atvoid7 = atvoid7
+            func atvoid7(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int, i6: Int) async throws -> Void { }
+
+
+            @Jumped("void8") private var _void8 = void8
+            func void8(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int, i6: Int, i7: Int) -> Void { }
+
+            @Jumped("tvoid8") private var _tvoid8 = tvoid8
+            func tvoid8(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int, i6: Int, i7: Int) throws -> Void { }
+
+            @Jumped("atvoid8", priority: .low) private var _atvoid8 = atvoid8
+            func atvoid8(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int, i6: Int, i7: Int) async throws -> Void { }
+
+
+            @Jumped("void9") private var _void9 = void9
+            func void9(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int, i6: Int, i7: Int, i8: Int) -> Void { }
+
+            @Jumped("tvoid9") private var _tvoid9 = tvoid9
+            func tvoid9(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int, i6: Int, i7: Int, i8: Int) throws -> Void { }
+
+            @Jumped("atvoid9", priority: .low) private var _atvoid9 = atvoid9
+            func atvoid9(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int, i6: Int, i7: Int, i8: Int) async throws -> Void { }
+
+
+            @Jumped("void10") private var _void10 = void10
+            func void10(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int, i6: Int, i7: Int, i8: Int, i9: Int) -> Void { }
+
+            @Jumped("tvoid10") private var _tvoid10 = tvoid10
+            func tvoid10(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int, i6: Int, i7: Int, i8: Int, i9: Int) throws -> Void { }
+
+            @Jumped("atvoid10", priority: .low) private var _atvoid10 = atvoid10
+            func atvoid10(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int, i6: Int, i7: Int, i8: Int, i9: Int) async throws -> Void { }
+
+
+            // we don't go to 11
+
+            //@Jumped("void11") private var _void11 = void11
+            //func void11(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int, i6: Int, i7: Int, i8: Int, i9: Int, i10: Int) -> Void { }
+
+            //@Jumped("tvoid11") private var _tvoid11 = tvoid11
+            //func tvoid11(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int, i6: Int, i7: Int, i8: Int, i9: Int, i10: Int) throws -> Void { }
+
+            //@Jumped("atvoid11", priority: .low) private var _atvoid11 = atvoid11
+            //func atvoid11(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int, i6: Int, i7: Int, i8: Int, i9: Int, i10: Int) async throws -> Void { }
+
+            lazy var jsc = jack()
+        }
+
+
+        let obj = VoidReturns()
+
+        try obj.jsc.eval("void0()")
+        try obj.jsc.eval("tvoid0()")
+        try await obj.jsc.eval("atvoid0()", priority: .low)
+
+        try obj.jsc.eval("void1(1)")
+        try obj.jsc.eval("tvoid1(1)")
+        try await obj.jsc.eval("atvoid1(1)", priority: .low)
+
+        try obj.jsc.eval("void2(1, 2)")
+        try obj.jsc.eval("tvoid2(1, 2)")
+        try await obj.jsc.eval("atvoid2(1, 2)", priority: .low)
+
+        try obj.jsc.eval("void3(1, 2, 3)")
+        try obj.jsc.eval("tvoid3(1, 2, 3)")
+        try await obj.jsc.eval("atvoid3(1, 2, 3)", priority: .low)
+
+        try obj.jsc.eval("void4(1, 2, 3, 4)")
+        try obj.jsc.eval("tvoid4(1, 2, 3, 4)")
+        try await obj.jsc.eval("atvoid4(1, 2, 3, 4)", priority: .low)
+
+        try obj.jsc.eval("void5(1, 2, 3, 4, 5)")
+        try obj.jsc.eval("tvoid5(1, 2, 3, 4, 5)")
+        try await obj.jsc.eval("atvoid5(1, 2, 3, 4, 5)", priority: .low)
+
+        try obj.jsc.eval("void6(1, 2, 3, 4, 5, 6)")
+        try obj.jsc.eval("tvoid6(1, 2, 3, 4, 5, 6)")
+        try await obj.jsc.eval("atvoid6(1, 2, 3, 4, 5, 6)", priority: .low)
+
+        try obj.jsc.eval("void7(1, 2, 3, 4, 5, 6, 7)")
+        try obj.jsc.eval("tvoid7(1, 2, 3, 4, 5, 6, 7)")
+        try await obj.jsc.eval("atvoid7(1, 2, 3, 4, 5, 6, 7)", priority: .low)
+
+        try obj.jsc.eval("void8(1, 2, 3, 4, 5, 6, 7, 8)")
+        try obj.jsc.eval("tvoid8(1, 2, 3, 4, 5, 6, 7, 8)")
+        try await obj.jsc.eval("atvoid8(1, 2, 3, 4, 5, 6, 7, 8)", priority: .low)
+
+        try obj.jsc.eval("void9(1, 2, 3, 4, 5, 6, 7, 8, 9)")
+        try obj.jsc.eval("tvoid9(1, 2, 3, 4, 5, 6, 7, 8, 9)")
+        try await obj.jsc.eval("atvoid9(1, 2, 3, 4, 5, 6, 7, 8, 9)", priority: .low)
+
+        try obj.jsc.eval("void10(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)")
+        try obj.jsc.eval("tvoid10(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)")
+        try await obj.jsc.eval("atvoid10(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)", priority: .low)
+
+        XCTAssertThrowsError(try obj.jsc.eval("void11(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)"))
+    }
+
+    func testJumpedSignatures() async throws {
+        try await jumpedTests(arg: Int.self, ret: Int.self)
+        try await jumpedTests(arg: String.self, ret: String.self)
+
+        try await jumpedTests(arg: Int.self, ret: String.self)
+        try await jumpedTests(arg: String.self, ret: Int.self)
+
+        try await jumpedTests(arg: UUID.self, ret: UUID.self)
+        try await jumpedTests(arg: String.self, ret: UUID.self)
+
+        try await jumpedTests(arg: Int.self, ret: UUID.self)
+        try await jumpedTests(arg: UUID.self, ret: String.self)
+        try await jumpedTests(arg: UUID.self, ret: Int.self)
+
+        struct RandoThing : Codable, Equatable, Randomizable, Conveyable, JSConvertable {
+            let str: String
+            let num: Double
+
+            static func rnd() -> Self {
+                Self(str: UUID().uuidString, num: Double.random(in: 0...100000))
+            }
+
+            var js: String {
+                "{ num: \(num), str: '\(str)' }"
+            }
+        }
+
+        try await jumpedTests(arg: RandoThing.self, ret: RandoThing.self)
+        try await jumpedTests(arg: RandoThing.self, ret: Int.self)
+        try await jumpedTests(arg: Int.self, ret: RandoThing.self)
+        try await jumpedTests(arg: RandoThing.self, ret: String.self)
+        try await jumpedTests(arg: String.self, ret: RandoThing.self)
+        try await jumpedTests(arg: RandoThing.self, ret: UUID.self)
+        try await jumpedTests(arg: UUID.self, ret: RandoThing.self)
+    }
+
+    private func jumpedTests<A: Conveyable & Randomizable & JSConvertable, R: Conveyable & Randomizable & Equatable>(arg: A.Type, ret: R.Type) async throws {
+        let obj = RandoJack<A, R>()
+
+        XCTAssertNotEqual(R.rnd(), try obj.jsc.eval("func0()").convey(in: obj.jsc))
+        XCTAssertNotEqual(R.rnd(), try obj.jsc.eval("tfunc0()").convey(in: obj.jsc))
+        try withExtendedLifetime(try await obj.jsc.eval("atfunc0()", priority: .low)) { x in
+            XCTAssertNotEqual(R.rnd(), try x.convey(in: obj.jsc))
+        }
+
+        let p: TaskPriority = TaskPriority.userInitiated
+
+        let a1 = A.rnd().js
+        try obj.jsc.eval("func1(\(a1))")
+        try obj.jsc.eval("tfunc1(\(a1))")
+        try await obj.jsc.eval("atfunc1(\(a1))", priority: p)
+
+        let a2 = A.rnd().js
+        try obj.jsc.eval("func2(\(a1), \(a2))")
+        try obj.jsc.eval("tfunc2(\(a1), \(a2))")
+        try await obj.jsc.eval("atfunc2(\(a1), \(a2))", priority: p)
+
+        let a3 = A.rnd().js
+        try obj.jsc.eval("func3(\(a1), \(a2), \(a3))")
+        try obj.jsc.eval("tfunc3(\(a1), \(a2), \(a3))")
+        try await obj.jsc.eval("atfunc3(\(a1), \(a2), \(a3))", priority: p)
+
+        let a4 = A.rnd().js
+        try obj.jsc.eval("func4(\(a1), \(a2), \(a3), \(a4))")
+        try obj.jsc.eval("tfunc4(\(a1), \(a2), \(a3), \(a4))")
+        try await obj.jsc.eval("atfunc4(\(a1), \(a2), \(a3), \(a4))", priority: p)
+
+        let a5 = A.rnd().js
+        try obj.jsc.eval("func5(\(a1), \(a2), \(a3), \(a4), \(a5))")
+        try obj.jsc.eval("tfunc5(\(a1), \(a2), \(a3), \(a4), \(a5))")
+        try await obj.jsc.eval("atfunc5(\(a1), \(a2), \(a3), \(a4), \(a5))", priority: p)
+
+        let a6 = A.rnd().js
+        try obj.jsc.eval("func6(\(a1), \(a2), \(a3), \(a4), \(a5), \(a6))")
+        try obj.jsc.eval("tfunc6(\(a1), \(a2), \(a3), \(a4), \(a5), \(a6))")
+        try await obj.jsc.eval("atfunc6(\(a1), \(a2), \(a3), \(a4), \(a5), \(a6))", priority: p)
+
+        let a7 = A.rnd().js
+        try obj.jsc.eval("func7(\(a1), \(a2), \(a3), \(a4), \(a5), \(a6), \(a7))")
+        try obj.jsc.eval("tfunc7(\(a1), \(a2), \(a3), \(a4), \(a5), \(a6), \(a7))")
+        try await obj.jsc.eval("atfunc7(\(a1), \(a2), \(a3), \(a4), \(a5), \(a6), \(a7))", priority: p)
+
+        let a8 = A.rnd().js
+        try obj.jsc.eval("func8(\(a1), \(a2), \(a3), \(a4), \(a5), \(a6), \(a7), \(a8))")
+        try obj.jsc.eval("tfunc8(\(a1), \(a2), \(a3), \(a4), \(a5), \(a6), \(a7), \(a8))")
+        try await obj.jsc.eval("atfunc8(\(a1), \(a2), \(a3), \(a4), \(a5), \(a6), \(a7), \(a8))", priority: p)
+
+        let a9 = A.rnd().js
+        try obj.jsc.eval("func9(\(a1), \(a2), \(a3), \(a4), \(a5), \(a6), \(a7), \(a8), \(a9))")
+        try obj.jsc.eval("tfunc9(\(a1), \(a2), \(a3), \(a4), \(a5), \(a6), \(a7), \(a8), \(a9))")
+        try await obj.jsc.eval("atfunc9(\(a1), \(a2), \(a3), \(a4), \(a5), \(a6), \(a7), \(a8), \(a9))", priority: p)
+
+        let a10 = A.rnd().js
+        try obj.jsc.eval("func10(\(a1), \(a2), \(a3), \(a4), \(a5), \(a6), \(a7), \(a8), \(a9), \(a10))")
+        try obj.jsc.eval("tfunc10(\(a1), \(a2), \(a3), \(a4), \(a5), \(a6), \(a7), \(a8), \(a9), \(a10))")
+        try await obj.jsc.eval("atfunc10(\(a1), \(a2), \(a3), \(a4), \(a5), \(a6), \(a7), \(a8), \(a9), \(a10))", priority: p)
+    }
 
     func testJumpedAsync() async throws {
         class JumpedObj : JackedObject {
@@ -649,7 +922,7 @@ final class JackTests: XCTestCase {
         try await obj.jsc.eval("sleepTask(0.1)", priority: .medium)
     }
 
-    func testJumpeAsync() async throws {
+    func testJumpedAsyncParams() async throws {
         class JumpedObj : JackedObject {
             @Jumped private var h0 = hi
             func hi() async throws -> Date { Date(timeIntervalSince1970: 1234) }
@@ -669,12 +942,18 @@ final class JackTests: XCTestCase {
                 return true // TODO: hanle returning void
             }
 
+            @Jumped("bye") private var _goodbye = goodbye // expose a void function
+            func goodbye() throws { print("goodbye called") }
+
+            @Jumped("byebye") private var _goodbye1 = goodbye1 // expose a void function
+            func goodbye1(x: Int) throws { print("goodbye1 called") }
+
 
             lazy var jsc = jack()
         }
 
         /// A sample of codable passing
-        struct Coded : Jugglable, Equatable {
+        struct Coded : Codable, Equatable, Conveyable {
             var id = UUID()
             var str = ""
             var num: Int?
@@ -718,6 +997,204 @@ final class JackTests: XCTestCase {
             XCTAssertEqual(#"evaluationErrorString("Error: cannot set a function from JS")"#, "\(error)")
         }
 
+        try obj.jsc.eval("bye()")
+        try obj.jsc.eval("byebye()")
     }
 
 }
+
+private protocol Randomizable { static func rnd() -> Self }
+private protocol JSConvertable { var js: String { get } }
+
+extension UUID : Randomizable, Conveyable, JSConvertable {
+    static func rnd() -> Self {
+        UUID()
+    }
+
+    var js: String {
+        "'" + self.uuidString + "'"
+    }
+}
+
+extension String : Randomizable, JSConvertable {
+    static func rnd() -> Self {
+        UUID().uuidString
+    }
+
+    var js: String {
+        "'" + self.self.replacingOccurrences(of: "'", with: "\\'") + "'"
+    }
+}
+
+extension Int : Randomizable, JSConvertable {
+    static func rnd() -> Self {
+        Int.random(in: (.min)...(.max))
+    }
+    var js: String {
+        self.description
+    }
+}
+
+/// A generic jumpable type that returns or the last argument instance
+private class RandoJack<ArgType: Conveyable, ReturnType: Randomizable & Conveyable> : JackedObject {
+    @Jumped("func0") private var _func0 = func0
+    func func0() -> ReturnType { .rnd() }
+
+    @Jumped("tfunc0") private var _tfunc0 = tfunc0
+    func tfunc0() throws -> ReturnType { .rnd() }
+
+    @Jumped("atfunc0", priority: .low) private var _atfunc0 = atfunc0
+    func atfunc0() async throws -> ReturnType { .rnd() }
+
+
+    @Jumped("func1") private var _func1 = func1
+    func func1(i0: ArgType) -> ReturnType { i0 as? ReturnType ?? .rnd() }
+
+    @Jumped("tfunc1") private var _tfunc1 = tfunc1
+    func tfunc1(i0: ArgType) throws -> ReturnType { i0 as? ReturnType ?? .rnd()  }
+
+    @Jumped("atfunc1", priority: .low) private var _atfunc1 = atfunc1
+    func atfunc1(i0: ArgType) async throws -> ReturnType { i0 as? ReturnType ?? .rnd()  }
+
+
+    @Jumped("func2") private var _func2 = func2
+    func func2(i0: ArgType, i1: ArgType) -> ReturnType { i1 as? ReturnType ?? .rnd()  }
+
+    @Jumped("tfunc2") private var _tfunc2 = tfunc2
+    func tfunc2(i0: ArgType, i1: ArgType) throws -> ReturnType { i1 as? ReturnType ?? .rnd()  }
+
+    @Jumped("atfunc2", priority: .low) private var _atfunc2 = atfunc2
+    func atfunc2(i0: ArgType, i1: ArgType) async throws -> ReturnType { i1 as? ReturnType ?? .rnd()  }
+
+
+    @Jumped("func3") private var _func3 = func3
+    func func3(i0: ArgType, i1: ArgType, i2: ArgType) -> ReturnType { i2 as? ReturnType ?? .rnd()  }
+
+    @Jumped("tfunc3") private var _tfunc3 = tfunc3
+    func tfunc3(i0: ArgType, i1: ArgType, i2: ArgType) throws -> ReturnType { i2 as? ReturnType ?? .rnd()  }
+
+    @Jumped("atfunc3", priority: .low) private var _atfunc3 = atfunc3
+    func atfunc3(i0: ArgType, i1: ArgType, i2: ArgType) async throws -> ReturnType { i2 as? ReturnType ?? .rnd()  }
+
+
+    @Jumped("func4") private var _func4 = func4
+    func func4(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType) -> ReturnType { i3 as? ReturnType ?? .rnd()  }
+
+    @Jumped("tfunc4") private var _tfunc4 = tfunc4
+    func tfunc4(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType) throws -> ReturnType { i3 as? ReturnType ?? .rnd()  }
+
+    @Jumped("atfunc4", priority: .low) private var _atfunc4 = atfunc4
+    func atfunc4(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType) async throws -> ReturnType { i3 as? ReturnType ?? .rnd()  }
+
+
+    @Jumped("func5") private var _func5 = func5
+    func func5(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType, i4: ArgType) -> ReturnType { i4 as? ReturnType ?? .rnd()  }
+
+    @Jumped("tfunc5") private var _tfunc5 = tfunc5
+    func tfunc5(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType, i4: ArgType) throws -> ReturnType { i4 as? ReturnType ?? .rnd()  }
+
+    @Jumped("atfunc5", priority: .low) private var _atfunc5 = atfunc5
+    func atfunc5(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType, i4: ArgType) async throws -> ReturnType { i4 as? ReturnType ?? .rnd()  }
+
+
+    @Jumped("func6") private var _func6 = func6
+    func func6(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType, i4: ArgType, i5: ArgType) -> ReturnType { i5 as? ReturnType ?? .rnd()  }
+
+    @Jumped("tfunc6") private var _tfunc6 = tfunc6
+    func tfunc6(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType, i4: ArgType, i5: ArgType) throws -> ReturnType { i5 as? ReturnType ?? .rnd()  }
+
+    @Jumped("atfunc6", priority: .low) private var _atfunc6 = atfunc6
+    func atfunc6(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType, i4: ArgType, i5: ArgType) async throws -> ReturnType { i5 as? ReturnType ?? .rnd()  }
+
+
+    @Jumped("func7") private var _func7 = func7
+    func func7(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType, i4: ArgType, i5: ArgType, i6: ArgType) -> ReturnType { i6 as? ReturnType ?? .rnd()  }
+
+    @Jumped("tfunc7") private var _tfunc7 = tfunc7
+    func tfunc7(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType, i4: ArgType, i5: ArgType, i6: ArgType) throws -> ReturnType { i6 as? ReturnType ?? .rnd()  }
+
+    @Jumped("atfunc7", priority: .low) private var _atfunc7 = atfunc7
+    func atfunc7(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType, i4: ArgType, i5: ArgType, i6: ArgType) async throws -> ReturnType { i6 as? ReturnType ?? .rnd()  }
+
+
+    @Jumped("func8") private var _func8 = func8
+    func func8(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType, i4: ArgType, i5: ArgType, i6: ArgType, i7: ArgType) -> ReturnType { i7 as? ReturnType ?? .rnd()  }
+
+    @Jumped("tfunc8") private var _tfunc8 = tfunc8
+    func tfunc8(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType, i4: ArgType, i5: ArgType, i6: ArgType, i7: ArgType) throws -> ReturnType { i7 as? ReturnType ?? .rnd()  }
+
+    @Jumped("atfunc8", priority: .low) private var _atfunc8 = atfunc8
+    func atfunc8(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType, i4: ArgType, i5: ArgType, i6: ArgType, i7: ArgType) async throws -> ReturnType { i7 as? ReturnType ?? .rnd()  }
+
+
+    @Jumped("func9") private var _func9 = func9
+    func func9(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType, i4: ArgType, i5: ArgType, i6: ArgType, i7: ArgType, i8: ArgType) -> ReturnType { i8 as? ReturnType ?? .rnd()  }
+
+    @Jumped("tfunc9") private var _tfunc9 = tfunc9
+    func tfunc9(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType, i4: ArgType, i5: ArgType, i6: ArgType, i7: ArgType, i8: ArgType) throws -> ReturnType { i8 as? ReturnType ?? .rnd()  }
+
+    @Jumped("atfunc9", priority: .low) private var _atfunc9 = atfunc9
+    func atfunc9(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType, i4: ArgType, i5: ArgType, i6: ArgType, i7: ArgType, i8: ArgType) async throws -> ReturnType { i8 as? ReturnType ?? .rnd()  }
+
+
+    @Jumped("func10") private var _func10 = func10
+    func func10(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType, i4: ArgType, i5: ArgType, i6: ArgType, i7: ArgType, i8: ArgType, i9: ArgType) -> ReturnType { i9 as? ReturnType ?? .rnd()  }
+
+    @Jumped("tfunc10") private var _tfunc10 = tfunc10
+    func tfunc10(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType, i4: ArgType, i5: ArgType, i6: ArgType, i7: ArgType, i8: ArgType, i9: ArgType) throws -> ReturnType { i9 as? ReturnType ?? .rnd()  }
+
+    @Jumped("atfunc10", priority: .low) private var _atfunc10 = atfunc10
+    func atfunc10(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType, i4: ArgType, i5: ArgType, i6: ArgType, i7: ArgType, i8: ArgType, i9: ArgType) async throws -> ReturnType { i9 as? ReturnType ?? .rnd()  }
+
+    lazy var jsc = jack()
+}
+
+
+// MARK: JackPod
+
+/// A ``JackPod`` is a unit of native functionality that can be exported to a scripting environment via a ``JackedObject``.
+@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+public protocol JackPod : JackedObject {
+    /// The metadata for this pod
+    var metadata: JackPodMetaData { get }
+    var podContext: JXContext { get }
+}
+
+public struct JackPodMetaData : Codable {
+    public var author: String
+    public var homePage: URL
+}
+
+
+@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+final class JackPodTests: XCTestCase {
+    func testJackPod() async throws {
+    }
+}
+
+
+// MARK: TimersPod
+
+// setTimeout()
+// await sleep(123)
+
+// MARK: ConsolePod
+
+// console.log('message…')
+
+// MARK: FileSystemPod
+
+// fs.mkdir('/tmp/dir')
+
+// MARK: FetchPod
+
+// fetch('https://example.org/resource.json')
+
+// MARK: CoreLocationPod
+
+// await location.current()
+
+// MARK: CanvasPod
+
+// MARK: CanvasPod
+

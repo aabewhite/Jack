@@ -1,39 +1,17 @@
 import OpenCombineShim
 import class Foundation.JSONEncoder
 
-
-/// A ``Jugglable`` type is a ``Codable`` that can be passed between Swift and JSC through serialization.
-///
-/// To support efficient passing of JSC basic types, use ``Jackable`` instead.
-public protocol Jugglable : Jumpable, Codable {
-}
-
-extension Jugglable {
-    public static func makeJX(from value: JXValue, in context: JXContext) throws -> Self {
-        try value.toDecodable(ofType: Self.self)
-    }
-
-    public func getJX(from context: JXContext) -> JXValue {
-        do {
-            return try context.encode(self)
-        } catch {
-            context.currentError = JXValue(newErrorFromMessage: "\(error)", in: context)
-            return JXValue(nullIn: context)
-        }
-    }
-}
-
-// MARK: Juggled
+// MARK: Coded
 
 /// A type that publishes a property marked with an attribute and exports that property to an associated ``JXKit\\JXContext``
 /// by serializing the codable type.
 ///
-/// Publishing a property with the `@Juggled` attribute creates a publisher of this
+/// Publishing a property with the `@Coded` attribute creates a publisher of this
 /// type. You access the publisher with the `$` operator, as with ``Jacked``.
 ///
 @available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
 @propertyWrapper
-public struct Juggled<Value : Codable> : _TrackableProperty, _JackableProperty {
+public struct Coded<Value : Codable> : _TrackableProperty, _JackableProperty {
     /// The key that will be used to export the instance; a nil key will prevent export.
     internal let key: String?
 
@@ -132,7 +110,7 @@ public struct Juggled<Value : Codable> : _TrackableProperty, _JackableProperty {
     public static subscript<EnclosingSelf: AnyObject>(
         _enclosingInstance object: EnclosingSelf,
         wrapped wrappedKeyPath: ReferenceWritableKeyPath<EnclosingSelf, Value>,
-        storage storageKeyPath: ReferenceWritableKeyPath<EnclosingSelf, Juggled<Value>>
+        storage storageKeyPath: ReferenceWritableKeyPath<EnclosingSelf, Coded<Value>>
     ) -> Value {
         get {
             switch object[keyPath: storageKeyPath].storage {
@@ -154,7 +132,7 @@ public struct Juggled<Value : Codable> : _TrackableProperty, _JackableProperty {
 }
 
 
-/// The shared default encoder for `Juggled` types
+/// The shared default encoder for `Coded` types
 @available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
 private let defaultEncoder : JSONEncoder = {
     let encoder = JSONEncoder()
@@ -166,7 +144,7 @@ private let defaultEncoder : JSONEncoder = {
 // This is similar to the OpenCombine implementation except we handle both `*Combine.Published` and `Jack.Jacked`
 
 @available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
-extension Juggled {
+extension Coded {
     var exportedKey: String? { key }
 
     subscript(in context: JXContext, owner: AnyObject?) -> JXValue {

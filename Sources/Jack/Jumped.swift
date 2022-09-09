@@ -1,25 +1,5 @@
 import OpenCombineShim
 
-/// A type that can move between Swift and JavaScipt, either through direct reference or by serialization
-public protocol Jumpable {
-    /// Converts this value into a JXContext
-    static func makeJX(from value: JXValue, in context: JXContext) throws -> Self
-
-    /// Converts this value into a JXContext
-    func getJX(from context: JXContext) throws -> JXValue
-}
-
-extension JXValue : Jumpable {
-    public static func makeJX(from value: JXValue, in context: JXContext) throws -> JXValue {
-        value
-    }
-
-    /// Converts this value into a JXContext
-    public func getJX(from context: JXContext) -> JXValue {
-        self
-    }
-}
-
 /// A type that publishes a property with an exporte function to an associated ``JXKit\\JXContext``.
 ///
 /// Example:
@@ -42,7 +22,7 @@ extension JXValue : Jumpable {
 /// - `Publisher.assign(to:)`
 @available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
 @propertyWrapper
-public struct Jumped<O: JackedObject, U : Jackable> : _JackableProperty {
+public struct Jumped<O: JackedObject, U> : _JackableProperty {
     typealias JumpFunc = (_ context: JXContext, _ owner: AnyObject?) -> JXValue
 
     private let function: JumpFunc
@@ -76,15 +56,58 @@ private extension JXContext {
         throw JackError.jumpContextInvalid(.init(context: self))
     }
 
-    func jarg<J: Jumpable>(_ index: Int, _ args: [JXValue]) throws -> J {
+    func jarg<J: Conveyable>(_ index: Int, _ args: [JXValue]) throws -> J {
         try J.makeJX(from: args.dropFirst(index).first ?? JXValue(nullIn: self), in: self)
     }
 }
 
+// The possible Jumped function signatures are:
+//
+// 1. synchronous void return
+// 2. asynchronous void return
+// 3. synchronous Conveyable return
+// 4. asynchronous Conveyable return
 
 @available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
 extension Jumped {
-    fileprivate static func createAsyncFunction<J: Jumpable>(priority: TaskPriority?, block: @escaping (JXContext, AnyObject?, [JXValue]) async throws -> J) -> JumpFunc {
+    
+    fileprivate static func createFunction<J: Conveyable>(block: @escaping (JXContext, AnyObject?, [JXValue]) throws -> J) -> JumpFunc {
+        { context, owner in
+            JXValue(newFunctionIn: context) { ctx, this, args in
+                try block(ctx, owner, args).getJX(from: ctx)
+            }
+        }
+    }
+
+    fileprivate static func createFunctionVoid(block: @escaping (JXContext, AnyObject?, [JXValue]) throws -> Void) -> JumpFunc {
+        { context, owner in
+            JXValue(newFunctionIn: context) { ctx, this, args in
+                try block(ctx, owner, args)
+                return JXValue(undefinedIn: ctx)
+            }
+        }
+    }
+
+    fileprivate static func createFunctionAsyncVoid(priority: TaskPriority?, block: @escaping (JXContext, AnyObject?, [JXValue]) async throws -> Void) -> JumpFunc {
+        { context, owner in
+            JXValue(newFunctionIn: context) { ctx, this, args in
+                let promise = try JXValue.createPromise(in: ctx)
+
+                Task.detached(priority: priority) {
+                    do {
+                        try await block(ctx, owner, args)
+                        promise.resolveFunction.call(withArguments: [JXValue(undefinedIn: ctx)], this: this)
+                    } catch {
+                        promise.rejectFunction.call(withArguments: [JXValue(newErrorFromMessage: "\(error)", in: ctx)], this: this)
+                    }
+                }
+
+                return JXValue(env: ctx, value: promise.promise)
+            }
+        }
+    }
+
+    fileprivate static func createFunctionAsync<J: Conveyable>(priority: TaskPriority?, block: @escaping (JXContext, AnyObject?, [JXValue]) async throws -> J) -> JumpFunc {
         { context, owner in
             JXValue(newFunctionIn: context) { ctx, this, args in
                 let promise = try JXValue.createPromise(in: ctx)
@@ -104,98 +127,364 @@ extension Jumped {
     }
 }
 
-/// Single-argument function wrappers
+// MARK: Jumped Arity 0
+
 @available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
 extension Jumped {
-    public init(wrappedValue f0: @escaping (O) -> () throws -> U, _ key: String? = nil) {
-        self.function = { context, owner in
-            JXValue(newFunctionIn: context) { ctx, this, args in
-                try f0(ctx.casting(owner))().getJX(from: ctx)
-            }
+    public init(wrappedValue f: @escaping (O) -> () throws -> U, _ key: String? = nil) where U : Conveyable {
+        self.function = Self.createFunction() { ctx, owner, args in
+            try f(ctx.casting(owner))()
         }
         self.exportedKey = key
     }
 
-    public init(wrappedValue af0: @escaping (O) -> () async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) {
-        self.function = Self.createAsyncFunction(priority: priority) { ctx, owner, args in
-            try await af0(ctx.casting(owner))()
+    public init(wrappedValue f: @escaping (O) -> () throws -> U, _ key: String? = nil) where U == Void {
+        self.function = Self.createFunctionVoid() { ctx, owner, args in
+            try f(ctx.casting(owner))()
+        }
+        self.exportedKey = key
+    }
+
+    public init(wrappedValue f: @escaping (O) -> () async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U == Void {
+        self.function = Self.createFunctionAsyncVoid(priority: priority) { ctx, owner, args in
+            try await f(ctx.casting(owner))()
+        }
+        self.exportedKey = key
+    }
+
+    public init(wrappedValue f: @escaping (O) -> () async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U : Conveyable {
+        self.function = Self.createFunctionAsync(priority: priority) { ctx, owner, args in
+            try await f(ctx.casting(owner))()
         }
         self.exportedKey = key
     }
 }
 
+// MARK: Jumped Arity 1
+
 @available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
 extension Jumped {
-    public init<X1: Jumpable>(wrappedValue f1: @escaping (O) -> (X1) throws -> U, _ key: String? = nil) {
-        self.function = { context, owner in
-            JXValue(newFunctionIn: context) { ctx, this, args in
-                try f1(ctx.casting(owner))(ctx.jarg(0, args)).getJX(from: ctx)
-            }
+    public init<X1: Conveyable>(wrappedValue f: @escaping (O) -> (X1) throws -> U, _ key: String? = nil) where U : Conveyable {
+        self.function = Self.createFunction() { ctx, owner, args in
+            try f(ctx.casting(owner))(ctx.jarg(0, args))
         }
         self.exportedKey = key
     }
 
-    public init<X1: Jumpable>(wrappedValue af1: @escaping (O) -> (X1) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) {
-        self.function = Self.createAsyncFunction(priority: priority) { ctx, owner, args in
-            try await af1(ctx.casting(owner))(ctx.jarg(0, args))
+    public init<X1: Conveyable>(wrappedValue f: @escaping (O) -> (X1) throws -> U, _ key: String? = nil) where U == Void {
+        self.function = Self.createFunctionVoid() { ctx, owner, args in
+            try f(ctx.casting(owner))(ctx.jarg(0, args))
+        }
+        self.exportedKey = key
+    }
+
+    public init<X1: Conveyable>(wrappedValue f: @escaping (O) -> (X1) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U == Void {
+        self.function = Self.createFunctionAsyncVoid(priority: priority) { ctx, owner, args in
+            try await f(ctx.casting(owner))(ctx.jarg(0, args))
+        }
+        self.exportedKey = key
+    }
+
+    public init<X1: Conveyable>(wrappedValue f: @escaping (O) -> (X1) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U : Conveyable {
+        self.function = Self.createFunctionAsync(priority: priority) { ctx, owner, args in
+            try await f(ctx.casting(owner))(ctx.jarg(0, args))
         }
         self.exportedKey = key
     }
 }
 
+// MARK: Jumped Arity 2
+
 @available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
 extension Jumped {
-    public init<X1: Jumpable, X2: Jumpable>(wrappedValue f2: @escaping (O) -> (X1, X2) throws -> U, _ key: String? = nil) {
-        self.function = { context, owner in
-            JXValue(newFunctionIn: context) { ctx, this, args in
-                try f2(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args)).getJX(from: ctx)
-            }
+    public init<X1: Conveyable, X2: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2) throws -> U, _ key: String? = nil) where U : Conveyable {
+        self.function = Self.createFunction() { ctx, owner, args in
+            try f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args))
         }
         self.exportedKey = key
     }
 
-    public init<X1: Jumpable, X2: Jumpable>(wrappedValue af2: @escaping (O) -> (X1, X2) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) {
-        self.function = Self.createAsyncFunction(priority: priority) { ctx, owner, args in
-            try await af2(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args))
+    public init<X1: Conveyable, X2: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2) throws -> U, _ key: String? = nil) where U == Void {
+        self.function = Self.createFunctionVoid() { ctx, owner, args in
+            try f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args))
+        }
+        self.exportedKey = key
+    }
+
+    public init<X1: Conveyable, X2: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U == Void {
+        self.function = Self.createFunctionAsyncVoid(priority: priority) { ctx, owner, args in
+            try await f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args))
+        }
+        self.exportedKey = key
+    }
+
+    public init<X1: Conveyable, X2: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U : Conveyable {
+        self.function = Self.createFunctionAsync(priority: priority) { ctx, owner, args in
+            try await f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args))
         }
         self.exportedKey = key
     }
 }
 
+// MARK: Jumped Arity 3
+
 @available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
 extension Jumped {
-    public init<X1: Jumpable, X2: Jumpable, X3: Jumpable>(wrappedValue f3: @escaping (O) -> (X1, X2, X3) throws -> U, _ key: String? = nil) {
-        self.function = { context, owner in
-            JXValue(newFunctionIn: context) { ctx, this, args in
-                try f3(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args)).getJX(from: ctx)
-            }
+    public init<X1: Conveyable, X2: Conveyable, X3: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2, X3) throws -> U, _ key: String? = nil) where U : Conveyable {
+        self.function = Self.createFunction() { ctx, owner, args in
+            try f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args))
         }
         self.exportedKey = key
     }
 
-    public init<X1: Jumpable, X2: Jumpable, X3: Jumpable>(wrappedValue af3: @escaping (O) -> (X1, X2, X3) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) {
-        self.function = Self.createAsyncFunction(priority: priority) { ctx, owner, args in
-            try await af3(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args))
+    public init<X1: Conveyable, X2: Conveyable, X3: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2, X3) throws -> U, _ key: String? = nil) where U == Void {
+        self.function = Self.createFunctionVoid() { ctx, owner, args in
+            try f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args))
+        }
+        self.exportedKey = key
+    }
+
+    public init<X1: Conveyable, X2: Conveyable, X3: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2, X3) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U == Void {
+        self.function = Self.createFunctionAsyncVoid(priority: priority) { ctx, owner, args in
+            try await f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args))
+        }
+        self.exportedKey = key
+    }
+
+    public init<X1: Conveyable, X2: Conveyable, X3: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2, X3) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U : Conveyable {
+        self.function = Self.createFunctionAsync(priority: priority) { ctx, owner, args in
+            try await f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args))
         }
         self.exportedKey = key
     }
 }
 
+// MARK: Jumped Arity 4
+
 @available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
 extension Jumped {
-    public init<X1: Jumpable, X2: Jumpable, X3: Jumpable, X4: Jumpable>(wrappedValue f4: @escaping (O) -> (X1, X2, X3, X4) throws -> U, _ key: String? = nil) {
-        self.function = { context, owner in
-            JXValue(newFunctionIn: context) { ctx, this, args in
-                try f4(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args)).getJX(from: ctx)
-            }
+    public init<X1: Conveyable, X2: Conveyable, X3: Conveyable, X4: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4) throws -> U, _ key: String? = nil) where U : Conveyable {
+        self.function = Self.createFunction() { ctx, owner, args in
+            try f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args))
         }
-
         self.exportedKey = key
     }
 
-    public init<X1: Jumpable, X2: Jumpable, X3: Jumpable, X4: Jumpable>(wrappedValue af4: @escaping (O) -> (X1, X2, X3, X4) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) {
-        self.function = Self.createAsyncFunction(priority: priority) { ctx, owner, args in
-            try await af4(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args))
+    public init<X1: Conveyable, X2: Conveyable, X3: Conveyable, X4: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4) throws -> U, _ key: String? = nil) where U == Void {
+        self.function = Self.createFunctionVoid() { ctx, owner, args in
+            try f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args))
+        }
+        self.exportedKey = key
+    }
+
+    public init<X1: Conveyable, X2: Conveyable, X3: Conveyable, X4: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U == Void {
+        self.function = Self.createFunctionAsyncVoid(priority: priority) { ctx, owner, args in
+            try await f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args))
+        }
+        self.exportedKey = key
+    }
+
+    public init<X1: Conveyable, X2: Conveyable, X3: Conveyable, X4: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U : Conveyable {
+        self.function = Self.createFunctionAsync(priority: priority) { ctx, owner, args in
+            try await f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args))
+        }
+        self.exportedKey = key
+    }
+}
+
+// MARK: Jumped Arity 5
+
+@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+extension Jumped {
+    public init<X1: Conveyable, X2: Conveyable, X3: Conveyable, X4: Conveyable, X5: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5) throws -> U, _ key: String? = nil) where U : Conveyable {
+        self.function = Self.createFunction() { ctx, owner, args in
+            try f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args), ctx.jarg(4, args))
+        }
+        self.exportedKey = key
+    }
+
+    public init<X1: Conveyable, X2: Conveyable, X3: Conveyable, X4: Conveyable, X5: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5) throws -> U, _ key: String? = nil) where U == Void {
+        self.function = Self.createFunctionVoid() { ctx, owner, args in
+            try f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args), ctx.jarg(4, args))
+        }
+        self.exportedKey = key
+    }
+
+    public init<X1: Conveyable, X2: Conveyable, X3: Conveyable, X4: Conveyable, X5: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U == Void {
+        self.function = Self.createFunctionAsyncVoid(priority: priority) { ctx, owner, args in
+            try await f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args), ctx.jarg(4, args))
+        }
+        self.exportedKey = key
+    }
+
+    public init<X1: Conveyable, X2: Conveyable, X3: Conveyable, X4: Conveyable, X5: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U : Conveyable {
+        self.function = Self.createFunctionAsync(priority: priority) { ctx, owner, args in
+            try await f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args), ctx.jarg(4, args))
+        }
+        self.exportedKey = key
+    }
+}
+
+// MARK: Jumped Arity 6
+
+@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+extension Jumped {
+    public init<X1: Conveyable, X2: Conveyable, X3: Conveyable, X4: Conveyable, X5: Conveyable, X6: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6) throws -> U, _ key: String? = nil) where U : Conveyable {
+        self.function = Self.createFunction() { ctx, owner, args in
+            try f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args), ctx.jarg(4, args), ctx.jarg(5, args))
+        }
+        self.exportedKey = key
+    }
+
+    public init<X1: Conveyable, X2: Conveyable, X3: Conveyable, X4: Conveyable, X5: Conveyable, X6: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6) throws -> U, _ key: String? = nil) where U == Void {
+        self.function = Self.createFunctionVoid() { ctx, owner, args in
+            try f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args), ctx.jarg(4, args), ctx.jarg(5, args))
+        }
+        self.exportedKey = key
+    }
+
+    public init<X1: Conveyable, X2: Conveyable, X3: Conveyable, X4: Conveyable, X5: Conveyable, X6: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U == Void {
+        self.function = Self.createFunctionAsyncVoid(priority: priority) { ctx, owner, args in
+            try await f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args), ctx.jarg(4, args), ctx.jarg(5, args))
+        }
+        self.exportedKey = key
+    }
+
+    public init<X1: Conveyable, X2: Conveyable, X3: Conveyable, X4: Conveyable, X5: Conveyable, X6: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U : Conveyable {
+        self.function = Self.createFunctionAsync(priority: priority) { ctx, owner, args in
+            try await f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args), ctx.jarg(4, args), ctx.jarg(5, args))
+        }
+        self.exportedKey = key
+    }
+}
+
+// MARK: Jumped Arity 7
+
+@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+extension Jumped {
+    public init<X1: Conveyable, X2: Conveyable, X3: Conveyable, X4: Conveyable, X5: Conveyable, X6: Conveyable, X7: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7) throws -> U, _ key: String? = nil) where U : Conveyable {
+        self.function = Self.createFunction() { ctx, owner, args in
+            try f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args), ctx.jarg(4, args), ctx.jarg(5, args), ctx.jarg(6, args))
+        }
+        self.exportedKey = key
+    }
+
+    public init<X1: Conveyable, X2: Conveyable, X3: Conveyable, X4: Conveyable, X5: Conveyable, X6: Conveyable, X7: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7) throws -> U, _ key: String? = nil) where U == Void {
+        self.function = Self.createFunctionVoid() { ctx, owner, args in
+            try f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args), ctx.jarg(4, args), ctx.jarg(5, args), ctx.jarg(6, args))
+        }
+        self.exportedKey = key
+    }
+
+    public init<X1: Conveyable, X2: Conveyable, X3: Conveyable, X4: Conveyable, X5: Conveyable, X6: Conveyable, X7: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U == Void {
+        self.function = Self.createFunctionAsyncVoid(priority: priority) { ctx, owner, args in
+            try await f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args), ctx.jarg(4, args), ctx.jarg(5, args), ctx.jarg(6, args))
+        }
+        self.exportedKey = key
+    }
+
+    public init<X1: Conveyable, X2: Conveyable, X3: Conveyable, X4: Conveyable, X5: Conveyable, X6: Conveyable, X7: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U : Conveyable {
+        self.function = Self.createFunctionAsync(priority: priority) { ctx, owner, args in
+            try await f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args), ctx.jarg(4, args), ctx.jarg(5, args), ctx.jarg(6, args))
+        }
+        self.exportedKey = key
+    }
+}
+
+// MARK: Jumped Arity 8
+
+@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+extension Jumped {
+    public init<X1: Conveyable, X2: Conveyable, X3: Conveyable, X4: Conveyable, X5: Conveyable, X6: Conveyable, X7: Conveyable, X8: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7, X8) throws -> U, _ key: String? = nil) where U : Conveyable {
+        self.function = Self.createFunction() { ctx, owner, args in
+            try f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args), ctx.jarg(4, args), ctx.jarg(5, args), ctx.jarg(6, args), ctx.jarg(7, args))
+        }
+        self.exportedKey = key
+    }
+
+    public init<X1: Conveyable, X2: Conveyable, X3: Conveyable, X4: Conveyable, X5: Conveyable, X6: Conveyable, X7: Conveyable, X8: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7, X8) throws -> U, _ key: String? = nil) where U == Void {
+        self.function = Self.createFunctionVoid() { ctx, owner, args in
+            try f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args), ctx.jarg(4, args), ctx.jarg(5, args), ctx.jarg(6, args), ctx.jarg(7, args))
+        }
+        self.exportedKey = key
+    }
+
+    public init<X1: Conveyable, X2: Conveyable, X3: Conveyable, X4: Conveyable, X5: Conveyable, X6: Conveyable, X7: Conveyable, X8: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7, X8) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U == Void {
+        self.function = Self.createFunctionAsyncVoid(priority: priority) { ctx, owner, args in
+            try await f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args), ctx.jarg(4, args), ctx.jarg(5, args), ctx.jarg(6, args), ctx.jarg(7, args))
+        }
+        self.exportedKey = key
+    }
+
+    public init<X1: Conveyable, X2: Conveyable, X3: Conveyable, X4: Conveyable, X5: Conveyable, X6: Conveyable, X7: Conveyable, X8: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7, X8) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U : Conveyable {
+        self.function = Self.createFunctionAsync(priority: priority) { ctx, owner, args in
+            try await f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args), ctx.jarg(4, args), ctx.jarg(5, args), ctx.jarg(6, args), ctx.jarg(7, args))
+        }
+        self.exportedKey = key
+    }
+}
+
+// MARK: Jumped Arity 9
+
+@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+extension Jumped {
+    public init<X1: Conveyable, X2: Conveyable, X3: Conveyable, X4: Conveyable, X5: Conveyable, X6: Conveyable, X7: Conveyable, X8: Conveyable, X9: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7, X8, X9) throws -> U, _ key: String? = nil) where U : Conveyable {
+        self.function = Self.createFunction() { ctx, owner, args in
+            try f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args), ctx.jarg(4, args), ctx.jarg(5, args), ctx.jarg(6, args), ctx.jarg(7, args), ctx.jarg(8, args))
+        }
+        self.exportedKey = key
+    }
+
+    public init<X1: Conveyable, X2: Conveyable, X3: Conveyable, X4: Conveyable, X5: Conveyable, X6: Conveyable, X7: Conveyable, X8: Conveyable, X9: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7, X8, X9) throws -> U, _ key: String? = nil) where U == Void {
+        self.function = Self.createFunctionVoid() { ctx, owner, args in
+            try f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args), ctx.jarg(4, args), ctx.jarg(5, args), ctx.jarg(6, args), ctx.jarg(7, args), ctx.jarg(8, args))
+        }
+        self.exportedKey = key
+    }
+
+    public init<X1: Conveyable, X2: Conveyable, X3: Conveyable, X4: Conveyable, X5: Conveyable, X6: Conveyable, X7: Conveyable, X8: Conveyable, X9: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7, X8, X9) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U == Void {
+        self.function = Self.createFunctionAsyncVoid(priority: priority) { ctx, owner, args in
+            try await f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args), ctx.jarg(4, args), ctx.jarg(5, args), ctx.jarg(6, args), ctx.jarg(7, args), ctx.jarg(8, args))
+        }
+        self.exportedKey = key
+    }
+
+    public init<X1: Conveyable, X2: Conveyable, X3: Conveyable, X4: Conveyable, X5: Conveyable, X6: Conveyable, X7: Conveyable, X8: Conveyable, X9: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7, X8, X9) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U : Conveyable {
+        self.function = Self.createFunctionAsync(priority: priority) { ctx, owner, args in
+            try await f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args), ctx.jarg(4, args), ctx.jarg(5, args), ctx.jarg(6, args), ctx.jarg(7, args), ctx.jarg(8, args))
+        }
+        self.exportedKey = key
+    }
+}
+
+// MARK: Jumped Arity 10
+
+@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+extension Jumped {
+    public init<X1: Conveyable, X2: Conveyable, X3: Conveyable, X4: Conveyable, X5: Conveyable, X6: Conveyable, X7: Conveyable, X8: Conveyable, X9: Conveyable, X10: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7, X8, X9, X10) throws -> U, _ key: String? = nil) where U : Conveyable {
+        self.function = Self.createFunction() { ctx, owner, args in
+            try f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args), ctx.jarg(4, args), ctx.jarg(5, args), ctx.jarg(6, args), ctx.jarg(7, args), ctx.jarg(8, args), ctx.jarg(9, args))
+        }
+        self.exportedKey = key
+    }
+
+    public init<X1: Conveyable, X2: Conveyable, X3: Conveyable, X4: Conveyable, X5: Conveyable, X6: Conveyable, X7: Conveyable, X8: Conveyable, X9: Conveyable, X10: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7, X8, X9, X10) throws -> U, _ key: String? = nil) where U == Void {
+        self.function = Self.createFunctionVoid() { ctx, owner, args in
+            try f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args), ctx.jarg(4, args), ctx.jarg(5, args), ctx.jarg(6, args), ctx.jarg(7, args), ctx.jarg(8, args), ctx.jarg(9, args))
+        }
+        self.exportedKey = key
+    }
+
+    public init<X1: Conveyable, X2: Conveyable, X3: Conveyable, X4: Conveyable, X5: Conveyable, X6: Conveyable, X7: Conveyable, X8: Conveyable, X9: Conveyable, X10: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7, X8, X9, X10) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U == Void {
+        self.function = Self.createFunctionAsyncVoid(priority: priority) { ctx, owner, args in
+            try await f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args), ctx.jarg(4, args), ctx.jarg(5, args), ctx.jarg(6, args), ctx.jarg(7, args), ctx.jarg(8, args), ctx.jarg(9, args))
+        }
+        self.exportedKey = key
+    }
+
+    public init<X1: Conveyable, X2: Conveyable, X3: Conveyable, X4: Conveyable, X5: Conveyable, X6: Conveyable, X7: Conveyable, X8: Conveyable, X9: Conveyable, X10: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7, X8, X9, X10) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U : Conveyable {
+        self.function = Self.createFunctionAsync(priority: priority) { ctx, owner, args in
+            try await f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args), ctx.jarg(4, args), ctx.jarg(5, args), ctx.jarg(6, args), ctx.jarg(7, args), ctx.jarg(8, args), ctx.jarg(9, args))
         }
         self.exportedKey = key
     }

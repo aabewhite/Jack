@@ -6,10 +6,10 @@ import OpenCombineShim
 /// This type extends from ``JackedObject``, which is a type of object with a publisher that emits before the object has changed.
 ///
 ///     class EnhancedObj : JackedObject {
-///         @UnJacked var x = 0 // unexported to jsc
+///         @Tracked var x = 0 // unexported to jsc
 ///         @Jacked var i = 1 // exported as number
 ///         @Jacked("B") var b = false // exported as bool
-///         @Juggled var id = UUID() // exported (via codability) as string
+///         @Coded var id = UUID() // exported (via codability) as string
 ///         @Jumped("now") private var _now = now // exported as function
 ///         func now() -> Date { Date(timeIntervalSince1970: 1_234) }
 ///
@@ -71,7 +71,7 @@ import OpenCombineShim
 /// in its place in SwiftUI hierarchies with ``@EnvironmentObject``, it is *not* possible to
 /// mix ``@Published`` and ``@Jacked`` properties in the same object. Doing so will
 /// result in a crash at initialization time. In order to support ``@Published``behavior
-/// without needing to export the property to the JSC, use the equivalent ``@UnJacked`` wrapper,
+/// without needing to export the property to the JSC, use the equivalent ``@Tracked`` wrapper,
 /// which will behave the same way.
 @available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
 public protocol JackedObject : ObservableObject {
@@ -172,7 +172,7 @@ extension JackedObject where ObjectWillChangePublisher == ObservableObjectPublis
 
                 if property is Published<ObjectWillChangePublisher.Output> {
                     // TODO: how can we implement support for @Published and @Jacked at the same time?
-                    fatalError("instances may not currently have both @Published and @Jacked properties (use @UnJacked instead)")
+                    fatalError("instances may not currently have both @Published and @Jacked properties (use @Tracked instead)")
                 }
 
                 if let property = property as? _TrackableProperty {
@@ -200,7 +200,7 @@ extension JackedObject where ObjectWillChangePublisher == ObservableObjectPublis
                 }
 
 
-                // other read-only types (e.g., Jumped, UnJacked) are left un-tracked
+                // other read-only types (e.g., Jumped, Tracked) are left un-tracked
             }
             reflection = aClass.superclassMirror
         }
