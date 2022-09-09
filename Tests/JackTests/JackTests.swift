@@ -75,7 +75,7 @@ final class JackTests: XCTestCase {
 
 #if !os(Linux) // no combineLatest
         let announcer = playerA.$score.combineLatest(playerB.$score).sink { scoreA, scoreB in
-            print("SCORE:", scoreA, scoreB, "Serving:", server === playerA ? "SWIFT" : "JAVASCRIPT")
+            //print("SCORE:", scoreA, scoreB, "Serving:", server === playerA ? "SWIFT" : "JAVASCRIPT")
         }
 #endif
 
@@ -86,12 +86,12 @@ final class JackTests: XCTestCase {
                 while try !playerB.pong() && !playerA.ping() { continue }
             }
             if (playerA.score + playerB.score) % 5 == 0 {
-                print("Switching Servers")
+                //print("Switching Servers")
                 server = server === playerA ? playerB : playerA
             }
         }
 
-        print("Winner: ", playerA.score > playerB.score ? "Swift" : "JavaScript")
+        //print("Winner: ", playerA.score > playerB.score ? "Swift" : "JavaScript")
 #if !os(Linux) // no combineLatest
         _ = announcer // no longer needed
 #endif
@@ -506,23 +506,30 @@ final class JackTests: XCTestCase {
 
     func testJumped() throws {
         class JumpedObj : JackedObject {
-            @Jumped private var h0 = hi
+            @Jumped private var f0 = hi
             func hi() -> Date { Date(timeIntervalSince1970: 1234) }
 
-            @Jumped private var h1 = hello // expose the 1-arg function
+            @Jumped private var f1 = hello // expose the 1-arg function
             func hello(name: String) -> String { "Hello \(name)!" }
 
-            @Jumped("H2") private var h2 = happyBirthday // expose the 2-arg function
+            @Jumped("F2") private var f2 = happyBirthday // expose the 2-arg function
             func happyBirthday(name: String, age: Int) -> String { "Happy Birthday \(name), you are \(age)!" }
 
             @Jumped("replicate") private var _replicate = replicate
-            func replicate(_ coded: Coded, count: Int) -> [Coded] { Array(Array(repeating: coded, count: count)) }
+            func replicate(_ coded: JuggledCodable, count: Int) -> [JuggledCodable] { Array(Array(repeating: coded, count: count)) }
+
+            @Jumped("exceptional") private var _exceptional = exceptional
+            func exceptional() throws -> Bool { throw SomeError(reason: "YOLO") }
+
+            struct SomeError : Error {
+                var reason: String
+            }
 
             lazy var jsc = jack()
         }
 
         /// A sample of codable passing
-        struct Coded : Jugglable, Equatable {
+        struct JuggledCodable : Jugglable, Equatable {
             var id = UUID()
             var str = ""
             var num: Int?
@@ -530,20 +537,22 @@ final class JackTests: XCTestCase {
 
         let obj = JumpedObj()
 
-        XCTAssertEqual("function", try obj.jsc.eval("typeof h0").stringValue)
-        XCTAssertEqual("function", try obj.jsc.eval("typeof h1").stringValue)
-        XCTAssertEqual("undefined", try obj.jsc.eval("typeof h2").stringValue)
-        XCTAssertEqual("function", try obj.jsc.eval("typeof H2").stringValue)
+        XCTAssertEqual("function", try obj.jsc.eval("typeof f0").stringValue)
+        XCTAssertEqual("function", try obj.jsc.eval("typeof f1").stringValue)
+        XCTAssertEqual("undefined", try obj.jsc.eval("typeof f2").stringValue, "f2 should be visible as F2")
+        XCTAssertEqual("function", try obj.jsc.eval("typeof F2").stringValue)
+        XCTAssertEqual("function", try obj.jsc.eval("typeof replicate").stringValue)
+        XCTAssertEqual("function", try obj.jsc.eval("typeof exceptional").stringValue)
 
-        XCTAssertEqual(1_234_000, try obj.jsc.eval("h0()").numberValue)
-        XCTAssertEqual("Hello x!", try obj.jsc.eval("h1('x')").stringValue)
-        XCTAssertEqual("Happy Birthday x, you are 9!", try obj.jsc.eval("H2('x', 9)").stringValue)
+        XCTAssertEqual(1_234_000, try obj.jsc.eval("f0()").numberValue)
+        XCTAssertEqual("Hello x!", try obj.jsc.eval("f1('x')").stringValue)
+        XCTAssertEqual("Happy Birthday x, you are 9!", try obj.jsc.eval("F2('x', 9)").stringValue)
 
-        let c = Coded(id: UUID(uuidString: "4991E2A0-DE05-4BB3-B502-42F7584C9973")!, str: "abc", num: 9)
-        XCTAssertEqual([c, c, c], try obj.jsc.eval("replicate({ id: '4991E2A0-DE05-4BB3-B502-42F7584C9973', str: 'abc', num: 9 }, 3)").toDecodable(ofType: Array<Coded>.self))
+        let c = JuggledCodable(id: UUID(uuidString: "4991E2A0-DE05-4BB3-B502-42F7584C9973")!, str: "abc", num: 9)
+        XCTAssertEqual([c, c, c], try obj.jsc.eval("replicate({ id: '4991E2A0-DE05-4BB3-B502-42F7584C9973', str: 'abc', num: 9 }, 3)").toDecodable(ofType: Array<JuggledCodable>.self))
 
         // make sure we are blocked from setting the function property from JS
-        XCTAssertThrowsError(try obj.jsc.eval("h0 = null")) { error in
+        XCTAssertThrowsError(try obj.jsc.eval("f0 = null")) { error in
             XCTAssertEqual(#"evaluationErrorString("cannot set a function from JS")"#, "\(error)")
         }
 
@@ -571,6 +580,138 @@ final class JackTests: XCTestCase {
         XCTAssertEqual("function", try obj.jsc.eval("typeof now").stringValue)
         XCTAssertEqual("object", try obj.jsc.eval("typeof now()").stringValue)
         XCTAssertEqual(1_234_000, try obj.jsc.eval("now()").numberValue)
+    }
+
+
+    func testJumpedAsync() async throws {
+        class JumpedObj : JackedObject {
+            @Jumped("promise0", priority: .background) private var _promise0 = promise0
+            func promise0() async throws -> Int {
+                13
+            }
+
+            @Jumped("promise1", priority: .background) private var _promise1 = promise1
+            func promise1(number: Int) async throws -> String {
+                "\(number)"
+            }
+
+            lazy var jsc = jack()
+        }
+
+        let obj = JumpedObj()
+
+        XCTAssertEqual("[object Promise]", try obj.jsc.eval("new Promise((resolve, reject) => { resolve(1) })").stringValue)
+        XCTAssertEqual(true, try obj.jsc.eval("new Promise((resolve, reject) => { resolve(1) }).then").isFunction)
+        XCTAssertEqual("[object Promise]", try obj.jsc.eval("new Promise((resolve, reject) => { resolve(1) }).then()").stringValue)
+
+        XCTAssertEqual("function", try obj.jsc.eval("typeof promise0").stringValue)
+        XCTAssertEqual("[object CallbackObject]", try obj.jsc.eval("promise0").stringValue)
+        XCTAssertEqual("[object Promise]", try obj.jsc.eval("promise0()").stringValue)
+
+        XCTAssertEqual(true, try obj.jsc.eval("promise0()").isObject)
+        XCTAssertEqual(false, try obj.jsc.eval("promise0()").isFunction)
+
+        do {
+            let lres = try await obj.jsc.eval("promise0()", priority: .userInitiated)
+            XCTAssertEqual(13, lres.numberValue)
+        }
+
+        do {
+            let lres = try await obj.jsc.eval("promise1(12)", priority: .userInitiated)
+            XCTAssertEqual("12", lres.stringValue)
+        }
+
+        do {
+            let l8r = try await obj.jsc.eval("(async () => { return 999 })()", priority: .high)
+            XCTAssertEqual(999, l8r.numberValue)
+        } catch {
+            XCTFail("\(error)")
+        }
+
+        do {
+            try await obj.jsc.eval("999", priority: .userInitiated)
+            XCTFail("should not have been able to async invoke a sync function")
+        } catch {
+            XCTAssertEqual("asyncEvalMustReturnPromise", "\(error)")
+        }
+
+        do {
+            let l8r = try await obj.jsc.eval("(async () => { throw Error('async error') })()", priority: .userInitiated)
+            XCTFail("should have thrown: \(l8r)")
+        } catch {
+            XCTAssertEqual("Error: async error", "\(error)")
+        }
+    }
+
+    func testJumpeAsync() async throws {
+        class JumpedObj : JackedObject {
+            @Jumped private var h0 = hi
+            func hi() async throws -> Date { Date(timeIntervalSince1970: 1234) }
+
+            @Jumped private var h1 = hello // expose the 1-arg function
+            func hello(name: String) async throws -> String { "Hello \(name)!" }
+
+            @Jumped("H2") private var h2 = happyBirthday // expose the 2-arg function
+            func happyBirthday(name: String, age: Int) async throws -> String { "Happy Birthday \(name), you are \(age)!" }
+
+            @Jumped("replicate") private var _replicate = replicate
+            func replicate(_ coded: Coded, count: Int) async throws -> [Coded] { Array(Array(repeating: coded, count: count)) }
+
+            @Jumped private var _sleep = sleep
+            func sleep(interval: TimeInterval) async throws -> Bool {
+                try await Task.sleep(nanoseconds: UInt64(interval * 1_000_000_000))
+                return true // TODO: hanle returning void
+            }
+
+
+            lazy var jsc = jack()
+        }
+
+        /// A sample of codable passing
+        struct Coded : Jugglable, Equatable {
+            var id = UUID()
+            var str = ""
+            var num: Int?
+        }
+
+        let obj = JumpedObj()
+
+        XCTAssertEqual("function", try obj.jsc.eval("typeof h0").stringValue)
+        XCTAssertEqual("function", try obj.jsc.eval("typeof h1").stringValue)
+        XCTAssertEqual("undefined", try obj.jsc.eval("typeof h2").stringValue)
+        XCTAssertEqual("function", try obj.jsc.eval("typeof H2").stringValue)
+
+//        do {
+//            let x = try await obj.jsc.eval("sleep(1)", priority: .medium).booleanValue
+//            XCTAssertEqual(false, x)
+//        }
+
+        do {
+            let x = try await obj.jsc.eval("h0()", priority: .medium).numberValue
+            XCTAssertEqual(1_234_000, x)
+        }
+
+        do {
+            let x = try await obj.jsc.eval("h1('x')", priority: .high).stringValue
+            XCTAssertEqual("Hello x!", x)
+        }
+
+        do {
+            let x = try await obj.jsc.eval("H2('x', 9)", priority: .userInitiated).stringValue
+            XCTAssertEqual("Happy Birthday x, you are 9!", x)
+        }
+
+        do {
+            let c = Coded(id: UUID(uuidString: "4991E2A0-DE05-4BB3-B502-42F7584C9973")!, str: "abc", num: 9)
+            let x = try await obj.jsc.eval("replicate({ id: '4991E2A0-DE05-4BB3-B502-42F7584C9973', str: 'abc', num: 9 }, 3)", priority: .userInitiated)
+            XCTAssertEqual([c, c, c], try x.toDecodable(ofType: Array<Coded>.self))
+        }
+
+        // make sure we are blocked from setting the function property from JS
+        XCTAssertThrowsError(try obj.jsc.eval("h0 = null")) { error in
+            XCTAssertEqual(#"evaluationErrorString("cannot set a function from JS")"#, "\(error)")
+        }
+
     }
 
 }

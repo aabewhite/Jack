@@ -36,6 +36,12 @@ public enum JackError : Error {
     case dataElementNotNumber(_ index: Int, _ value: JXValue, Context)
 
     case dataElementOutOfRange(_ index: Int, _ value: JXValue, Context)
+
+    /// The context for a @Jump was invalid or deallocated.
+    ///
+    /// This can occur when the bound instance is not retained anywhere.
+    case jumpContextInvalid(Context)
+
 }
 
 

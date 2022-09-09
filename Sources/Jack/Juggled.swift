@@ -9,8 +9,8 @@ public protocol Jugglable : Jumpable, Codable {
 }
 
 extension Jugglable {
-    public init(value: JXValue, in context: JXContext) throws {
-        self = try value.toDecodable(ofType: Self.self)
+    public static func makeJX(from value: JXValue, in context: JXContext) throws -> Self {
+        try value.toDecodable(ofType: Self.self)
     }
 
     public mutating func getJX(from context: JXContext) -> JXValue {

@@ -5,7 +5,6 @@ import OpenCombineShim
 ///
 /// This type extends from ``JackedObject``, which is a type of object with a publisher that emits before the object has changed.
 ///
-///
 ///     class EnhancedObj : JackedObject {
 ///         @UnJacked var x = 0 // unexported to jsc
 ///         @Jacked var i = 1 // exported as number
@@ -19,14 +18,17 @@ import OpenCombineShim
 ///
 ///     let obj = EnhancedObj()
 ///
-///     XCTAssertEqual("undefined", try obj.jsc.eval("typeof x").stringValue)
-///     XCTAssertEqual("number", try obj.jsc.eval("typeof i").stringValue)
-///     XCTAssertEqual("undefined", try obj.jsc.eval("typeof b").stringValue) // aliased away
-///     XCTAssertEqual("boolean", try obj.jsc.eval("typeof B").stringValue) // aliased
-///     XCTAssertEqual("string", try obj.jsc.eval("typeof id").stringValue)
-///     XCTAssertEqual("function", try obj.jsc.eval("typeof now").stringValue)
-///     XCTAssertEqual("object", try obj.jsc.eval("typeof now()").stringValue)
-///     XCTAssertEqual(1_234_000, try obj.jsc.eval("now()").numberValue)
+///     try obj.jsc.eval("typeof x").stringValue == "undefined"
+///     try obj.jsc.eval("typeof i").stringValue == "number"
+///
+///     try obj.jsc.eval("typeof b").stringValue == "undefined"
+///     try obj.jsc.eval("typeof B").stringValue == "boolean"
+///
+///     try obj.jsc.eval("typeof id").stringValue == "string"
+///
+///     try obj.jsc.eval("typeof now").stringValue == "function"
+///     try obj.jsc.eval("typeof now()").stringValue == "object"
+///     try obj.jsc.eval("now()").numberValue ==  1_234_000
 ///
 /// In addition, a `JackedObject` synthesizes an `objectWillChange` publisher that
 /// emits the changed value before any of its wrapped properties changes.
@@ -69,10 +71,10 @@ import OpenCombineShim
 /// in its place in SwiftUI hierarchies with ``@EnvironmentObject``, it is *not* possible to
 /// mix ``@Published`` and ``@Jacked`` properties in the same object. Doing so will
 /// result in a crash at initialization time. In order to support ``@Published``behavior
-/// without needing to export the property to the JSC, use the equivalent ``@UnJacked`` wrapper.
+/// without needing to export the property to the JSC, use the equivalent ``@UnJacked`` wrapper,
+/// which will behave the same way.
 @available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
 public protocol JackedObject : ObservableObject {
-
 }
 
 
@@ -84,7 +86,7 @@ public extension JackedObject {
     ///   - into context: the context to jack into; will create a new context if needed
     ///   - as object: the object to use for exporting the properties and functions
     /// - Returns: the context
-    func jack(into context: JXContext = JXContext(), as object: JXValue? = nil) -> JXContext {
+    @discardableResult func jack(into context: JXContext = JXContext(), as object: JXValue? = nil) -> JXContext {
         for (label, prop) in props() {
             guard let prop = prop as? _JackableProperty else {
                 continue
@@ -198,7 +200,7 @@ extension JackedObject where ObjectWillChangePublisher == ObservableObjectPublis
                 }
 
 
-                // other read-only types (e.g., Jumped, UnJacked) are left un-tracked but tolerated
+                // other read-only types (e.g., Jumped, UnJacked) are left un-tracked
             }
             reflection = aClass.superclassMirror
         }
