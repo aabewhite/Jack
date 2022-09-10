@@ -401,7 +401,7 @@ extension Data : Jackable {
             }
 
             let data: [UInt8] = try (0..<max).map { index in
-                let element = value[index]
+                let element = value[.init(index)]
                 guard element.isNumber, let num = element.numberValue else {
                     throw JackError.dataElementNotNumber(Int(index), value, .init(context: context))
                 }

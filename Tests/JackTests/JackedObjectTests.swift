@@ -503,7 +503,11 @@ extension Int32 : JSConvertable {
 
 /// A generic jumpable type that represents functions with all the possible arities.
 @available(macOS 10.15, macCatalyst 13, iOS 13, tvOS 13, watchOS 6, *)
-private class RandoJack<ArgType: Conveyable, ReturnType: Randomizable & Conveyable> : JackedObject {
+private class RandoJack<A: Conveyable, ReturnType: Randomizable & Conveyable> : JackedObject {
+    private func cast(_ value: Any) -> ReturnType {
+        value as? ReturnType ?? .rnd()
+    }
+
     @Jumped("func0") private var _func0 = func0
     func func0() -> ReturnType { .rnd() }
 
@@ -515,103 +519,103 @@ private class RandoJack<ArgType: Conveyable, ReturnType: Randomizable & Conveyab
 
 
     @Jumped("func1") private var _func1 = func1
-    func func1(i0: ArgType) -> ReturnType { i0 as? ReturnType ?? .rnd() }
+    func func1(i0: A) -> ReturnType { cast(i0) }
 
     @Jumped("tfunc1") private var _tfunc1 = tfunc1
-    func tfunc1(i0: ArgType) throws -> ReturnType { i0 as? ReturnType ?? .rnd()  }
+    func tfunc1(i0: A) throws -> ReturnType { cast(i0)  }
 
     @Jumped("atfunc1", priority: .low) private var _atfunc1 = atfunc1
-    func atfunc1(i0: ArgType) async throws -> ReturnType { i0 as? ReturnType ?? .rnd()  }
+    func atfunc1(i0: A) async throws -> ReturnType { cast(i0)  }
 
 
     @Jumped("func2") private var _func2 = func2
-    func func2(i0: ArgType, i1: ArgType) -> ReturnType { i1 as? ReturnType ?? .rnd()  }
+    func func2(i0: A, i1: A) -> ReturnType { cast(i1)  }
 
     @Jumped("tfunc2") private var _tfunc2 = tfunc2
-    func tfunc2(i0: ArgType, i1: ArgType) throws -> ReturnType { i1 as? ReturnType ?? .rnd()  }
+    func tfunc2(i0: A, i1: A) throws -> ReturnType { cast(i1)  }
 
     @Jumped("atfunc2", priority: .low) private var _atfunc2 = atfunc2
-    func atfunc2(i0: ArgType, i1: ArgType) async throws -> ReturnType { i1 as? ReturnType ?? .rnd()  }
+    func atfunc2(i0: A, i1: A) async throws -> ReturnType { cast(i1)  }
 
 
     @Jumped("func3") private var _func3 = func3
-    func func3(i0: ArgType, i1: ArgType, i2: ArgType) -> ReturnType { i2 as? ReturnType ?? .rnd()  }
+    func func3(i0: A, i1: A, i2: A) -> ReturnType { cast(i2)  }
 
     @Jumped("tfunc3") private var _tfunc3 = tfunc3
-    func tfunc3(i0: ArgType, i1: ArgType, i2: ArgType) throws -> ReturnType { i2 as? ReturnType ?? .rnd()  }
+    func tfunc3(i0: A, i1: A, i2: A) throws -> ReturnType { cast(i2)  }
 
     @Jumped("atfunc3", priority: .low) private var _atfunc3 = atfunc3
-    func atfunc3(i0: ArgType, i1: ArgType, i2: ArgType) async throws -> ReturnType { i2 as? ReturnType ?? .rnd()  }
+    func atfunc3(i0: A, i1: A, i2: A) async throws -> ReturnType { cast(i2)  }
 
 
     @Jumped("func4") private var _func4 = func4
-    func func4(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType) -> ReturnType { i3 as? ReturnType ?? .rnd()  }
+    func func4(i0: A, i1: A, i2: A, i3: A) -> ReturnType { cast(i3)  }
 
     @Jumped("tfunc4") private var _tfunc4 = tfunc4
-    func tfunc4(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType) throws -> ReturnType { i3 as? ReturnType ?? .rnd()  }
+    func tfunc4(i0: A, i1: A, i2: A, i3: A) throws -> ReturnType { cast(i3)  }
 
     @Jumped("atfunc4", priority: .low) private var _atfunc4 = atfunc4
-    func atfunc4(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType) async throws -> ReturnType { i3 as? ReturnType ?? .rnd()  }
+    func atfunc4(i0: A, i1: A, i2: A, i3: A) async throws -> ReturnType { cast(i3)  }
 
 
     @Jumped("func5") private var _func5 = func5
-    func func5(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType, i4: ArgType) -> ReturnType { i4 as? ReturnType ?? .rnd()  }
+    func func5(i0: A, i1: A, i2: A, i3: A, i4: A) -> ReturnType { cast(i4)  }
 
     @Jumped("tfunc5") private var _tfunc5 = tfunc5
-    func tfunc5(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType, i4: ArgType) throws -> ReturnType { i4 as? ReturnType ?? .rnd()  }
+    func tfunc5(i0: A, i1: A, i2: A, i3: A, i4: A) throws -> ReturnType { cast(i4)  }
 
     @Jumped("atfunc5", priority: .low) private var _atfunc5 = atfunc5
-    func atfunc5(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType, i4: ArgType) async throws -> ReturnType { i4 as? ReturnType ?? .rnd()  }
+    func atfunc5(i0: A, i1: A, i2: A, i3: A, i4: A) async throws -> ReturnType { cast(i4)  }
 
 
     @Jumped("func6") private var _func6 = func6
-    func func6(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType, i4: ArgType, i5: ArgType) -> ReturnType { i5 as? ReturnType ?? .rnd()  }
+    func func6(i0: A, i1: A, i2: A, i3: A, i4: A, i5: A) -> ReturnType { cast(i5)  }
 
     @Jumped("tfunc6") private var _tfunc6 = tfunc6
-    func tfunc6(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType, i4: ArgType, i5: ArgType) throws -> ReturnType { i5 as? ReturnType ?? .rnd()  }
+    func tfunc6(i0: A, i1: A, i2: A, i3: A, i4: A, i5: A) throws -> ReturnType { cast(i5)  }
 
     @Jumped("atfunc6", priority: .low) private var _atfunc6 = atfunc6
-    func atfunc6(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType, i4: ArgType, i5: ArgType) async throws -> ReturnType { i5 as? ReturnType ?? .rnd()  }
+    func atfunc6(i0: A, i1: A, i2: A, i3: A, i4: A, i5: A) async throws -> ReturnType { cast(i5)  }
 
 
     @Jumped("func7") private var _func7 = func7
-    func func7(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType, i4: ArgType, i5: ArgType, i6: ArgType) -> ReturnType { i6 as? ReturnType ?? .rnd()  }
+    func func7(i0: A, i1: A, i2: A, i3: A, i4: A, i5: A, i6: A) -> ReturnType { cast(i6)  }
 
     @Jumped("tfunc7") private var _tfunc7 = tfunc7
-    func tfunc7(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType, i4: ArgType, i5: ArgType, i6: ArgType) throws -> ReturnType { i6 as? ReturnType ?? .rnd()  }
+    func tfunc7(i0: A, i1: A, i2: A, i3: A, i4: A, i5: A, i6: A) throws -> ReturnType { cast(i6)  }
 
     @Jumped("atfunc7", priority: .low) private var _atfunc7 = atfunc7
-    func atfunc7(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType, i4: ArgType, i5: ArgType, i6: ArgType) async throws -> ReturnType { i6 as? ReturnType ?? .rnd()  }
+    func atfunc7(i0: A, i1: A, i2: A, i3: A, i4: A, i5: A, i6: A) async throws -> ReturnType { cast(i6)  }
 
 
     @Jumped("func8") private var _func8 = func8
-    func func8(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType, i4: ArgType, i5: ArgType, i6: ArgType, i7: ArgType) -> ReturnType { i7 as? ReturnType ?? .rnd()  }
+    func func8(i0: A, i1: A, i2: A, i3: A, i4: A, i5: A, i6: A, i7: A) -> ReturnType { cast(i7)  }
 
     @Jumped("tfunc8") private var _tfunc8 = tfunc8
-    func tfunc8(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType, i4: ArgType, i5: ArgType, i6: ArgType, i7: ArgType) throws -> ReturnType { i7 as? ReturnType ?? .rnd()  }
+    func tfunc8(i0: A, i1: A, i2: A, i3: A, i4: A, i5: A, i6: A, i7: A) throws -> ReturnType { cast(i7)  }
 
     @Jumped("atfunc8", priority: .low) private var _atfunc8 = atfunc8
-    func atfunc8(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType, i4: ArgType, i5: ArgType, i6: ArgType, i7: ArgType) async throws -> ReturnType { i7 as? ReturnType ?? .rnd()  }
+    func atfunc8(i0: A, i1: A, i2: A, i3: A, i4: A, i5: A, i6: A, i7: A) async throws -> ReturnType { cast(i7)  }
 
 
     @Jumped("func9") private var _func9 = func9
-    func func9(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType, i4: ArgType, i5: ArgType, i6: ArgType, i7: ArgType, i8: ArgType) -> ReturnType { i8 as? ReturnType ?? .rnd()  }
+    func func9(i0: A, i1: A, i2: A, i3: A, i4: A, i5: A, i6: A, i7: A, i8: A) -> ReturnType { cast(i8)  }
 
     @Jumped("tfunc9") private var _tfunc9 = tfunc9
-    func tfunc9(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType, i4: ArgType, i5: ArgType, i6: ArgType, i7: ArgType, i8: ArgType) throws -> ReturnType { i8 as? ReturnType ?? .rnd()  }
+    func tfunc9(i0: A, i1: A, i2: A, i3: A, i4: A, i5: A, i6: A, i7: A, i8: A) throws -> ReturnType { cast(i8)  }
 
     @Jumped("atfunc9", priority: .low) private var _atfunc9 = atfunc9
-    func atfunc9(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType, i4: ArgType, i5: ArgType, i6: ArgType, i7: ArgType, i8: ArgType) async throws -> ReturnType { i8 as? ReturnType ?? .rnd()  }
+    func atfunc9(i0: A, i1: A, i2: A, i3: A, i4: A, i5: A, i6: A, i7: A, i8: A) async throws -> ReturnType { cast(i8)  }
 
 
     @Jumped("func10") private var _func10 = func10
-    func func10(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType, i4: ArgType, i5: ArgType, i6: ArgType, i7: ArgType, i8: ArgType, i9: ArgType) -> ReturnType { i9 as? ReturnType ?? .rnd()  }
+    func func10(i0: A, i1: A, i2: A, i3: A, i4: A, i5: A, i6: A, i7: A, i8: A, i9: A) -> ReturnType { cast(i9)  }
 
     @Jumped("tfunc10") private var _tfunc10 = tfunc10
-    func tfunc10(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType, i4: ArgType, i5: ArgType, i6: ArgType, i7: ArgType, i8: ArgType, i9: ArgType) throws -> ReturnType { i9 as? ReturnType ?? .rnd()  }
+    func tfunc10(i0: A, i1: A, i2: A, i3: A, i4: A, i5: A, i6: A, i7: A, i8: A, i9: A) throws -> ReturnType { cast(i9)  }
 
     @Jumped("atfunc10", priority: .low) private var _atfunc10 = atfunc10
-    func atfunc10(i0: ArgType, i1: ArgType, i2: ArgType, i3: ArgType, i4: ArgType, i5: ArgType, i6: ArgType, i7: ArgType, i8: ArgType, i9: ArgType) async throws -> ReturnType { i9 as? ReturnType ?? .rnd()  }
+    func atfunc10(i0: A, i1: A, i2: A, i3: A, i4: A, i5: A, i6: A, i7: A, i8: A, i9: A) async throws -> ReturnType { cast(i9)  }
 
     lazy var jsc = jack()
 }
