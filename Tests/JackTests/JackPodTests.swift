@@ -11,6 +11,7 @@ public protocol JackPod : JackedObject {
     var podContext: JXContext { get }
 }
 
+@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
 public struct JackPodMetaData : Codable {
     public var author: String
     public var homePage: URL
@@ -40,6 +41,7 @@ final class JackPodTests: XCTestCase {
 
 // MARK: TimersPod
 
+@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
 public class TimersPod : JackPod {
     public var metadata: JackPodMetaData {
         JackPodMetaData(author: "XXX", homePage: URL(string: "https://www.example.com")!)
@@ -60,6 +62,7 @@ public class TimersPod : JackPod {
     enum Errors : Error {
         case sleepDurationNaN
     }
+
     lazy var jsc = jack()
 }
 
