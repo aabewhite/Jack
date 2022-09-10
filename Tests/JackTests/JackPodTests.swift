@@ -11,6 +11,7 @@ public protocol JackPod : JackedObject {
     var podContext: Result<JXContext, Error> { get }
 }
 
+@available(macOS 11, iOS 13, tvOS 13, *)
 extension JackPod {
     /// The primary context for the pod
     public var jsc: JXContext {
@@ -111,6 +112,7 @@ public class FileSystemPod : JackPod {
 
 // MARK: ConsolePod
 
+@available(macOS 11, iOS 13, tvOS 13, *)
 public protocol ConsolePod : JackPod {
 }
 
@@ -179,6 +181,7 @@ public class CoreLocationPod : JackPod {
 
 // MARK: CanvasPod
 
+@available(macOS 11, iOS 13, tvOS 13, *)
 public protocol CanvasPod : JackPod {
 }
 
@@ -211,6 +214,7 @@ public class SwiftUICanvasPod : JackPod, CanvasPod {
 
 // MARK: DatabasePod
 
+@available(macOS 11, iOS 13, tvOS 13, *)
 public protocol DatabasePod : JackPod {
 }
 
