@@ -6,9 +6,10 @@ import OpenCombineShim
 ///
 /// To support for passing codable types through serialization, use ``Jugglable``
 public protocol Jackable : Conveyable {
-    /// Sets the value of this property
+    /// Sets the value of this property.
+    ///
+    /// - SeeAlso: ``makeJX``
     mutating func setJX(value: JXValue, in context: JXContext) throws
-
 }
 
 // MARK: Jacked

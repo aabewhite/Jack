@@ -1037,7 +1037,7 @@ extension Int32 : Randomizable, JSConvertable {
     }
 }
 
-/// A generic jumpable type that returns or the last argument instance
+/// A generic jumpable type that represents functions with all the possible arities.
 @available(macOS 10.15, macCatalyst 13, iOS 13, tvOS 13, watchOS 6, *)
 private class RandoJack<ArgType: Conveyable, ReturnType: Randomizable & Conveyable> : JackedObject {
     @Jumped("func0") private var _func0 = func0
@@ -1151,53 +1151,3 @@ private class RandoJack<ArgType: Conveyable, ReturnType: Randomizable & Conveyab
 
     lazy var jsc = jack()
 }
-
-
-// MARK: JackPod
-
-/// A ``JackPod`` is a unit of native functionality that can be exported to a scripting environment via a ``JackedObject``.
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
-public protocol JackPod : JackedObject {
-    /// The metadata for this pod
-    var metadata: JackPodMetaData { get }
-    var podContext: JXContext { get }
-}
-
-public struct JackPodMetaData : Codable {
-    public var author: String
-    public var homePage: URL
-}
-
-
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
-final class JackPodTests: XCTestCase {
-    func testJackPod() async throws {
-    }
-}
-
-
-// MARK: TimersPod
-
-// setTimeout()
-// await sleep(123)
-
-// MARK: ConsolePod
-
-// console.log('message…')
-
-// MARK: FileSystemPod
-
-// fs.mkdir('/tmp/dir')
-
-// MARK: FetchPod
-
-// fetch('https://example.org/resource.json')
-
-// MARK: CoreLocationPod
-
-// await location.current()
-
-// MARK: CanvasPod
-
-// MARK: CanvasPod
-
