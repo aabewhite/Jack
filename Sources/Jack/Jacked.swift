@@ -59,7 +59,7 @@ public struct Jacked<Value : Jackable> : _TrackableProperty {
     /// The key that will be used to export the instance; a nil key will prevent export.
     internal let key: String?
 
-    typealias Storage = JackedPublisher<Value>.Storage
+    typealias Storage = JackPublisher<Value>.Storage
 
     @propertyWrapper
     private final class Box {
@@ -114,14 +114,14 @@ public struct Jacked<Value : Jackable> : _TrackableProperty {
     /// The property for which this instance exposes a publisher.
     ///
     /// The `projectedValue` is the property accessed with the `$` operator.
-    public var projectedValue: JackedPublisher<Value> {
+    public var projectedValue: JackPublisher<Value> {
         mutating get {
             return getPublisher()
         }
         set { // swiftlint:disable:this unused_setter_value
             switch storage {
             case .value(let value):
-                storage = .publisher(JackedPublisher(value))
+                storage = .publisher(JackPublisher(value))
             case .publisher:
                 break
             }
@@ -129,10 +129,10 @@ public struct Jacked<Value : Jackable> : _TrackableProperty {
     }
 
     /// Note: This method can mutate `storage`
-    fileprivate func getPublisher() -> JackedPublisher<Value> {
+    fileprivate func getPublisher() -> JackPublisher<Value> {
         switch storage {
         case .value(let value):
-            let publisher = JackedPublisher(value)
+            let publisher = JackPublisher(value)
             storage = .publisher(publisher)
             return publisher
         case .publisher(let publisher):
@@ -163,7 +163,7 @@ public struct Jacked<Value : Jackable> : _TrackableProperty {
         set {
             switch object[keyPath: storageKeyPath].storage {
             case .value:
-                object[keyPath: storageKeyPath].storage = .publisher(JackedPublisher(newValue))
+                object[keyPath: storageKeyPath].storage = .publisher(JackPublisher(newValue))
             case .publisher(let publisher):
                 publisher.subject.value = newValue
             }
@@ -202,7 +202,7 @@ extension Jacked: _JackableProperty where Value : Jackable {
                 case .value(let value):
                     var v = value
                     try v.setJX(value: newValue, in: context)
-                    storage = .publisher(JackedPublisher(v))
+                    storage = .publisher(JackPublisher(v))
                 case .publisher(let publisher):
                     try publisher.subject.value.setJX(value: newValue, in: context)
                 }
@@ -396,18 +396,18 @@ extension Data : Jackable {
             // copy the array manually
             let length = value["length"]
 
-            guard length.isNumber, let count = length.numberValue, let max = Int(exactly: count) else {
+            guard length.isNumber, let count = length.numberValue, let max = UInt32(exactly: count) else {
                 throw JackError.valueNotArray(value, .init(context: context))
             }
 
             let data: [UInt8] = try (0..<max).map { index in
                 let element = value[index]
                 guard element.isNumber, let num = element.numberValue else {
-                    throw JackError.dataElementNotNumber(index, value, .init(context: context))
+                    throw JackError.dataElementNotNumber(Int(index), value, .init(context: context))
                 }
 
                 guard num <= .init(UInt8.max), num >= .init(UInt8.min), let byte = UInt8(exactly: num) else {
-                    throw JackError.dataElementOutOfRange(index, value, .init(context: context))
+                    throw JackError.dataElementOutOfRange(Int(index), value, .init(context: context))
                 }
 
                 return byte

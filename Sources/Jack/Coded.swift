@@ -18,7 +18,7 @@ public struct Coded<Value : Codable> : _TrackableProperty, _JackableProperty {
     /// The key that will be used to export the instance; a nil key will prevent export.
     internal let encoder: JSONEncoder
 
-    typealias Storage = JackedPublisher<Value>.Storage
+    typealias Storage = JackPublisher<Value>.Storage
 
     @propertyWrapper
     private final class Box {
@@ -74,14 +74,14 @@ public struct Coded<Value : Codable> : _TrackableProperty, _JackableProperty {
     /// The property for which this instance exposes a publisher.
     ///
     /// The `projectedValue` is the property accessed with the `$` operator.
-    public var projectedValue: JackedPublisher<Value> {
+    public var projectedValue: JackPublisher<Value> {
         mutating get {
             return getPublisher()
         }
         set { // swiftlint:disable:this unused_setter_value
             switch storage {
             case .value(let value):
-                storage = .publisher(JackedPublisher(value))
+                storage = .publisher(JackPublisher(value))
             case .publisher:
                 break
             }
@@ -89,10 +89,10 @@ public struct Coded<Value : Codable> : _TrackableProperty, _JackableProperty {
     }
 
     /// Note: This method can mutate `storage`
-    fileprivate func getPublisher() -> JackedPublisher<Value> {
+    fileprivate func getPublisher() -> JackPublisher<Value> {
         switch storage {
         case .value(let value):
-            let publisher = JackedPublisher(value)
+            let publisher = JackPublisher(value)
             storage = .publisher(publisher)
             return publisher
         case .publisher(let publisher):
@@ -123,7 +123,7 @@ public struct Coded<Value : Codable> : _TrackableProperty, _JackableProperty {
         set {
             switch object[keyPath: storageKeyPath].storage {
             case .value:
-                object[keyPath: storageKeyPath].storage = .publisher(JackedPublisher(newValue))
+                object[keyPath: storageKeyPath].storage = .publisher(JackPublisher(newValue))
             case .publisher(let publisher):
                 publisher.subject.value = newValue
             }
@@ -166,7 +166,7 @@ extension Coded {
             do {
                 switch _storage.wrappedValue {
                 case .value(_):
-                    storage = .publisher(JackedPublisher(try newValue.toDecodable(ofType: Value.self)))
+                    storage = .publisher(JackPublisher(try newValue.toDecodable(ofType: Value.self)))
                 case .publisher(let publisher):
                     publisher.subject.value = try newValue.toDecodable(ofType: Value.self)
                 }
