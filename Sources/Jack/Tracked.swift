@@ -5,7 +5,7 @@ import OpenCombineShim
 /// A value that is `@Published` but not available.
 ///
 /// - `Publisher.assign(to:)`
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+@available(macOS 11, iOS 13, tvOS 13, *)
 @propertyWrapper
 public struct Tracked<Value : Jackable> {
     /// The key that will be used to export the instance; a nil key will prevent export.
@@ -123,6 +123,6 @@ public struct Tracked<Value : Jackable> {
     }
 }
 
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+@available(macOS 11, iOS 13, tvOS 13, *)
 extension Tracked : _TrackableProperty {
 }

@@ -4,7 +4,7 @@ import Jack
 // MARK: JackPod
 
 /// A ``JackPod`` is a unit of native functionality that can be exported to a scripting environment via a ``JackedObject``.
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+@available(macOS 11, iOS 13, tvOS 13, *)
 public protocol JackPod : JackedObject {
     /// The metadata for this pod
     var metadata: JackPodMetaData { get }
@@ -20,13 +20,13 @@ extension JackPod {
     }
 }
 
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+@available(macOS 11, iOS 13, tvOS 13, *)
 public struct JackPodMetaData : Codable {
     public var homePage: URL
 }
 
 
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+@available(macOS 11, iOS 13, tvOS 13, *)
 final class JackPodTests: XCTestCase {
     func testTimersPod() async throws {
         let tp = TimersPod()
@@ -52,7 +52,7 @@ final class JackPodTests: XCTestCase {
 // setTimeout()
 // await sleep(123)
 
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+@available(macOS 11, iOS 13, tvOS 13, *)
 public class TimersPod : JackPod {
     public var metadata: JackPodMetaData {
         JackPodMetaData(homePage: URL(string: "https://www.example.com")!)
@@ -83,7 +83,7 @@ public class TimersPod : JackPod {
 
 // fs.mkdir('/tmp/dir')
 
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+@available(macOS 11, iOS 13, tvOS 13, *)
 public class FileSystemPod : JackPod {
     let fm: FileManager
 
@@ -117,7 +117,7 @@ public protocol ConsolePod : JackPod {
 // console.log('message…')
 
 /// A ``ConsolePod`` that stores messages in a buffer
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+@available(macOS 11, iOS 13, tvOS 13, *)
 public class CapturingConsolePod : JackPod, ConsolePod {
     public var metadata: JackPodMetaData {
         JackPodMetaData(homePage: URL(string: "https://www.example.com")!)
@@ -130,7 +130,7 @@ public class CapturingConsolePod : JackPod, ConsolePod {
 import OSLog
 
 /// A ``ConsolePod`` that forwards logged messages to the system consle
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+@available(macOS 11, iOS 13, tvOS 13, *)
 public class LoggingConsolePod : JackPod, ConsolePod {
     public var metadata: JackPodMetaData {
         JackPodMetaData(homePage: URL(string: "https://www.example.com")!)
@@ -148,7 +148,7 @@ public class LoggingConsolePod : JackPod, ConsolePod {
 #if canImport(FoundationNetworking)
 import FoundationNetworking
 
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+@available(macOS 11, iOS 13, tvOS 13, *)
 public class FetchPod : JackPod {
     public var metadata: JackPodMetaData {
         JackPodMetaData(homePage: URL(string: "https://www.example.com")!)
@@ -166,7 +166,7 @@ public class FetchPod : JackPod {
 #if canImport(CoreLocation)
 import CoreLocation
 
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+@available(macOS 11, iOS 13, tvOS 13, *)
 public class CoreLocationPod : JackPod {
     public var metadata: JackPodMetaData {
         JackPodMetaData(homePage: URL(string: "https://www.example.com")!)
@@ -185,7 +185,7 @@ public protocol CanvasPod : JackPod {
 #if canImport(CoreGraphics)
 import CoreGraphics
 
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+@available(macOS 11, iOS 13, tvOS 13, *)
 public class CoreGraphicsCanvasPod : JackPod, CanvasPod {
     public var metadata: JackPodMetaData {
         JackPodMetaData(homePage: URL(string: "https://www.example.com")!)
@@ -198,7 +198,7 @@ public class CoreGraphicsCanvasPod : JackPod, CanvasPod {
 #if canImport(SwiftUI)
 import SwiftUI
 
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+@available(macOS 11, iOS 13, tvOS 13, *)
 public class SwiftUICanvasPod : JackPod, CanvasPod {
     public var metadata: JackPodMetaData {
         JackPodMetaData(homePage: URL(string: "https://www.example.com")!)
@@ -219,7 +219,7 @@ public protocol DatabasePod : JackPod {
 #if canImport(SQLite3)
 import SQLite3
 
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+@available(macOS 11, iOS 13, tvOS 13, *)
 public class SQLLitePod : JackPod, DatabasePod {
     public var metadata: JackPodMetaData {
         JackPodMetaData(homePage: URL(string: "https://www.example.com")!)

@@ -53,7 +53,7 @@ public protocol Jackable : Conveyable {
 /// ### See Also
 ///
 /// - `Publisher.assign(to:)`
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+@available(macOS 11, iOS 13, tvOS 13, *)
 @propertyWrapper
 public struct Jacked<Value : Jackable> : _TrackableProperty {
     /// The key that will be used to export the instance; a nil key will prevent export.
@@ -177,7 +177,7 @@ public struct Jacked<Value : Jackable> : _TrackableProperty {
 
 
 // Jacked is always a _TrackableProperty, but is only a _JackableProperty when the embedded type is itself `Jackable`
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+@available(macOS 11, iOS 13, tvOS 13, *)
 extension Jacked: _JackableProperty where Value : Jackable {
     var exportedKey: String? { key }
 

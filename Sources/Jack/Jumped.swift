@@ -20,7 +20,7 @@ import OpenCombineShim
 /// ### See Also
 ///
 /// - `Publisher.assign(to:)`
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+@available(macOS 11, iOS 13, tvOS 13, *)
 @propertyWrapper
 public struct Jumped<O: JackedObject, U> : _JackableProperty {
     typealias JumpFunc = (_ context: JXContext, _ owner: AnyObject?) -> JXValue
@@ -68,7 +68,7 @@ private extension JXContext {
 // 3. synchronous Conveyable return
 // 4. asynchronous Conveyable return
 
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+@available(macOS 11, iOS 13, tvOS 13, *)
 extension Jumped {
     
     fileprivate static func createFunction<J: Conveyable>(block: @escaping (JXContext, AnyObject?, [JXValue]) throws -> J) -> JumpFunc {
@@ -129,7 +129,7 @@ extension Jumped {
 
 // MARK: Jumped Arity 0
 
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+@available(macOS 11, iOS 13, tvOS 13, *)
 extension Jumped {
     public init(wrappedValue f: @escaping (O) -> () throws -> U, _ key: String? = nil) where U : Conveyable {
         self.function = Self.createFunction() { ctx, owner, args in
@@ -162,7 +162,7 @@ extension Jumped {
 
 // MARK: Jumped Arity 1
 
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+@available(macOS 11, iOS 13, tvOS 13, *)
 extension Jumped {
     public init<X1: Conveyable>(wrappedValue f: @escaping (O) -> (X1) throws -> U, _ key: String? = nil) where U : Conveyable {
         self.function = Self.createFunction() { ctx, owner, args in
@@ -195,7 +195,7 @@ extension Jumped {
 
 // MARK: Jumped Arity 2
 
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+@available(macOS 11, iOS 13, tvOS 13, *)
 extension Jumped {
     public init<X1: Conveyable, X2: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2) throws -> U, _ key: String? = nil) where U : Conveyable {
         self.function = Self.createFunction() { ctx, owner, args in
@@ -228,7 +228,7 @@ extension Jumped {
 
 // MARK: Jumped Arity 3
 
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+@available(macOS 11, iOS 13, tvOS 13, *)
 extension Jumped {
     public init<X1: Conveyable, X2: Conveyable, X3: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2, X3) throws -> U, _ key: String? = nil) where U : Conveyable {
         self.function = Self.createFunction() { ctx, owner, args in
@@ -261,7 +261,7 @@ extension Jumped {
 
 // MARK: Jumped Arity 4
 
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+@available(macOS 11, iOS 13, tvOS 13, *)
 extension Jumped {
     public init<X1: Conveyable, X2: Conveyable, X3: Conveyable, X4: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4) throws -> U, _ key: String? = nil) where U : Conveyable {
         self.function = Self.createFunction() { ctx, owner, args in
@@ -294,7 +294,7 @@ extension Jumped {
 
 // MARK: Jumped Arity 5
 
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+@available(macOS 11, iOS 13, tvOS 13, *)
 extension Jumped {
     public init<X1: Conveyable, X2: Conveyable, X3: Conveyable, X4: Conveyable, X5: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5) throws -> U, _ key: String? = nil) where U : Conveyable {
         self.function = Self.createFunction() { ctx, owner, args in
@@ -327,7 +327,7 @@ extension Jumped {
 
 // MARK: Jumped Arity 6
 
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+@available(macOS 11, iOS 13, tvOS 13, *)
 extension Jumped {
     public init<X1: Conveyable, X2: Conveyable, X3: Conveyable, X4: Conveyable, X5: Conveyable, X6: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6) throws -> U, _ key: String? = nil) where U : Conveyable {
         self.function = Self.createFunction() { ctx, owner, args in
@@ -360,7 +360,7 @@ extension Jumped {
 
 // MARK: Jumped Arity 7
 
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+@available(macOS 11, iOS 13, tvOS 13, *)
 extension Jumped {
     public init<X1: Conveyable, X2: Conveyable, X3: Conveyable, X4: Conveyable, X5: Conveyable, X6: Conveyable, X7: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7) throws -> U, _ key: String? = nil) where U : Conveyable {
         self.function = Self.createFunction() { ctx, owner, args in
@@ -393,7 +393,7 @@ extension Jumped {
 
 // MARK: Jumped Arity 8
 
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+@available(macOS 11, iOS 13, tvOS 13, *)
 extension Jumped {
     public init<X1: Conveyable, X2: Conveyable, X3: Conveyable, X4: Conveyable, X5: Conveyable, X6: Conveyable, X7: Conveyable, X8: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7, X8) throws -> U, _ key: String? = nil) where U : Conveyable {
         self.function = Self.createFunction() { ctx, owner, args in
@@ -426,7 +426,7 @@ extension Jumped {
 
 // MARK: Jumped Arity 9
 
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+@available(macOS 11, iOS 13, tvOS 13, *)
 extension Jumped {
     public init<X1: Conveyable, X2: Conveyable, X3: Conveyable, X4: Conveyable, X5: Conveyable, X6: Conveyable, X7: Conveyable, X8: Conveyable, X9: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7, X8, X9) throws -> U, _ key: String? = nil) where U : Conveyable {
         self.function = Self.createFunction() { ctx, owner, args in
@@ -459,7 +459,7 @@ extension Jumped {
 
 // MARK: Jumped Arity 10
 
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+@available(macOS 11, iOS 13, tvOS 13, *)
 extension Jumped {
     public init<X1: Conveyable, X2: Conveyable, X3: Conveyable, X4: Conveyable, X5: Conveyable, X6: Conveyable, X7: Conveyable, X8: Conveyable, X9: Conveyable, X10: Conveyable>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7, X8, X9, X10) throws -> U, _ key: String? = nil) where U : Conveyable {
         self.function = Self.createFunction() { ctx, owner, args in

@@ -3,7 +3,7 @@
 import OpenCombineShim
 
 /// A publisher for properties marked with the `@Jacked` attribute.
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
+@available(macOS 11, iOS 13, tvOS 13, *)
 public struct JackPublisher<Value>: Publisher {
     public typealias Output = Value
     public typealias Failure = Never

@@ -3,7 +3,7 @@ import Jack
 import protocol OpenCombineShim.ObservableObject
 import struct OpenCombineShim.Published
 
-@available(macOS 10.15, macCatalyst 13, iOS 13, tvOS 13, watchOS 6, *)
+@available(macOS 11, iOS 13, tvOS 13, *)
 final class JackTests: XCTestCase {
     func testObservation() {
         class Contact : JackedObject {
