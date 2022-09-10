@@ -118,7 +118,7 @@ public protocol ConsolePod : JackPod {
 
 /// A ``ConsolePod`` that stores messages in a buffer
 @available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
-public class CaptureConsolePod : JackPod, ConsolePod {
+public class CapturingConsolePod : JackPod, ConsolePod {
     public var metadata: JackPodMetaData {
         JackPodMetaData(homePage: URL(string: "https://www.example.com")!)
     }
@@ -228,4 +228,3 @@ public class SQLLitePod : JackPod, DatabasePod {
     public lazy var podContext = Result { jack() }
 }
 #endif
-
