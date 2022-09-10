@@ -454,6 +454,7 @@ extension UUID : JSConvertable {
 
 // MARK: Date
 
+@available(macOS 10.15, macCatalyst 13, iOS 13, tvOS 13, watchOS 6, *)
 private let iso8601fmt: ISO8601DateFormatter = {
     let formatter = ISO8601DateFormatter()
     formatter.formatOptions = [.withFullDate]
