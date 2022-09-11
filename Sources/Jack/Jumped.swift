@@ -59,7 +59,7 @@ private extension JXContext {
     }
 
     func jarg<J: Conveyable>(_ index: Int, _ args: [JXValue]) throws -> J {
-        try J.makeJX(from: args.dropFirst(index).first ?? JXValue(nullIn: self), in: self)
+        try J.makeJX(from: args.dropFirst(index).first ?? self.null(), in: self)
     }
 }
 
@@ -85,7 +85,7 @@ extension Jumped {
         { context, owner in
             JXValue(newFunctionIn: context) { ctx, this, args in
                 try block(ctx, owner, args)
-                return JXValue(undefinedIn: ctx)
+                return ctx.undefined()
             }
         }
     }
@@ -98,10 +98,10 @@ extension Jumped {
                 Task.detached(priority: priority) {
                     do {
                         try await block(ctx, owner, args)
-                        try promise.resolveFunction.call(withArguments: [JXValue(undefinedIn: ctx)], this: this)
+                        try promise.resolveFunction.call(withArguments: [ctx.undefined()], this: this)
                     } catch {
                         // TODO: store the error so it can be retrieved from the stack
-                        try promise.rejectFunction.call(withArguments: [JXValue(newErrorFromMessage: "\(error)", in: ctx)], this: this)
+                        try promise.rejectFunction.call(withArguments: [ctx.error(error)], this: this)
                     }
                 }
 
@@ -120,7 +120,7 @@ extension Jumped {
                         let result = try await block(ctx, owner, args).getJX(from: ctx)
                         try promise.resolveFunction.call(withArguments: [result], this: this)
                     } catch {
-                        try promise.rejectFunction.call(withArguments: [JXValue(newErrorFromMessage: "\(error)", in: ctx)], this: this)
+                        try promise.rejectFunction.call(withArguments: [ctx.error(error)], this: this)
                     }
                 }
 

@@ -42,7 +42,7 @@ final class JackPodTests: XCTestCase {
             XCTFail("should not have succeeded")
         } catch {
             //XCTAssertEqual("Error: sleepDurationNaN", "\(error)")
-            XCTAssertEqual("jxerror([JXValue])", "\(error)")
+            XCTAssertEqual("Error: sleepDurationNaN", try (error as? JXError)?.stringValue)
         }
 
     }

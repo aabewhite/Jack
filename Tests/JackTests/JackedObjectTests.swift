@@ -305,7 +305,7 @@ final class JackedObjectTests: XCTestCase {
 
         let obj = JumpedObj()
 
-        XCTAssertEqual("[object Promise]", try obj.jsc.eval("new Promise((resolve, reject) => { resolve(1) })").stringValue)
+        XCTAssertEqual(true, try obj.jsc.eval("new Promise((resolve, reject) => { resolve(1) })").isPromise)
         XCTAssertEqual(true, try obj.jsc.eval("new Promise((resolve, reject) => { resolve(1) }).then").isFunction)
         XCTAssertEqual("[object Promise]", try obj.jsc.eval("new Promise((resolve, reject) => { resolve(1) }).then()").stringValue)
 
@@ -316,35 +316,20 @@ final class JackedObjectTests: XCTestCase {
         XCTAssertEqual(true, try obj.jsc.eval("promise0()").isObject)
         XCTAssertEqual(false, try obj.jsc.eval("promise0()").isFunction)
 
-        do {
-            let lres = try await obj.jsc.eval("promise0()", priority: .high)
-            XCTAssertEqual(13, try lres.numberValue)
-        }
+        try with(await obj.jsc.eval("promise0()", priority: .high)) { XCTAssertEqual(13, try $0.numberValue) }
+        try with(await obj.jsc.eval("promise1(12)", priority: .high)) { XCTAssertEqual("12", try $0.stringValue) }
+        try with(await obj.jsc.eval("(async () => { return 999 })()", priority: .high)) { XCTAssertEqual(999, try $0.numberValue) }
 
         do {
-            let lres = try await obj.jsc.eval("promise1(12)", priority: .high)
-            XCTAssertEqual("12", try lres.stringValue)
-        }
-
-        do {
-            let l8r = try await obj.jsc.eval("(async () => { return 999 })()", priority: .high)
-            XCTAssertEqual(999, try l8r.numberValue)
-        } catch {
-            XCTFail("\(error)")
-        }
-
-        do {
-            try await obj.jsc.eval("999", priority: .high)
-            XCTFail("should not have been able to async invoke a sync function")
+            try with(await obj.jsc.eval("999", priority: .high)) { _ in XCTFail("should not have been able to async invoke a sync function") }
         } catch {
             XCTAssertEqual("asyncEvalMustReturnPromise", "\(error)")
         }
 
         do {
-            let l8r = try await obj.jsc.eval("(async () => { throw Error('async error') })()", priority: .high)
-            XCTFail("should have thrown: \(l8r)")
+            try with(await obj.jsc.eval("(async () => { throw Error('async error') })()", priority: .high)) { XCTFail("should have thrown: \($0)") }
         } catch {
-            XCTAssertEqual("jxerror([JXValue])", "\(error)")
+            XCTAssertEqual("Error: async error", try (error as? JXError)?.stringValue)
         }
 
         try await obj.jsc.eval("sleepTask(0.1)", priority: .medium)
@@ -428,6 +413,37 @@ final class JackedObjectTests: XCTestCase {
         try obj.jsc.eval("bye()")
         try obj.jsc.eval("byebye()")
     }
+
+    func testActors() async throws {
+        @available(macOS 10.15, macCatalyst 13, iOS 13, tvOS 13, watchOS 6, *)
+        actor ActorDemo : JackedObject {
+            @Jacked var str = ""
+            @Jacked var num = 0
+
+            // Errors when trying to use the async function:
+            // Generic parameter 'O' could not be inferred
+            // No exact matches in call to initializer
+            // Reference: Actor-isolated instance method 'func0()' can not be partially applied
+            // @Jumped("func0") private var _func0 = func0
+            // func func0() -> UUID { .rnd() }
+
+            lazy var jsc = jack()
+        }
+
+        let actor = ActorDemo()
+
+        // let func0: (@Sendable () -> UUID) = actor.func0 // Actor-isolated instance method 'func0()' can not be partially applied
+
+        with(try await actor.jsc.eval("str").stringValue) { XCTAssertEqual("", $0) }
+        try await actor.jsc.eval("str = 'xy' + 'z'")
+        with(try await actor.jsc.eval("str").stringValue) { XCTAssertEqual("xyz", $0) }
+    }
+}
+
+
+/// Helper function to assist with the lack of async support in XCTAssertEqual functions
+private func with<T, U>(_ x: T, f: (T) throws -> U) rethrows -> U {
+    try f(x)
 }
 
 // MARK: Testing protocols
@@ -501,19 +517,6 @@ extension Int32 : JSConvertable {
     var js: String {
         self.description
     }
-}
-
-@available(macOS 10.15, macCatalyst 13, iOS 13, tvOS 13, watchOS 6, *)
-actor ActorDemo : JackedObject {
-    @Jacked var xxx = ""
-
-    // Errors when trying to use the async function:
-    // Generic parameter 'O' could not be inferred
-    // No exact matches in call to initializer
-//    @Jumped("func0") private var _func0 = func0
-//    func func0() -> UUID { .rnd() }
-
-    lazy var jsc = jack()
 }
 
 /// A generic jumpable type that represents functions with all the possible arities.

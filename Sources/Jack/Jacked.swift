@@ -238,7 +238,7 @@ extension Bool : Jackable {
     }
 
     public func getJX(from context: JXContext) -> JXValue {
-        JXValue(bool: self, in: context)
+        context.boolean(self)
     }
 }
 
@@ -249,7 +249,7 @@ extension String : Jackable {
     }
 
     public func getJX(from context: JXContext) -> JXValue {
-        JXValue(string: self, in: context)
+        context.string(self)
     }
 }
 
@@ -264,7 +264,7 @@ extension BinaryInteger where Self : _ExpressibleByBuiltinIntegerLiteral {
     }
 
     func _getJX(from context: JXContext) -> JXValue {
-        JXValue(double: Double(self), in: context)
+        context.number(self)
     }
 }
 
@@ -324,7 +324,7 @@ extension BinaryFloatingPoint where Self : ExpressibleByFloatLiteral {
     }
 
     func _getJX(from context: JXContext) -> JXValue {
-        JXValue(double: Double(self), in: context)
+        context.number(self)
     }
 }
 
@@ -358,11 +358,10 @@ extension Array : Jackable, Conveyable where Element : Conveyable {
     }
 
     public func getJX(from context: JXContext) throws -> JXValue {
-        try JXValue(newArrayIn: context, values: self.map({ x in
+        try context.array(self.map({ x in
             try x.getJX(from: context)
         }))
     }
-
 }
 
 
@@ -376,7 +375,7 @@ extension Date : Jackable {
     }
 
     public func getJX(from context: JXContext) throws -> JXValue {
-        try JXValue(date: self, in: context)
+        try context.date(self)
     }
 }
 #endif
