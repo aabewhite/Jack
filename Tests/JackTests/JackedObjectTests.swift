@@ -503,6 +503,7 @@ extension Int32 : JSConvertable {
     }
 }
 
+@available(macOS 10.15, macCatalyst 13, iOS 13, tvOS 13, watchOS 6, *)
 actor ActorDemo : JackedObject {
     @Jacked var xxx = ""
     //@Jumped("func0") private var _func0 = func0
