@@ -175,15 +175,24 @@ public class FetchPod : JackPod {
 import CoreLocation
 
 @available(macOS 11, iOS 13, tvOS 13, *)
-public class CoreLocationPod : JackPod {
+public class CoreLocationPod : NSObject, CLLocationManagerDelegate, JackPod {
     private let manager: CLLocationManager
 
     public init(manager: CLLocationManager = CLLocationManager()) {
         self.manager = manager
+        manager.delegate = self
     }
 
     public var metadata: JackPodMetaData {
         JackPodMetaData(homePage: URL(string: "https://www.example.com")!)
+    }
+
+    func currentLocation() async throws -> Bool {
+        manager.requestLocation()
+    }
+
+    public func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        <#code#>
     }
 
     public lazy var podContext = Result { jack() }

@@ -13,13 +13,34 @@ envrionment.
 Jack provides the following property wrappers that can be
 used within a ``JackedObject``.
 
-### @``Tracked``
+### @Tracked
 
-### @``Jacked``
+A ``Tracked`` property is the equivalent to the ``Published``
+property for the ``ObservableObject`` conformance of a ``JackedObject``.
+Note that it is not possible to use ``Published`` in ``JackedObject``,
+so ``Tracked`` provides equivalent functionality and works transparently
+as an ``ObservableObject``, such as in a SwiftUI ``EnvironmentObject``.
 
-### @``Coded``
+### @Jacked
 
-### @``Jumped``
+A ``Jacked`` propery is published (like the ``Tracked`` wrapped), and it is
+additionally exposed the the ``JXContext`` as a property. Properties
+can be get and set from within JavaScript as if they were regular
+properties of objects.
+
+The conforming types are numbers, strings, and booleans.
+For general support for other codable value types,
+use ``Coded``.
+
+### @Coded
+
+A ``Coded`` property is similar to ``Jacked``, but it passes objects
+back and forth between Swift and JavaScript by encoding its values.
+
+### @Jumped
+
+A ``Jumped`` proeprty applies to closure properties as a means
+of exposing Swift functions to the JavaScript environment.
 
 
 ## JackPod
