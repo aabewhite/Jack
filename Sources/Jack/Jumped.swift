@@ -1,6 +1,6 @@
 import OpenCombineShim
 
-/// A type that publishes a property with an exporte function to an associated ``JXKit\\JXContext``.
+/// A type that publishes a property with an exporte function to an associated ``JXContext``.
 ///
 /// Example:
 ///

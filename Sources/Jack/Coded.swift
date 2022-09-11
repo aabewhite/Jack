@@ -3,7 +3,7 @@ import class Foundation.JSONEncoder
 
 // MARK: Coded
 
-/// A type that publishes a property marked with an attribute and exports that property to an associated ``JXKit\\JXContext``
+/// A type that publishes a property marked with an attribute and exports that property to an associated ``JXContext``
 /// by serializing the codable type.
 ///
 /// Publishing a property with the `@Coded` attribute creates a publisher of this

@@ -1,6 +1,6 @@
 import OpenCombineShim
 
-/// A ``JackedObject`` is an ``ObservableObject`` with the ability to share their properties automatically with a ``JXKit\\JXContext``.
+/// A ``JackedObject`` is an ``ObservableObject`` with the ability to share their properties automatically with a ``JXContext``.
 /// This allows an embedded JavaScript context to access the properties and invoke the functions of the containing object.
 ///
 /// This type extends from ``JackedObject``, which is a type of object with a publisher that emits before the object has changed.
