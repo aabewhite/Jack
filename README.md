@@ -8,6 +8,8 @@ Jack
 
 Jack is a cross-platform Swift framework that enables a Combine (or OpenCombine) `ObservableObject` to expose and share its properties and functionality with an embedded JavaScriptCore runtime. 
 
+Browse the [API Documentation].
+
 This framework integrates transparently with SwiftUI's `EnvironmentObject` pattern, and so can be used to enhance existing `ObservableObject` instances with scriptable app-specific plug-ins.
 
 Consider an example ping-pong game between Swift and JavaScript:
@@ -133,6 +135,7 @@ These projects are used by Jack:
 
 [ProjectLink]: https://github.com/jectivex/Jack
 [ActionsLink]: https://github.com/jectivex/Jack/actions
+[API Documentation]: https://www.jective.org/Jack/documentation/jack/
 
 [Swift]: https://swift.org/
 [OpenCombine]: https://github.com/OpenCombine/OpenCombine
