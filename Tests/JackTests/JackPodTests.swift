@@ -178,8 +178,17 @@ import CoreLocation
 public class CoreLocationPod : NSObject, CLLocationManagerDelegate, JackPod {
     private let manager: CLLocationManager
 
+    @Jacked var locations: [Location] = []
+
+    public struct Location : Codable, Equatable, Conveyable {
+        public var latitude: Double
+        public var longitude: Double
+        public var altitude: Double
+    }
+
     public init(manager: CLLocationManager = CLLocationManager()) {
         self.manager = manager
+        super.init()
         manager.delegate = self
     }
 
@@ -187,12 +196,16 @@ public class CoreLocationPod : NSObject, CLLocationManagerDelegate, JackPod {
         JackPodMetaData(homePage: URL(string: "https://www.example.com")!)
     }
 
-    func currentLocation() async throws -> Bool {
+    func currentLocation() async throws {
         manager.requestLocation()
+        // TODO: handle responses in delegate
+        return try await withCheckedThrowingContinuation { c in
+            c.resume(throwing: CocoaError(.featureUnsupported))
+        }
     }
 
     public func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        <#code#>
+
     }
 
     public lazy var podContext = Result { jack() }
