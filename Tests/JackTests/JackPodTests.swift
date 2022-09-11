@@ -213,20 +213,20 @@ public class CoreGraphicsCanvasPod : JackPod, CanvasPod {
 #if canImport(SwiftUI)
 import SwiftUI
 
-@available(macOS 12, iOS 15, tvOS 15, *)
-public class SwiftUICanvasPod<Symbols : View> : JackPod, CanvasPod {
-    private let canvas: Canvas<Symbols>
-
-    public init(canvas: Canvas<Symbols>) {
-        self.canvas = canvas
-    }
-
-    public var metadata: JackPodMetaData {
-        JackPodMetaData(homePage: URL(string: "https://www.example.com")!)
-    }
-
-    public lazy var podContext = Result { jack() }
-}
+//@available(macOS 12, iOS 15, tvOS 15, *)
+//public class SwiftUICanvasPod<Symbols : SwiftUI.View> : JackPod, CanvasPod {
+//    private let canvas: Canvas<Symbols>
+//
+//    public init(canvas: Canvas<Symbols>) {
+//        self.canvas = canvas
+//    }
+//
+//    public var metadata: JackPodMetaData {
+//        JackPodMetaData(homePage: URL(string: "https://www.example.com")!)
+//    }
+//
+//    public lazy var podContext = Result { jack() }
+//}
 #endif
 
 

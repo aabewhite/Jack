@@ -506,8 +506,12 @@ extension Int32 : JSConvertable {
 @available(macOS 10.15, macCatalyst 13, iOS 13, tvOS 13, watchOS 6, *)
 actor ActorDemo : JackedObject {
     @Jacked var xxx = ""
-    //@Jumped("func0") private var _func0 = func0
-    func func0() -> UUID { .rnd() }
+
+    // Errors when trying to use the async function:
+    // Generic parameter 'O' could not be inferred
+    // No exact matches in call to initializer
+//    @Jumped("func0") private var _func0 = func0
+//    func func0() -> UUID { .rnd() }
 
     lazy var jsc = jack()
 }
