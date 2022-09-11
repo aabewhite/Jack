@@ -24,7 +24,7 @@ as an ``ObservableObject``, such as in a SwiftUI ``EnvironmentObject``.
 ### @Jacked
 
 A ``Jacked`` propery is published (like the ``Tracked`` wrapped), and it is
-additionally exposed the the ``JXContext`` as a property. Properties
+additionally exposed to the [JXContext] as a property. Properties
 can be get and set from within JavaScript as if they were regular
 properties of objects.
 
@@ -46,7 +46,11 @@ of exposing Swift functions to the JavaScript environment.
 ## JackPod
 
 A ``JackPod`` provides a set of native properties and functions
-that are exported to a ``JXContext``. It can be used to provide
+that are exported to a [JXContext]. It can be used to provide
 interfaces to the os logging, file system, and custom frameworks.
 It also bridges JavaScript and Swift concurrency primitivies, 
 to enable JavaScript's `await` to call back into a swift `async` function.
+
+
+[JXContext]: https://www.jective.org/JXKit/documentation/jxkit/jxcontext
+[JXValue]: https://www.jective.org/JXKit/documentation/jxkit/jxvalue
