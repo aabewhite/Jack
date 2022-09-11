@@ -33,9 +33,10 @@ public struct Jumped<O: JackedObject, U> : _JackableProperty {
         get {
             function(context, owner)
         }
-        nonmutating set {
-            context.currentError = JXValue(newErrorFromMessage: "cannot set a function from JS", in: context)
-        }
+    }
+
+    func setValue(_ newValue: JXValue, in context: JXContext, owner: AnyObject?) throws {
+        throw JackError.functionPropertyReadOnly(newValue, .init(context: context))
     }
 
     // swiftlint:disable let_var_whitespace
@@ -48,6 +49,7 @@ public struct Jumped<O: JackedObject, U> : _JackableProperty {
 }
 
 
+@available(macOS 11, iOS 13, tvOS 13, *)
 private extension JXContext {
     func casting<O>(_ value: AnyObject?) throws -> O {
         if let value = value as? O {
@@ -96,9 +98,10 @@ extension Jumped {
                 Task.detached(priority: priority) {
                     do {
                         try await block(ctx, owner, args)
-                        promise.resolveFunction.call(withArguments: [JXValue(undefinedIn: ctx)], this: this)
+                        try promise.resolveFunction.call(withArguments: [JXValue(undefinedIn: ctx)], this: this)
                     } catch {
-                        promise.rejectFunction.call(withArguments: [JXValue(newErrorFromMessage: "\(error)", in: ctx)], this: this)
+                        // TODO: store the error so it can be retrieved from the stack
+                        try promise.rejectFunction.call(withArguments: [JXValue(newErrorFromMessage: "\(error)", in: ctx)], this: this)
                     }
                 }
 
@@ -115,9 +118,9 @@ extension Jumped {
                 Task.detached(priority: priority) {
                     do {
                         let result = try await block(ctx, owner, args).getJX(from: ctx)
-                        promise.resolveFunction.call(withArguments: [result], this: this)
+                        try promise.resolveFunction.call(withArguments: [result], this: this)
                     } catch {
-                        promise.rejectFunction.call(withArguments: [JXValue(newErrorFromMessage: "\(error)", in: ctx)], this: this)
+                        try promise.rejectFunction.call(withArguments: [JXValue(newErrorFromMessage: "\(error)", in: ctx)], this: this)
                     }
                 }
 

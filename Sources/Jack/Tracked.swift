@@ -8,9 +8,6 @@ import OpenCombineShim
 @available(macOS 11, iOS 13, tvOS 13, *)
 @propertyWrapper
 public struct Tracked<Value : Jackable> {
-    /// The key that will be used to export the instance; a nil key will prevent export.
-    internal let key: String?
-
     typealias Storage = JackPublisher<Value>.Storage
 
     @propertyWrapper
@@ -46,8 +43,8 @@ public struct Tracked<Value : Jackable> {
     ///     @Tracked var lastUpdated: Date = Date()
     ///
     /// - Parameter wrappedValue: The publisher's initial value.
-    public init(initialValue: Value, _ key: String? = nil) {
-        self.init(wrappedValue: initialValue, key)
+    public init(initialValue: Value) {
+        self.init(wrappedValue: initialValue)
     }
 
     /// Creates the published instance with an initial value.
@@ -58,9 +55,8 @@ public struct Tracked<Value : Jackable> {
     ///     @Tracked var lastUpdated: Date = Date()
     ///
     /// - Parameter initialValue: The publisher's initial value.
-    public init(wrappedValue: Value, _ key: String? = nil) {
+    public init(wrappedValue: Value) {
         _storage = Box(wrappedValue: .value(wrappedValue))
-        self.key = key
     }
 
     /// The property for which this instance exposes a publisher.

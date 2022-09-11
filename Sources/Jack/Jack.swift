@@ -25,6 +25,7 @@ public struct JackPublisher<Value>: Publisher {
     }
 }
 
+@available(macOS 11, iOS 13, tvOS 13, *)
 public enum JackError : Error {
     /// The context in which the error occurred.
     public struct Context {
@@ -63,6 +64,7 @@ public enum JackError : Error {
     /// This can occur when the bound instance is not retained anywhere.
     case jumpContextInvalid(Context)
 
+    case functionPropertyReadOnly(_ value: JXValue, Context)
 }
 
 

@@ -98,11 +98,11 @@ public extension JackedObject {
             }
 
             let jprop = JXProperty(
-                getter: { [weak self] this in prop[in: context, self] },
-                setter: { [weak self] this, newValue in prop[in: context, self] = newValue  }
+                getter: { [weak self] this in try prop[in: context, self] },
+                setter: { [weak self] this, newValue in try prop.setValue(newValue, in: context, owner: self) }
             )
 
-            (object ?? context.global).defineProperty(key, jprop)
+            try! (object ?? context.global).defineProperty(key, jprop)
         }
         return context
     }
@@ -128,7 +128,9 @@ internal protocol _TrackableProperty : _ObservableObjectProperty {
 internal protocol _JackableProperty : _ObservableObjectProperty {
     var exportedKey: String? { get }
 
-    subscript(in context: JXContext, owner: AnyObject?) -> JXValue { get nonmutating set }
+    subscript(in context: JXContext, owner: AnyObject?) -> JXValue { get throws }
+
+    func setValue(_ newValue: JXValue, in context: JXContext, owner: AnyObject?) throws
 }
 
 @available(macOS 11, iOS 13, tvOS 13, *)

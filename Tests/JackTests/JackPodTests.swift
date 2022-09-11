@@ -7,16 +7,16 @@ import Jack
 @available(macOS 11, iOS 13, tvOS 13, *)
 public protocol JackPod : JackedObject {
     /// The metadata for this pod
-    var metadata: JackPodMetaData { get }
-    var podContext: Result<JXContext, Error> { get }
+    var metadata: JackPodMetaData { get async }
+    var podContext: Result<JXContext, Error> { get async }
 }
 
 @available(macOS 11, iOS 13, tvOS 13, *)
 extension JackPod {
     /// The primary context for the pod
     public var jsc: JXContext {
-        get throws {
-            try podContext.get()
+        get async throws {
+            try await podContext.get()
         }
     }
 }
@@ -41,7 +41,8 @@ final class JackPodTests: XCTestCase {
             try await tp.jsc.eval("sleep(NaN)", priority: .high)
             XCTFail("should not have succeeded")
         } catch {
-            XCTAssertEqual("Error: sleepDurationNaN", "\(error)")
+            //XCTAssertEqual("Error: sleepDurationNaN", "\(error)")
+            XCTAssertEqual("jxerror([JXValue])", "\(error)")
         }
 
     }
@@ -58,7 +59,6 @@ public class TimersPod : JackPod {
     public var metadata: JackPodMetaData {
         JackPodMetaData(homePage: URL(string: "https://www.example.com")!)
     }
-
 
     @Jumped("sleep") var _sleep = sleep
     func sleep(duration: TimeInterval) async throws {
@@ -152,6 +152,12 @@ import FoundationNetworking
 
 @available(macOS 11, iOS 13, tvOS 13, *)
 public class FetchPod : JackPod {
+    private let session: URLSession
+
+    public init(session: URLSession = .shared) {
+        self.session = session
+    }
+
     public var metadata: JackPodMetaData {
         JackPodMetaData(homePage: URL(string: "https://www.example.com")!)
     }
@@ -170,6 +176,12 @@ import CoreLocation
 
 @available(macOS 11, iOS 13, tvOS 13, *)
 public class CoreLocationPod : JackPod {
+    private let manager: CLLocationManager
+
+    public init(manager: CLLocationManager = CLLocationManager()) {
+        self.manager = manager
+    }
+
     public var metadata: JackPodMetaData {
         JackPodMetaData(homePage: URL(string: "https://www.example.com")!)
     }
@@ -201,8 +213,14 @@ public class CoreGraphicsCanvasPod : JackPod, CanvasPod {
 #if canImport(SwiftUI)
 import SwiftUI
 
-@available(macOS 11, iOS 13, tvOS 13, *)
-public class SwiftUICanvasPod : JackPod, CanvasPod {
+@available(macOS 12, iOS 15, tvOS 15, *)
+public class SwiftUICanvasPod<Symbols : View> : JackPod, CanvasPod {
+    private let canvas: Canvas<Symbols>
+
+    public init(canvas: Canvas<Symbols>) {
+        self.canvas = canvas
+    }
+
     public var metadata: JackPodMetaData {
         JackPodMetaData(homePage: URL(string: "https://www.example.com")!)
     }

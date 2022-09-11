@@ -11,7 +11,7 @@ import class Foundation.JSONEncoder
 ///
 @available(macOS 11, iOS 13, tvOS 13, *)
 @propertyWrapper
-public struct Coded<Value : Codable> : _TrackableProperty, _JackableProperty {
+public struct Coded<Value : Codable> : _TrackableProperty {
     /// The key that will be used to export the instance; a nil key will prevent export.
     internal let key: String?
 
@@ -144,35 +144,26 @@ private let defaultEncoder : JSONEncoder = {
 // This is similar to the OpenCombine implementation except we handle both `*Combine.Published` and `Jack.Jacked`
 
 @available(macOS 11, iOS 13, tvOS 13, *)
-extension Coded {
+extension Coded : _JackableProperty {
     var exportedKey: String? { key }
 
     subscript(in context: JXContext, owner: AnyObject?) -> JXValue {
-        get {
-            do {
-                switch _storage.wrappedValue {
-                case .value(let value):
-                    return try context.encode(value)
-                case .publisher(let publisher):
-                    return try context.encode(publisher.subject.value)
-                }
-            } catch {
-                context.currentError = JXValue(newErrorFromMessage: "\(error)", in: context)
-                return JXValue(nullIn: context)
+        get throws {
+            switch _storage.wrappedValue {
+            case .value(let value):
+                return try context.encode(value)
+            case .publisher(let publisher):
+                return try context.encode(publisher.subject.value)
             }
         }
+    }
 
-        nonmutating set {
-            do {
-                switch _storage.wrappedValue {
-                case .value(_):
-                    storage = .publisher(JackPublisher(try newValue.toDecodable(ofType: Value.self)))
-                case .publisher(let publisher):
-                    publisher.subject.value = try newValue.toDecodable(ofType: Value.self)
-                }
-            } catch {
-                context.currentError = JXValue(string: "\(error)", in: context)
-            }
+    func setValue(_ newValue: JXValue, in context: JXContext, owner: AnyObject?) throws {
+        switch _storage.wrappedValue {
+        case .value(_):
+            storage = .publisher(JackPublisher(try newValue.toDecodable(ofType: Value.self)))
+        case .publisher(let publisher):
+            publisher.subject.value = try newValue.toDecodable(ofType: Value.self)
         }
     }
 }
