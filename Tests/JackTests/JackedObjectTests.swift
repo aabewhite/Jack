@@ -468,6 +468,7 @@ extension Date : Randomizable {
     }
 }
 
+@available(macOS 10.15, macCatalyst 13, iOS 13, tvOS 13, watchOS 6, *)
 extension Date : JSConvertable {
     var js: String {
         "new Date('" + iso8601fmt.string(from: self) + "')"
