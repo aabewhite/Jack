@@ -190,8 +190,8 @@ These projects are used by Jack:
 
 [Swift]: https://swift.org/
 [OpenCombine]: https://github.com/OpenCombine/OpenCombine
-[Jack]: https://github.com/github/jectivex/Jack
-[JXKit]: https://github.com/github/jectivex/JXKit
+[Jack]: https://github.com/jectivex/Jack
+[JXKit]: https://github.com/jectivex/JXKit
 
 [GitHubActionBadge]: https://img.shields.io/github/workflow/status/jectivex/Jack/Jack%20CI
 
