@@ -7,18 +7,16 @@ import Jack
 @available(macOS 11, iOS 13, tvOS 13, *)
 public protocol JackPod : JackedObject {
     /// The metadata for this pod
-    var metadata: JackPodMetaData { get async }
-    var podContext: Result<JXContext, Error> { get async }
+    var metadata: JackPodMetaData { get }
+
+    /// The value in which the pod uses to expose its properties and methods.
+    var pod: JXValue { get }
 }
 
 @available(macOS 11, iOS 13, tvOS 13, *)
 extension JackPod {
-    /// The primary context for the pod
-    public var jsc: JXContext {
-        get async throws {
-            try await podContext.get()
-        }
-    }
+    /// The context for the pod.
+    public var jxc: JXContext { pod.env }
 }
 
 @available(macOS 11, iOS 13, tvOS 13, *)
@@ -31,20 +29,19 @@ public struct JackPodMetaData : Codable {
 final class JackPodTests: XCTestCase {
     func testTimersPod() async throws {
         let tp = TimersPod()
-        try await tp.jsc.eval("sleep()", priority: .high)
-        try await tp.jsc.eval("sleep(0)", priority: .high)
-        try await tp.jsc.eval("sleep(0, 1)", priority: .high)
-        try await tp.jsc.eval("sleep(0, 1.2, 'x')", priority: .high)
-        try await tp.jsc.eval("sleep(0.0000000001)", priority: .high)
+        try await tp.jxc.eval("sleep()", priority: .high)
+        try await tp.jxc.eval("sleep(0)", priority: .high)
+        try await tp.jxc.eval("sleep(0, 1)", priority: .high)
+        try await tp.jxc.eval("sleep(0, 1.2, 'x')", priority: .high)
+        try await tp.jxc.eval("sleep(0.0000000001)", priority: .high)
 
         do {
-            try await tp.jsc.eval("sleep(NaN)", priority: .high)
+            try await tp.jxc.eval("sleep(NaN)", priority: .high)
             XCTFail("should not have succeeded")
         } catch {
             //XCTAssertEqual("Error: sleepDurationNaN", "\(error)")
             XCTAssertEqual("Error: sleepDurationNaN", try (error as? JXError)?.stringValue)
         }
-
     }
 }
 
@@ -76,7 +73,7 @@ public class TimersPod : JackPod {
         case sleepDurationNegative
     }
 
-    public lazy var podContext = Result { jack() }
+    public lazy var pod = jack()
 }
 
 
@@ -96,7 +93,7 @@ public class FileSystemPod : JackPod {
         JackPodMetaData(homePage: URL(string: "https://www.example.com")!)
     }
 
-    public lazy var podContext = Result { jack() }
+    public lazy var pod = jack()
 
     @Jumped("fileExists") var _fileExists = fileExists
     func fileExists(atPath path: String) -> Bool {
@@ -125,7 +122,7 @@ public class CapturingConsolePod : JackPod, ConsolePod {
         JackPodMetaData(homePage: URL(string: "https://www.example.com")!)
     }
 
-    public lazy var podContext = Result { jack() }
+    public lazy var pod = jack()
 }
 
 #if canImport(OSLog)
@@ -138,7 +135,7 @@ public class LoggingConsolePod : JackPod, ConsolePod {
         JackPodMetaData(homePage: URL(string: "https://www.example.com")!)
     }
 
-    public lazy var podContext = Result { jack() }
+    public lazy var pod = jack()
 }
 #endif
 
@@ -162,7 +159,12 @@ public class FetchPod : JackPod {
         JackPodMetaData(homePage: URL(string: "https://www.example.com")!)
     }
 
-    public lazy var podContext = Result { jack() }
+    // TODO
+    func fetch(url: String) async throws -> Bool{
+
+    }
+
+    public lazy var pod = jack()
 }
 #endif
 
@@ -208,29 +210,10 @@ public class CoreLocationPod : NSObject, CLLocationManagerDelegate, JackPod {
 
     }
 
-    public lazy var podContext = Result { jack() }
+    public lazy var pod = jack()
 }
 #endif
 
-
-// MARK: CanvasPod
-
-@available(macOS 11, iOS 13, tvOS 13, *)
-public protocol CanvasPod : JackPod {
-}
-
-#if canImport(CoreGraphics)
-import CoreGraphics
-
-@available(macOS 11, iOS 13, tvOS 13, *)
-public class CoreGraphicsCanvasPod : JackPod, CanvasPod {
-    public var metadata: JackPodMetaData {
-        JackPodMetaData(homePage: URL(string: "https://www.example.com")!)
-    }
-
-    public lazy var podContext = Result { jack() }
-}
-#endif
 
 #if canImport(SwiftUI)
 import SwiftUI
@@ -247,7 +230,7 @@ import SwiftUI
 //        JackPodMetaData(homePage: URL(string: "https://www.example.com")!)
 //    }
 //
-//    public lazy var podContext = Result { jack() }
+//    public lazy var pod = jack()
 //}
 #endif
 
@@ -269,6 +252,6 @@ public class SQLLitePod : JackPod, DatabasePod {
         JackPodMetaData(homePage: URL(string: "https://www.example.com")!)
     }
 
-    public lazy var podContext = Result { jack() }
+    public lazy var pod = jack()
 }
 #endif

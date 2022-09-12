@@ -128,57 +128,57 @@ final class JackedObjectTests: XCTestCase {
             //@Jumped("atvoid11", priority: .low) private var _atvoid11 = atvoid11
             //func atvoid11(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int, i6: Int, i7: Int, i8: Int, i9: Int, i10: Int) async throws -> Void { }
 
-            lazy var jsc = jack()
+            lazy var jxc = jack().env
         }
 
 
         let obj = VoidReturns()
 
-        try obj.jsc.eval("void0()")
-        try obj.jsc.eval("tvoid0()")
-        try await obj.jsc.eval("atvoid0()", priority: .low)
+        try obj.jxc.eval("void0()")
+        try obj.jxc.eval("tvoid0()")
+        try await obj.jxc.eval("atvoid0()", priority: .low)
 
-        try obj.jsc.eval("void1(1)")
-        try obj.jsc.eval("tvoid1(1)")
-        try await obj.jsc.eval("atvoid1(1)", priority: .low)
+        try obj.jxc.eval("void1(1)")
+        try obj.jxc.eval("tvoid1(1)")
+        try await obj.jxc.eval("atvoid1(1)", priority: .low)
 
-        try obj.jsc.eval("void2(1, 2)")
-        try obj.jsc.eval("tvoid2(1, 2)")
-        try await obj.jsc.eval("atvoid2(1, 2)", priority: .low)
+        try obj.jxc.eval("void2(1, 2)")
+        try obj.jxc.eval("tvoid2(1, 2)")
+        try await obj.jxc.eval("atvoid2(1, 2)", priority: .low)
 
-        try obj.jsc.eval("void3(1, 2, 3)")
-        try obj.jsc.eval("tvoid3(1, 2, 3)")
-        try await obj.jsc.eval("atvoid3(1, 2, 3)", priority: .low)
+        try obj.jxc.eval("void3(1, 2, 3)")
+        try obj.jxc.eval("tvoid3(1, 2, 3)")
+        try await obj.jxc.eval("atvoid3(1, 2, 3)", priority: .low)
 
-        try obj.jsc.eval("void4(1, 2, 3, 4)")
-        try obj.jsc.eval("tvoid4(1, 2, 3, 4)")
-        try await obj.jsc.eval("atvoid4(1, 2, 3, 4)", priority: .low)
+        try obj.jxc.eval("void4(1, 2, 3, 4)")
+        try obj.jxc.eval("tvoid4(1, 2, 3, 4)")
+        try await obj.jxc.eval("atvoid4(1, 2, 3, 4)", priority: .low)
 
-        try obj.jsc.eval("void5(1, 2, 3, 4, 5)")
-        try obj.jsc.eval("tvoid5(1, 2, 3, 4, 5)")
-        try await obj.jsc.eval("atvoid5(1, 2, 3, 4, 5)", priority: .low)
+        try obj.jxc.eval("void5(1, 2, 3, 4, 5)")
+        try obj.jxc.eval("tvoid5(1, 2, 3, 4, 5)")
+        try await obj.jxc.eval("atvoid5(1, 2, 3, 4, 5)", priority: .low)
 
-        try obj.jsc.eval("void6(1, 2, 3, 4, 5, 6)")
-        try obj.jsc.eval("tvoid6(1, 2, 3, 4, 5, 6)")
-        try await obj.jsc.eval("atvoid6(1, 2, 3, 4, 5, 6)", priority: .low)
+        try obj.jxc.eval("void6(1, 2, 3, 4, 5, 6)")
+        try obj.jxc.eval("tvoid6(1, 2, 3, 4, 5, 6)")
+        try await obj.jxc.eval("atvoid6(1, 2, 3, 4, 5, 6)", priority: .low)
 
-        try obj.jsc.eval("void7(1, 2, 3, 4, 5, 6, 7)")
-        try obj.jsc.eval("tvoid7(1, 2, 3, 4, 5, 6, 7)")
-        try await obj.jsc.eval("atvoid7(1, 2, 3, 4, 5, 6, 7)", priority: .low)
+        try obj.jxc.eval("void7(1, 2, 3, 4, 5, 6, 7)")
+        try obj.jxc.eval("tvoid7(1, 2, 3, 4, 5, 6, 7)")
+        try await obj.jxc.eval("atvoid7(1, 2, 3, 4, 5, 6, 7)", priority: .low)
 
-        try obj.jsc.eval("void8(1, 2, 3, 4, 5, 6, 7, 8)")
-        try obj.jsc.eval("tvoid8(1, 2, 3, 4, 5, 6, 7, 8)")
-        try await obj.jsc.eval("atvoid8(1, 2, 3, 4, 5, 6, 7, 8)", priority: .low)
+        try obj.jxc.eval("void8(1, 2, 3, 4, 5, 6, 7, 8)")
+        try obj.jxc.eval("tvoid8(1, 2, 3, 4, 5, 6, 7, 8)")
+        try await obj.jxc.eval("atvoid8(1, 2, 3, 4, 5, 6, 7, 8)", priority: .low)
 
-        try obj.jsc.eval("void9(1, 2, 3, 4, 5, 6, 7, 8, 9)")
-        try obj.jsc.eval("tvoid9(1, 2, 3, 4, 5, 6, 7, 8, 9)")
-        try await obj.jsc.eval("atvoid9(1, 2, 3, 4, 5, 6, 7, 8, 9)", priority: .low)
+        try obj.jxc.eval("void9(1, 2, 3, 4, 5, 6, 7, 8, 9)")
+        try obj.jxc.eval("tvoid9(1, 2, 3, 4, 5, 6, 7, 8, 9)")
+        try await obj.jxc.eval("atvoid9(1, 2, 3, 4, 5, 6, 7, 8, 9)", priority: .low)
 
-        try obj.jsc.eval("void10(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)")
-        try obj.jsc.eval("tvoid10(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)")
-        try await obj.jsc.eval("atvoid10(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)", priority: .low)
+        try obj.jxc.eval("void10(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)")
+        try obj.jxc.eval("tvoid10(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)")
+        try await obj.jxc.eval("atvoid10(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)", priority: .low)
 
-        XCTAssertThrowsError(try obj.jsc.eval("void11(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)"))
+        XCTAssertThrowsError(try obj.jxc.eval("void11(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)"))
     }
 
     func testJumpedSignatures() async throws {
@@ -223,63 +223,63 @@ final class JackedObjectTests: XCTestCase {
     private func jumpedTests<A: Conveyable & Randomizable & JSConvertable & Equatable, R: Conveyable & Randomizable & Equatable>(arg: A.Type, ret: R.Type) async throws {
         let obj = RandoJack<A, R>()
 
-        XCTAssertNotEqual(R.rnd(), try obj.jsc.eval("func0()").convey(in: obj.jsc))
-        XCTAssertNotEqual(R.rnd(), try obj.jsc.eval("tfunc0()").convey(in: obj.jsc))
-        try withExtendedLifetime(try await obj.jsc.eval("atfunc0()", priority: .low)) { x in
-            XCTAssertNotEqual(R.rnd(), try x.convey(in: obj.jsc))
+        XCTAssertNotEqual(R.rnd(), try obj.jxc.eval("func0()").convey(in: obj.jxc))
+        XCTAssertNotEqual(R.rnd(), try obj.jxc.eval("tfunc0()").convey(in: obj.jxc))
+        try withExtendedLifetime(try await obj.jxc.eval("atfunc0()", priority: .low)) { x in
+            XCTAssertNotEqual(R.rnd(), try x.convey(in: obj.jxc))
         }
 
         let p: TaskPriority = TaskPriority.high
 
         let a1 = A.rnd()
-        try obj.jsc.eval("func1(\(a1.js))")
-        try obj.jsc.eval("tfunc1(\(a1.js))")
-        try await obj.jsc.eval("atfunc1(\(a1.js))", priority: p)
+        try obj.jxc.eval("func1(\(a1.js))")
+        try obj.jxc.eval("tfunc1(\(a1.js))")
+        try await obj.jxc.eval("atfunc1(\(a1.js))", priority: p)
 
         let a2 = A.rnd()
-        try obj.jsc.eval("func2(\(a1.js), \(a2.js))")
-        try obj.jsc.eval("tfunc2(\(a1.js), \(a2.js))")
-        try await obj.jsc.eval("atfunc2(\(a1.js), \(a2.js))", priority: p)
+        try obj.jxc.eval("func2(\(a1.js), \(a2.js))")
+        try obj.jxc.eval("tfunc2(\(a1.js), \(a2.js))")
+        try await obj.jxc.eval("atfunc2(\(a1.js), \(a2.js))", priority: p)
 
         let a3 = A.rnd()
-        try obj.jsc.eval("func3(\(a1.js), \(a2.js), \(a3.js))")
-        try obj.jsc.eval("tfunc3(\(a1.js), \(a2.js), \(a3.js))")
-        try await obj.jsc.eval("atfunc3(\(a1.js), \(a2.js), \(a3.js))", priority: p)
+        try obj.jxc.eval("func3(\(a1.js), \(a2.js), \(a3.js))")
+        try obj.jxc.eval("tfunc3(\(a1.js), \(a2.js), \(a3.js))")
+        try await obj.jxc.eval("atfunc3(\(a1.js), \(a2.js), \(a3.js))", priority: p)
 
         let a4 = A.rnd()
-        try obj.jsc.eval("func4(\(a1.js), \(a2.js), \(a3.js), \(a4.js))")
-        try obj.jsc.eval("tfunc4(\(a1.js), \(a2.js), \(a3.js), \(a4.js))")
-        try await obj.jsc.eval("atfunc4(\(a1.js), \(a2.js), \(a3.js), \(a4.js))", priority: p)
+        try obj.jxc.eval("func4(\(a1.js), \(a2.js), \(a3.js), \(a4.js))")
+        try obj.jxc.eval("tfunc4(\(a1.js), \(a2.js), \(a3.js), \(a4.js))")
+        try await obj.jxc.eval("atfunc4(\(a1.js), \(a2.js), \(a3.js), \(a4.js))", priority: p)
 
         let a5 = A.rnd()
-        try obj.jsc.eval("func5(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js))")
-        try obj.jsc.eval("tfunc5(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js))")
-        try await obj.jsc.eval("atfunc5(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js))", priority: p)
+        try obj.jxc.eval("func5(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js))")
+        try obj.jxc.eval("tfunc5(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js))")
+        try await obj.jxc.eval("atfunc5(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js))", priority: p)
 
         let a6 = A.rnd()
-        try obj.jsc.eval("func6(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js))")
-        try obj.jsc.eval("tfunc6(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js))")
-        try await obj.jsc.eval("atfunc6(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js))", priority: p)
+        try obj.jxc.eval("func6(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js))")
+        try obj.jxc.eval("tfunc6(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js))")
+        try await obj.jxc.eval("atfunc6(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js))", priority: p)
 
         let a7 = A.rnd()
-        try obj.jsc.eval("func7(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js), \(a7.js))")
-        try obj.jsc.eval("tfunc7(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js), \(a7.js))")
-        try await obj.jsc.eval("atfunc7(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js), \(a7.js))", priority: p)
+        try obj.jxc.eval("func7(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js), \(a7.js))")
+        try obj.jxc.eval("tfunc7(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js), \(a7.js))")
+        try await obj.jxc.eval("atfunc7(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js), \(a7.js))", priority: p)
 
         let a8 = A.rnd()
-        try obj.jsc.eval("func8(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js), \(a7.js), \(a8.js))")
-        try obj.jsc.eval("tfunc8(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js), \(a7.js), \(a8.js))")
-        try await obj.jsc.eval("atfunc8(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js), \(a7.js), \(a8.js))", priority: p)
+        try obj.jxc.eval("func8(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js), \(a7.js), \(a8.js))")
+        try obj.jxc.eval("tfunc8(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js), \(a7.js), \(a8.js))")
+        try await obj.jxc.eval("atfunc8(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js), \(a7.js), \(a8.js))", priority: p)
 
         let a9 = A.rnd()
-        try obj.jsc.eval("func9(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js), \(a7.js), \(a8.js), \(a9.js))")
-        try obj.jsc.eval("tfunc9(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js), \(a7.js), \(a8.js), \(a9.js))")
-        try await obj.jsc.eval("atfunc9(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js), \(a7.js), \(a8.js), \(a9.js))", priority: p)
+        try obj.jxc.eval("func9(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js), \(a7.js), \(a8.js), \(a9.js))")
+        try obj.jxc.eval("tfunc9(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js), \(a7.js), \(a8.js), \(a9.js))")
+        try await obj.jxc.eval("atfunc9(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js), \(a7.js), \(a8.js), \(a9.js))", priority: p)
 
         let a10 = A.rnd()
-        try obj.jsc.eval("func10(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js), \(a7.js), \(a8.js), \(a9.js), \(a10.js))")
-        try obj.jsc.eval("tfunc10(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js), \(a7.js), \(a8.js), \(a9.js), \(a10.js))")
-        try await obj.jsc.eval("atfunc10(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js), \(a7.js), \(a8.js), \(a9.js), \(a10.js))", priority: p)
+        try obj.jxc.eval("func10(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js), \(a7.js), \(a8.js), \(a9.js), \(a10.js))")
+        try obj.jxc.eval("tfunc10(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js), \(a7.js), \(a8.js), \(a9.js), \(a10.js))")
+        try await obj.jxc.eval("atfunc10(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js), \(a7.js), \(a8.js), \(a9.js), \(a10.js))", priority: p)
     }
 
     func testJumpedAsync() async throws {
@@ -300,39 +300,39 @@ final class JackedObjectTests: XCTestCase {
                 return duration
             }
 
-            lazy var jsc = jack()
+            lazy var jxc = jack().env
         }
 
         let obj = JumpedObj()
 
-        XCTAssertEqual(true, try obj.jsc.eval("new Promise((resolve, reject) => { resolve(1) })").isPromise)
-        XCTAssertEqual(true, try obj.jsc.eval("new Promise((resolve, reject) => { resolve(1) }).then").isFunction)
-        XCTAssertEqual("[object Promise]", try obj.jsc.eval("new Promise((resolve, reject) => { resolve(1) }).then()").stringValue)
+        XCTAssertEqual(true, try obj.jxc.eval("new Promise((resolve, reject) => { resolve(1) })").isPromise)
+        XCTAssertEqual(true, try obj.jxc.eval("new Promise((resolve, reject) => { resolve(1) }).then").isFunction)
+        XCTAssertEqual("[object Promise]", try obj.jxc.eval("new Promise((resolve, reject) => { resolve(1) }).then()").stringValue)
 
-        XCTAssertEqual("function", try obj.jsc.eval("typeof promise0").stringValue)
-        XCTAssertEqual("[object CallbackObject]", try obj.jsc.eval("promise0").stringValue)
-        XCTAssertEqual("[object Promise]", try obj.jsc.eval("promise0()").stringValue)
+        XCTAssertEqual("function", try obj.jxc.eval("typeof promise0").stringValue)
+        XCTAssertEqual("[object CallbackObject]", try obj.jxc.eval("promise0").stringValue)
+        XCTAssertEqual("[object Promise]", try obj.jxc.eval("promise0()").stringValue)
 
-        XCTAssertEqual(true, try obj.jsc.eval("promise0()").isObject)
-        XCTAssertEqual(false, try obj.jsc.eval("promise0()").isFunction)
+        XCTAssertEqual(true, try obj.jxc.eval("promise0()").isObject)
+        XCTAssertEqual(false, try obj.jxc.eval("promise0()").isFunction)
 
-        try with(await obj.jsc.eval("promise0()", priority: .high)) { XCTAssertEqual(13, try $0.numberValue) }
-        try with(await obj.jsc.eval("promise1(12)", priority: .high)) { XCTAssertEqual("12", try $0.stringValue) }
-        try with(await obj.jsc.eval("(async () => { return 999 })()", priority: .high)) { XCTAssertEqual(999, try $0.numberValue) }
+        try with(await obj.jxc.eval("promise0()", priority: .high)) { XCTAssertEqual(13, try $0.numberValue) }
+        try with(await obj.jxc.eval("promise1(12)", priority: .high)) { XCTAssertEqual("12", try $0.stringValue) }
+        try with(await obj.jxc.eval("(async () => { return 999 })()", priority: .high)) { XCTAssertEqual(999, try $0.numberValue) }
 
         do {
-            try with(await obj.jsc.eval("999", priority: .high)) { _ in XCTFail("should not have been able to async invoke a sync function") }
+            try with(await obj.jxc.eval("999", priority: .high)) { _ in XCTFail("should not have been able to async invoke a sync function") }
         } catch {
             XCTAssertEqual("asyncEvalMustReturnPromise", "\(error)")
         }
 
         do {
-            try with(await obj.jsc.eval("(async () => { throw Error('async error') })()", priority: .high)) { XCTFail("should have thrown: \($0)") }
+            try with(await obj.jxc.eval("(async () => { throw Error('async error') })()", priority: .high)) { XCTFail("should have thrown: \($0)") }
         } catch {
             XCTAssertEqual("Error: async error", try (error as? JXError)?.stringValue)
         }
 
-        try await obj.jsc.eval("sleepTask(0.1)", priority: .medium)
+        try await obj.jxc.eval("sleepTask(0.1)", priority: .medium)
     }
 
     func testJumpedAsyncParams() async throws {
@@ -362,7 +362,7 @@ final class JackedObjectTests: XCTestCase {
             func goodbye1(x: Int) throws { print("goodbye1 called") }
 
 
-            lazy var jsc = jack()
+            lazy var jxc = jack().env
         }
 
         /// A sample of codable passing
@@ -374,44 +374,44 @@ final class JackedObjectTests: XCTestCase {
 
         let obj = JumpedObj()
 
-        XCTAssertEqual("function", try obj.jsc.eval("typeof h0").stringValue)
-        XCTAssertEqual("function", try obj.jsc.eval("typeof h1").stringValue)
-        XCTAssertEqual("undefined", try obj.jsc.eval("typeof h2").stringValue)
-        XCTAssertEqual("function", try obj.jsc.eval("typeof H2").stringValue)
+        XCTAssertEqual("function", try obj.jxc.eval("typeof h0").stringValue)
+        XCTAssertEqual("function", try obj.jxc.eval("typeof h1").stringValue)
+        XCTAssertEqual("undefined", try obj.jxc.eval("typeof h2").stringValue)
+        XCTAssertEqual("function", try obj.jxc.eval("typeof H2").stringValue)
 
 //        do {
-//            let x = try await obj.jsc.eval("sleep(1)", priority: .medium).booleanValue
+//            let x = try await obj.jxc.eval("sleep(1)", priority: .medium).booleanValue
 //            XCTAssertEqual(false, x)
 //        }
 
         do {
-            let x = try await obj.jsc.eval("h0()", priority: .medium).numberValue
+            let x = try await obj.jxc.eval("h0()", priority: .medium).numberValue
             XCTAssertEqual(1_234_000, x)
         }
 
         do {
-            let x = try await obj.jsc.eval("h1('x')", priority: .high).stringValue
+            let x = try await obj.jxc.eval("h1('x')", priority: .high).stringValue
             XCTAssertEqual("Hello x!", x)
         }
 
         do {
-            let x = try await obj.jsc.eval("H2('x', 9)", priority: .high).stringValue
+            let x = try await obj.jxc.eval("H2('x', 9)", priority: .high).stringValue
             XCTAssertEqual("Happy Birthday x, you are 9!", x)
         }
 
         do {
             let c = Coded(id: UUID(uuidString: "4991E2A0-DE05-4BB3-B502-42F7584C9973")!, str: "abc", num: 9)
-            let x = try await obj.jsc.eval("replicate({ id: '4991E2A0-DE05-4BB3-B502-42F7584C9973', str: 'abc', num: 9 }, 3)", priority: .high)
+            let x = try await obj.jxc.eval("replicate({ id: '4991E2A0-DE05-4BB3-B502-42F7584C9973', str: 'abc', num: 9 }, 3)", priority: .high)
             XCTAssertEqual([c, c, c], try x.toDecodable(ofType: Array<Coded>.self))
         }
 
         // make sure we are blocked from setting the function property from JS
-        XCTAssertThrowsError(try obj.jsc.eval("h0 = null")) { error in
+        XCTAssertThrowsError(try obj.jxc.eval("h0 = null")) { error in
             //XCTAssertEqual(#"evaluationErrorString("Error: cannot set a function from JS")"#, "\(error)")
         }
 
-        try obj.jsc.eval("bye()")
-        try obj.jsc.eval("byebye()")
+        try obj.jxc.eval("bye()")
+        try obj.jxc.eval("byebye()")
     }
 
     func testActors() async throws {
@@ -427,16 +427,16 @@ final class JackedObjectTests: XCTestCase {
             // @Jumped("func0") private var _func0 = func0
             // func func0() -> UUID { .rnd() }
 
-            lazy var jsc = jack()
+            lazy var jxc = jack().env
         }
 
         let actor = ActorDemo()
 
         // let func0: (@Sendable () -> UUID) = actor.func0 // Actor-isolated instance method 'func0()' can not be partially applied
 
-        with(try await actor.jsc.eval("str").stringValue) { XCTAssertEqual("", $0) }
-        try await actor.jsc.eval("str = 'xy' + 'z'")
-        with(try await actor.jsc.eval("str").stringValue) { XCTAssertEqual("xyz", $0) }
+        with(try await actor.jxc.eval("str").stringValue) { XCTAssertEqual("", $0) }
+        try await actor.jxc.eval("str = 'xy' + 'z'")
+        with(try await actor.jxc.eval("str").stringValue) { XCTAssertEqual("xyz", $0) }
     }
 }
 
@@ -635,5 +635,5 @@ private class RandoJack<A: Conveyable, ReturnType: Randomizable & Conveyable> : 
     @Jumped("atfunc10", priority: .low) private var _atfunc10 = atfunc10
     func atfunc10(i0: A, i1: A, i2: A, i3: A, i4: A, i5: A, i6: A, i7: A, i8: A, i9: A) async throws -> ReturnType { cast(i9)  }
 
-    lazy var jsc = jack()
+    lazy var jxc = jack().env
 }

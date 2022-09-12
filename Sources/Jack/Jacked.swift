@@ -342,6 +342,20 @@ extension Float : Jackable {
 }
 
 
+@available(macOS 11, iOS 13, tvOS 13, *)
+extension Optional : Jackable, Conveyable where Wrapped : Conveyable {
+    public static func makeJX(from value: JXValue, in context: JXContext) throws -> Self {
+        if value.isNull {
+            return .none
+        } else {
+            return try Wrapped.makeJX(from: value, in: context)
+        }
+    }
+
+    public func getJX(from context: JXContext) throws -> JXValue {
+        try self?.getJX(from: context) ?? context.null()
+    }
+}
 
 @available(macOS 11, iOS 13, tvOS 13, *)
 extension Array : Jackable, Conveyable where Element : Conveyable {

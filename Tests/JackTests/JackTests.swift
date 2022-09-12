@@ -3,28 +3,48 @@ import Jack
 import protocol OpenCombineShim.ObservableObject
 import struct OpenCombineShim.Published
 
+class AppleJack : JackedObject {
+    @Jacked var name: String
+    @Jacked var age: Int
+
+    /// An embedded `JXKit` script context that has access to the jacked properties and jumped functions
+    lazy var jxc = jack().env
+
+    init(name: String, age: Int) {
+        self.name = name
+        self.age = age
+    }
+
+    @Jumped("haveBirthday") var _haveBirthday = haveBirthday
+    func haveBirthday(count: Int? = nil) -> Int {
+        age += count ?? 1
+        return age
+    }
+
+    static func demo() throws {
+        let jackApp = AppleJack(name: "Jack Appleseed", age: 24)
+
+        let namejs = try jackApp.jxc.eval("name").stringValue
+        XCTAssertTrue(namejs == jackApp.name)
+
+        let agejs = try jackApp.jxc.eval("age").numberValue
+        XCTAssertTrue(agejs == Double(jackApp.age)) // JS numbers are always Double
+
+        XCTAssertTrue(jackApp.haveBirthday(count: 1) == 25) // direct Swift call
+        let newAge = try jackApp.jxc.eval("haveBirthday()").numberValue // script invocation
+        XCTAssertTrue(newAge == 26.0)
+        XCTAssertTrue(jackApp.age == 26)
+    }
+}
+
 @available(macOS 11, iOS 13, tvOS 13, *)
 final class JackTests: XCTestCase {
+    func testDemoCode() throws {
+        try AppleJack.demo()
+    }
+
     func testObservation() {
-        class Contact : JackedObject {
-            @Jacked var name: String
-            @Jacked var age: Int
-
-            lazy var jsc = jack()
-
-            init(name: String, age: Int) {
-                self.name = name
-                self.age = age
-            }
-
-            @Jumped("haveBirthday") var _haveBirthday = haveBirthday
-            func haveBirthday() -> Int {
-                age += 1
-                return age
-            }
-        }
-
-        let john = Contact(name: "John Appleseed", age: 24)
+        let john = AppleJack(name: "John Appleseed", age: 24)
 
         var changes = 0
         let cancellable = john.objectWillChange
@@ -35,10 +55,14 @@ final class JackTests: XCTestCase {
         XCTAssertEqual(25, john.haveBirthday())
         XCTAssertEqual(1, changes)
 
-        XCTAssertEqual(26, try john.jsc.eval("haveBirthday()").numberValue)
+        XCTAssertEqual(26, try john.jxc.eval("haveBirthday()").numberValue)
         XCTAssertEqual(2, changes)
 
         let _ = cancellable
+    }
+
+    func testAsyncStream() async throws {
+        let john = AppleJack(name: "John Appleseed", age: 24)
     }
 
     func testPingPongExample() throws {
@@ -59,12 +83,12 @@ final class JackTests: XCTestCase {
 
         class PingPongScripted : JackedObject {
             @Jacked var score = 0
-            private lazy var jsc = jack() // a JSContext bound to this instance
+            private lazy var jxc = jack().env // a JSContext bound to this instance
 
             /// - Returns: true if a point was scored
             func pong() throws -> Bool {
                 // evaluate the javascript with "score" as a readable/writable property
-                try jsc.eval("Math.random() > 0.5 ? this.score += 1 : false").booleanValue
+                try jxc.eval("Math.random() > 0.5 ? this.score += 1 : false").booleanValue
             }
         }
 
@@ -128,62 +152,62 @@ final class JackTests: XCTestCase {
 
         let _ = (obsvr1, obsvr3)
 
-        let jsc = obj.jack()
+        let jxc = obj.jack().env
 
-        XCTAssertEqual("number", try jsc.eval("typeof n").stringValue)
-        XCTAssertEqual("number", try jsc.eval("typeof f").stringValue)
-        XCTAssertEqual("boolean", try jsc.eval("typeof b").stringValue)
-        XCTAssertEqual("string", try jsc.eval("typeof s").stringValue)
+        XCTAssertEqual("number", try jxc.eval("typeof n").stringValue)
+        XCTAssertEqual("number", try jxc.eval("typeof f").stringValue)
+        XCTAssertEqual("boolean", try jxc.eval("typeof b").stringValue)
+        XCTAssertEqual("string", try jxc.eval("typeof s").stringValue)
 
         do {
-            XCTAssertEqual(1, try jsc.eval("n").numberValue)
-            try jsc.eval("n += 1")
+            XCTAssertEqual(1, try jxc.eval("n").numberValue)
+            try jxc.eval("n += 1")
             XCTAssertEqual(2, obj.integer)
-            try jsc.eval("n += 1")
+            try jxc.eval("n += 1")
             XCTAssertEqual(3, obj.integer)
         }
 
         do {
-            try jsc.eval("n = 9.12323")
+            try jxc.eval("n = 9.12323")
             XCTAssertEqual(9, obj.integer)
-            XCTAssertEqual(9, try jsc.eval("n").numberValue)
+            XCTAssertEqual(9, try jxc.eval("n").numberValue)
         }
 
         do {
             changes = 0
             XCTAssertEqual(0, changes)
 
-            try jsc.eval("s = 1.2") // should be able to set string from number, as per JS coercion
+            try jxc.eval("s = 1.2") // should be able to set string from number, as per JS coercion
             XCTAssertEqual("1.2", obj.string)
             XCTAssertEqual(1, changes) // even though it threw an error, it will still trigger the `objectWillChange`, since that is invoked before the attempt
 
-            try jsc.eval("s = 'x'")
+            try jxc.eval("s = 'x'")
             XCTAssertEqual("x", obj.string)
             XCTAssertEqual(2, changes)
 
-            try jsc.eval("s = 'abc' + 123")
+            try jxc.eval("s = 'abc' + 123")
             XCTAssertEqual("abc123", obj.string)
             XCTAssertEqual(3, changes)
         }
 
         do {
-            try jsc.eval("b = false")
+            try jxc.eval("b = false")
             XCTAssertEqual(false, obj.bool)
         }
 
         do {
-            try jsc.eval("b = true")
+            try jxc.eval("b = true")
             XCTAssertEqual(true, obj.bool)
         }
 
         do {
-            XCTAssertEqual(true, try jsc.eval("b").booleanValue)
+            XCTAssertEqual(true, try jxc.eval("b").booleanValue)
             obj.bool.toggle()
-            XCTAssertEqual(false, try jsc.eval("b").booleanValue)
+            XCTAssertEqual(false, try jxc.eval("b").booleanValue)
         }
 
         do {
-            XCTAssertThrowsError(try jsc.eval("n = 'x'")) // valueWasNotANumber
+            XCTAssertThrowsError(try jxc.eval("n = 'x'")) // valueWasNotANumber
         }
     }
 
@@ -204,21 +228,21 @@ final class JackTests: XCTestCase {
             changes += 1
         }
 
-        let jsc = obj.jack()
+        let jxc = obj.jack().env
 
         XCTAssertEqual(0, changes)
 
         do {
-            XCTAssertEqual(1, try jsc.eval("sup").numberValue)
+            XCTAssertEqual(1, try jxc.eval("sup").numberValue)
 
             XCTAssertEqual(0, changes)
-            try jsc.eval("sup += 1")
+            try jxc.eval("sup += 1")
             XCTAssertEqual(1, changes)
 
             XCTAssertEqual(2, obj.sup)
-            try jsc.eval("sup += 1")
+            try jxc.eval("sup += 1")
             XCTAssertEqual(3, obj.sup)
-            XCTAssertEqual(3, try jsc.eval("sup").numberValue)
+            XCTAssertEqual(3, try jxc.eval("sup").numberValue)
 
             XCTAssertEqual(2, changes)
         }
@@ -226,14 +250,14 @@ final class JackTests: XCTestCase {
         changes = 0
 
         do {
-            XCTAssertEqual(0, try jsc.eval("sub").numberValue)
+            XCTAssertEqual(0, try jxc.eval("sub").numberValue)
 
             XCTAssertEqual(0, changes)
-            try jsc.eval("sub += 1")
+            try jxc.eval("sub += 1")
             XCTAssertEqual(1, obj.sub)
-            try jsc.eval("sub += 1")
+            try jxc.eval("sub += 1")
             XCTAssertEqual(2, obj.sub)
-            XCTAssertEqual(2, try jsc.eval("sub").numberValue)
+            XCTAssertEqual(2, try jxc.eval("sub").numberValue)
 
             XCTAssertEqual(2, changes)
         }
@@ -278,36 +302,36 @@ final class JackTests: XCTestCase {
     func testJackedArray() throws {
         class JackedObj : JackedObject {
             @Jacked("sa") var stringArray = ["a", "b", "c"]
-            lazy var jsc = jack()
+            lazy var jxc = jack().env
         }
 
         let obj = JackedObj()
 
         do {
-            XCTAssertEqual("a,b,c", try obj.jsc.eval("sa").stringValue)
-            XCTAssertEqual(3, try obj.jsc.eval("sa.length").numberValue)
+            XCTAssertEqual("a,b,c", try obj.jxc.eval("sa").stringValue)
+            XCTAssertEqual(3, try obj.jxc.eval("sa.length").numberValue)
 
             XCTAssertEqual(["a", "b", "c"], obj.stringArray)
-            XCTAssertEqual(4, try obj.jsc.eval("sa.push('q')").numberValue)
+            XCTAssertEqual(4, try obj.jxc.eval("sa.push('q')").numberValue)
 
-            XCTAssertEqual("a,b,c", try obj.jsc.eval("sa").stringValue, "Array.push doesn't work")
+            XCTAssertEqual("a,b,c", try obj.jxc.eval("sa").stringValue, "Array.push doesn't work")
             XCTAssertEqual(["a", "b", "c"], obj.stringArray)
 
-            XCTAssertEqual(["q"], try obj.jsc.eval("sa = ['q']").array.map({ try $0.stringValue }))
+            XCTAssertEqual(["q"], try obj.jxc.eval("sa = ['q']").array.map({ try $0.stringValue }))
             XCTAssertEqual(["q"], obj.stringArray)
 
-            XCTAssertEqual([], try obj.jsc.eval("sa = []").array.map({ try $0.stringValue }))
+            XCTAssertEqual([], try obj.jxc.eval("sa = []").array.map({ try $0.stringValue }))
             XCTAssertEqual([], obj.stringArray)
 
-            try obj.jsc.eval("sa = [1]")
-            XCTAssertEqual("1", try obj.jsc.eval("sa").array.first?.stringValue)
-            try obj.jsc.eval("sa = [false]")
-            XCTAssertEqual(1, try obj.jsc.eval("sa").count)
-            try obj.jsc.eval("sa = [null]")
-            XCTAssertEqual("null", try obj.jsc.eval("sa").array.first?.stringValue)
+            try obj.jxc.eval("sa = [1]")
+            XCTAssertEqual("1", try obj.jxc.eval("sa").array.first?.stringValue)
+            try obj.jxc.eval("sa = [false]")
+            XCTAssertEqual(1, try obj.jxc.eval("sa").count)
+            try obj.jxc.eval("sa = [null]")
+            XCTAssertEqual("null", try obj.jxc.eval("sa").array.first?.stringValue)
 
-            XCTAssertEqual(2, try obj.jsc.eval("sa.push('x')").numberValue) // TODO: how to handle `Array.push`?
-            try obj.jsc.eval("let x = sa; sa = x")
+            XCTAssertEqual(2, try obj.jxc.eval("sa.push('x')").numberValue) // TODO: how to handle `Array.push`?
+            try obj.jxc.eval("let x = sa; sa = x")
             XCTAssertEqual(["null"], obj.stringArray)
         }
     }
@@ -315,7 +339,7 @@ final class JackTests: XCTestCase {
     func testJackedDate() throws {
         class JackedDate : JackedObject {
             @Jacked var date = Date(timeIntervalSince1970: 0)
-            lazy var jsc = jack()
+            lazy var jxc = jack().env
         }
 
         let obj = JackedDate()
@@ -323,23 +347,23 @@ final class JackTests: XCTestCase {
         XCTAssertEqual(Date(timeIntervalSince1970: 0), obj.date)
 
         // /home/runner/work/Jack/Jack/Tests/JackTests/JackTests.swift:132: error: JackTests.testJackedDate : XCTAssertEqual failed: ("Optional("Wed Dec 31 1969 19:00:00 GMT-0500 (Eastern Standard Time)")") is not equal to ("Optional("Thu Jan 01 1970 00:00:00 GMT+0000 (UTC)")") -
-        // XCTAssertEqual("Wed Dec 31 1969 19:00:00 GMT-0500 (Eastern Standard Time)", try obj.jsc.eval("date").stringValue)
+        // XCTAssertEqual("Wed Dec 31 1969 19:00:00 GMT-0500 (Eastern Standard Time)", try obj.jxc.eval("date").stringValue)
 
 
-        XCTAssertEqual(0, try obj.jsc.eval("date").numberValue)
+        XCTAssertEqual(0, try obj.jxc.eval("date").numberValue)
 
         obj.date = .distantPast
 
 #if os(Linux) // sigh
-        XCTAssertEqual(-62104233600000, try obj.jsc.eval("date").numberValue)
+        XCTAssertEqual(-62104233600000, try obj.jxc.eval("date").numberValue)
 #else
-        XCTAssertEqual(-62135596800000, try obj.jsc.eval("date").numberValue)
+        XCTAssertEqual(-62135596800000, try obj.jxc.eval("date").numberValue)
 #endif
 
         obj.date = .distantFuture
-        XCTAssertEqual(64092211200000, try obj.jsc.eval("date").numberValue)
+        XCTAssertEqual(64092211200000, try obj.jxc.eval("date").numberValue)
 
-        XCTAssertEqual(Date().timeIntervalSinceReferenceDate, try obj.jsc.eval("date = new Date()").dateValue?.timeIntervalSinceReferenceDate ?? 0, accuracy: 0.01, "date should agree")
+        XCTAssertEqual(Date().timeIntervalSinceReferenceDate, try obj.jxc.eval("date = new Date()").dateValue?.timeIntervalSinceReferenceDate ?? 0, accuracy: 0.01, "date should agree")
 
         // XCTAssertEqual(Data([1, 2, 3]), obj.data)
     }
@@ -347,33 +371,33 @@ final class JackTests: XCTestCase {
     func testJackedData() throws {
         class JackedData : JackedObject {
             @Jacked var data = Data()
-            lazy var jsc = jack()
+            lazy var jxc = jack().env
         }
 
         let obj = JackedData()
 
         XCTAssertEqual(Data(), obj.data)
-        XCTAssertEqual("1,2,3", try obj.jsc.eval("data = [1, 2, 3]").stringValue)
+        XCTAssertEqual("1,2,3", try obj.jxc.eval("data = [1, 2, 3]").stringValue)
         XCTAssertEqual(Data([1, 2, 3]), obj.data)
 
-        XCTAssertEqual(99, try obj.jsc.eval("data[0] = 99").numberValue)
+        XCTAssertEqual(99, try obj.jxc.eval("data[0] = 99").numberValue)
         XCTAssertNotEqual(99, obj.data.first, "array element assignment shouldn't work")
 
         // need to pad out the array before we can convert it to a buffer
-        XCTAssertThrowsError(try obj.jsc.eval("(new Int32Array(data))[0] = 99"))
+        XCTAssertThrowsError(try obj.jxc.eval("(new Int32Array(data))[0] = 99"))
 
         XCTAssertEqual(3, obj.data.count)
         obj.data.append(contentsOf: Data(repeating: 0, count: 8 - (obj.data.count % 8))) // pad the array
         XCTAssertEqual(8, obj.data.count)
 
-        XCTAssertEqual(99, try obj.jsc.eval("(new Int32Array(data))[0] = 99").numberValue)
+        XCTAssertEqual(99, try obj.jxc.eval("(new Int32Array(data))[0] = 99").numberValue)
         XCTAssertNotEqual(99, obj.data.first, "assignment through Int32Array should work")
 
-        XCTAssertEqual(999, try obj.jsc.eval("(new Int32Array(data))[7] = 999").numberValue)
+        XCTAssertEqual(999, try obj.jxc.eval("(new Int32Array(data))[7] = 999").numberValue)
         XCTAssertNotEqual(255, obj.data.last, "assignment to overflow value should round to byte")
 
         let oldData = Data(obj.data)
-        XCTAssertEqual(0, try obj.jsc.eval("(new Int32Array(data))[999] = 0").numberValue)
+        XCTAssertEqual(0, try obj.jxc.eval("(new Int32Array(data))[999] = 0").numberValue)
         XCTAssertEqual(oldData, obj.data, "assignment beyond bounds should have no effect")
     }
 
@@ -384,7 +408,7 @@ final class JackTests: XCTestCase {
         class JackedObj : JackedObject {
             @Jacked("c") var stringEnum = Compass.north
             @Jacked("d") var intEnum = Direction.left
-            lazy var jsc = jack()
+            lazy var jxc = jack().env
         }
 
         let obj = JackedObj()
@@ -392,19 +416,19 @@ final class JackTests: XCTestCase {
         do {
             XCTAssertEqual(.north, obj.stringEnum)
 
-            XCTAssertEqual("north", try obj.jsc.eval("c = 'north'").stringValue)
+            XCTAssertEqual("north", try obj.jxc.eval("c = 'north'").stringValue)
             XCTAssertEqual(.north, obj.stringEnum)
 
-            XCTAssertEqual("south", try obj.jsc.eval("c = 'south'").stringValue)
+            XCTAssertEqual("south", try obj.jxc.eval("c = 'south'").stringValue)
             XCTAssertEqual(.south, obj.stringEnum)
 
-            XCTAssertEqual("east", try obj.jsc.eval("c = 'east'").stringValue)
+            XCTAssertEqual("east", try obj.jxc.eval("c = 'east'").stringValue)
             XCTAssertEqual(.east, obj.stringEnum)
 
-            XCTAssertEqual("west", try obj.jsc.eval("c = 'west'").stringValue)
+            XCTAssertEqual("west", try obj.jxc.eval("c = 'west'").stringValue)
             XCTAssertEqual(.west, obj.stringEnum)
 
-            XCTAssertThrowsError(try obj.jsc.eval("c = 'northX'")) { error in
+            XCTAssertThrowsError(try obj.jxc.eval("c = 'northX'")) { error in
                 // the exception gets wrapped in a JXValue and then unwrapped as a string
                 //                if case JackError.rawInitializerFailed(let value, _) = error {
                 //                    XCTAssertEqual("northX", value.stringValue)
@@ -417,19 +441,19 @@ final class JackTests: XCTestCase {
         do {
             XCTAssertEqual(.left, obj.intEnum)
 
-            XCTAssertEqual(3, try obj.jsc.eval("d = 3").numberValue)
+            XCTAssertEqual(3, try obj.jxc.eval("d = 3").numberValue)
             XCTAssertEqual(.right, obj.intEnum)
 
-            XCTAssertEqual(0, try obj.jsc.eval("d = 0").numberValue)
+            XCTAssertEqual(0, try obj.jxc.eval("d = 0").numberValue)
             XCTAssertEqual(.up, obj.intEnum)
 
-            XCTAssertEqual(2, try obj.jsc.eval("d = 2").numberValue)
+            XCTAssertEqual(2, try obj.jxc.eval("d = 2").numberValue)
             XCTAssertEqual(.left, obj.intEnum)
 
-            XCTAssertEqual(1, try obj.jsc.eval("d = 1").numberValue)
+            XCTAssertEqual(1, try obj.jxc.eval("d = 1").numberValue)
             XCTAssertEqual(.down, obj.intEnum)
 
-            XCTAssertThrowsError(try obj.jsc.eval("d = 4")) { error in
+            XCTAssertThrowsError(try obj.jxc.eval("d = 4")) { error in
             }
             XCTAssertEqual(.down, obj.intEnum)
         }
@@ -439,28 +463,28 @@ final class JackTests: XCTestCase {
     func testJackedNumbers() throws {
         class JackedObj : JackedObject {
             @Jacked var dbl = 0.0
-            lazy var jsc = jack()
+            lazy var jxc = jack().env
         }
 
         let obj = JackedObj()
 
-        XCTAssertEqual(.pi, try obj.jsc.eval("dbl = Math.PI").numberValue)
+        XCTAssertEqual(.pi, try obj.jxc.eval("dbl = Math.PI").numberValue)
         XCTAssertEqual(3.141592653589793, obj.dbl)
 
-        XCTAssertEqual(2.718281828459045, try obj.jsc.eval("dbl = Math.E").numberValue)
+        XCTAssertEqual(2.718281828459045, try obj.jxc.eval("dbl = Math.E").numberValue)
         XCTAssertEqual(2.718281828459045, obj.dbl)
 
-        XCTAssertEqual(sqrt(2.0), try obj.jsc.eval("dbl = Math.sqrt(2)").numberValue)
+        XCTAssertEqual(sqrt(2.0), try obj.jxc.eval("dbl = Math.sqrt(2)").numberValue)
         XCTAssertEqual(1.4142135623730951, obj.dbl)
 
-        try obj.jsc.eval("dbl = Math.sqrt(-1)")
+        try obj.jxc.eval("dbl = Math.sqrt(-1)")
         XCTAssertTrue(obj.dbl.isNaN)
     }
 
     func testJugglable() throws {
         class JackedCode : JackedObject {
             @Coded var info = SomeInfo(str: "XYZ", int: 123, extra: SomeInfo.ExtraInfo(dbl: 1.2, strs: ["A", "B", "C"]))
-            lazy var jsc = jack()
+            lazy var jxc = jack().env
 
             struct SomeInfo : Codable, Equatable {
                 var str: String?
@@ -477,30 +501,30 @@ final class JackTests: XCTestCase {
         let obj = JackedCode()
 
         XCTAssertEqual("XYZ", obj.info.str)
-        XCTAssertEqual("XYZ", try obj.jsc.eval("info.str").stringValue)
+        XCTAssertEqual("XYZ", try obj.jxc.eval("info.str").stringValue)
 
         XCTAssertEqual(123, obj.info.int)
-        XCTAssertEqual(123, try obj.jsc.eval("info.int").numberValue)
+        XCTAssertEqual(123, try obj.jxc.eval("info.int").numberValue)
 
         XCTAssertEqual("A", obj.info.extra?.strs?[0])
-        XCTAssertEqual("A", try obj.jsc.eval("info.extra.strs[0]").stringValue)
+        XCTAssertEqual("A", try obj.jxc.eval("info.extra.strs[0]").stringValue)
 
-        XCTAssertEqual("QRS", try obj.jsc.eval("info.str = 'QRS'").stringValue)
+        XCTAssertEqual("QRS", try obj.jxc.eval("info.str = 'QRS'").stringValue)
         XCTAssertNotEqual("QRS", obj.info.str, "known shortcoming: setting through struct properties doesn't work")
 
-        XCTAssertEqual("[object Object]", try obj.jsc.eval("var i = info; i.str = 'QRS'; info = i").stringValue)
+        XCTAssertEqual("[object Object]", try obj.jxc.eval("var i = info; i.str = 'QRS'; info = i").stringValue)
         XCTAssertEqual("QRS", obj.info.str)
 
-        XCTAssertEqual(0, try obj.jsc.eval("info = { }").dictionary?.keys.count)
+        XCTAssertEqual(0, try obj.jxc.eval("info = { }").dictionary?.keys.count)
         XCTAssertEqual(.init(), obj.info)
 
-        XCTAssertEqual(1, try obj.jsc.eval("info = { str: 'abc' }").dictionary?.keys.count)
+        XCTAssertEqual(1, try obj.jxc.eval("info = { str: 'abc' }").dictionary?.keys.count)
         XCTAssertEqual(.init(str: "abc"), obj.info)
 
-        XCTAssertEqual(2, try obj.jsc.eval("info = { str: 'abc', int: 2 }").dictionary?.keys.count)
+        XCTAssertEqual(2, try obj.jxc.eval("info = { str: 'abc', int: 2 }").dictionary?.keys.count)
         XCTAssertEqual(.init(str: "abc", int: 2), obj.info)
 
-        XCTAssertEqual(3, try obj.jsc.eval("info = { str: 'abc', int: 2, extra: { strs: [ 'q', 'r', 's' ] } }").dictionary?.keys.count)
+        XCTAssertEqual(3, try obj.jxc.eval("info = { str: 'abc', int: 2, extra: { strs: [ 'q', 'r', 's' ] } }").dictionary?.keys.count)
         XCTAssertEqual(.init(str: "abc", int: 2, extra: .init(strs: ["q", "r", "s"])), obj.info)
 
     }
@@ -526,7 +550,7 @@ final class JackTests: XCTestCase {
                 var reason: String
             }
 
-            lazy var jsc = jack()
+            lazy var jxc = jack().env
         }
 
         /// A sample of codable passing
@@ -538,22 +562,22 @@ final class JackTests: XCTestCase {
 
         let obj = JumpedObj()
 
-        XCTAssertEqual("function", try obj.jsc.eval("typeof f0").stringValue)
-        XCTAssertEqual("function", try obj.jsc.eval("typeof f1").stringValue)
-        XCTAssertEqual("undefined", try obj.jsc.eval("typeof f2").stringValue, "f2 should be visible as F2")
-        XCTAssertEqual("function", try obj.jsc.eval("typeof F2").stringValue)
-        XCTAssertEqual("function", try obj.jsc.eval("typeof replicate").stringValue)
-        XCTAssertEqual("function", try obj.jsc.eval("typeof exceptional").stringValue)
+        XCTAssertEqual("function", try obj.jxc.eval("typeof f0").stringValue)
+        XCTAssertEqual("function", try obj.jxc.eval("typeof f1").stringValue)
+        XCTAssertEqual("undefined", try obj.jxc.eval("typeof f2").stringValue, "f2 should be visible as F2")
+        XCTAssertEqual("function", try obj.jxc.eval("typeof F2").stringValue)
+        XCTAssertEqual("function", try obj.jxc.eval("typeof replicate").stringValue)
+        XCTAssertEqual("function", try obj.jxc.eval("typeof exceptional").stringValue)
 
-        XCTAssertEqual(1_234_000, try obj.jsc.eval("f0()").numberValue)
-        XCTAssertEqual("Hello x!", try obj.jsc.eval("f1('x')").stringValue)
-        XCTAssertEqual("Happy Birthday x, you are 9!", try obj.jsc.eval("F2('x', 9)").stringValue)
+        XCTAssertEqual(1_234_000, try obj.jxc.eval("f0()").numberValue)
+        XCTAssertEqual("Hello x!", try obj.jxc.eval("f1('x')").stringValue)
+        XCTAssertEqual("Happy Birthday x, you are 9!", try obj.jxc.eval("F2('x', 9)").stringValue)
 
         let c = CodedCodable(id: UUID(uuidString: "4991E2A0-DE05-4BB3-B502-42F7584C9973")!, str: "abc", num: 9)
-        XCTAssertEqual([c, c, c], try obj.jsc.eval("replicate({ id: '4991E2A0-DE05-4BB3-B502-42F7584C9973', str: 'abc', num: 9 }, 3)").toDecodable(ofType: Array<CodedCodable>.self))
+        XCTAssertEqual([c, c, c], try obj.jxc.eval("replicate({ id: '4991E2A0-DE05-4BB3-B502-42F7584C9973', str: 'abc', num: 9 }, 3)").toDecodable(ofType: Array<CodedCodable>.self))
 
         // make sure we are blocked from setting the function property from JS
-        XCTAssertThrowsError(try obj.jsc.eval("f0 = null")) { error in
+        XCTAssertThrowsError(try obj.jxc.eval("f0 = null")) { error in
             //XCTAssertEqual(#"evaluationErrorString("Error: cannot set a function from JS")"#, "\(error)")
         }
 
@@ -561,25 +585,25 @@ final class JackTests: XCTestCase {
 
     func testAllPropertyWrappers() throws {
         class EnhancedObj : JackedObject {
-            @Tracked var x = 0 // unexported to jsc
+            @Tracked var x = 0 // unexported to jxc
             @Jacked var i = 1 // exported as number
             @Jacked("B") var b = false // exported as bool
             @Coded var id = UUID() // exported (via codability) as string
             @Jumped("now") private var _now = now // exported as function
             func now() -> Date { Date(timeIntervalSince1970: 1_234) }
 
-            lazy var jsc = jack()
+            lazy var jxc = jack().env
         }
 
         let obj = EnhancedObj()
 
-        XCTAssertEqual("undefined", try obj.jsc.eval("typeof x").stringValue)
-        XCTAssertEqual("number", try obj.jsc.eval("typeof i").stringValue)
-        XCTAssertEqual("undefined", try obj.jsc.eval("typeof b").stringValue) // aliased away
-        XCTAssertEqual("boolean", try obj.jsc.eval("typeof B").stringValue) // aliased
-        XCTAssertEqual("string", try obj.jsc.eval("typeof id").stringValue)
-        XCTAssertEqual("function", try obj.jsc.eval("typeof now").stringValue)
-        XCTAssertEqual("object", try obj.jsc.eval("typeof now()").stringValue)
-        XCTAssertEqual(1_234_000, try obj.jsc.eval("now()").numberValue)
+        XCTAssertEqual("undefined", try obj.jxc.eval("typeof x").stringValue)
+        XCTAssertEqual("number", try obj.jxc.eval("typeof i").stringValue)
+        XCTAssertEqual("undefined", try obj.jxc.eval("typeof b").stringValue) // aliased away
+        XCTAssertEqual("boolean", try obj.jxc.eval("typeof B").stringValue) // aliased
+        XCTAssertEqual("string", try obj.jxc.eval("typeof id").stringValue)
+        XCTAssertEqual("function", try obj.jxc.eval("typeof now").stringValue)
+        XCTAssertEqual("object", try obj.jxc.eval("typeof now()").stringValue)
+        XCTAssertEqual(1_234_000, try obj.jxc.eval("now()").numberValue)
     }
 }

@@ -6,9 +6,60 @@ Jack
 ![Platform][SwiftPlatforms]
 <!-- [![](https://tokei.rs/b1/github/jectivex/Jack)](https://github.com/jectivex/Jack) -->
 
-Jack is a cross-platform Swift framework that enables a Combine (or OpenCombine) `ObservableObject` to expose and share its properties and functionality with an embedded JavaScriptCore runtime. 
+Jack is a cross-platform framework that enables you to export
+properties of your Swift classes to an embedded JavaScript environment,
+enabling your app to provide scriptable extensions.
+
+```swift
+import Jack
+
+class AppleJack : JackedObject { 
+    @Jacked var name: String // exports the property to JS and acts as Combine.Published 
+    @Jacked var age: Int
+
+    /// An embedded `JXKit` script context that has access to the jacked properties and jumped functions
+    lazy var jxc = jack().env
+
+    init(name: String, age: Int) {
+        self.name = name
+        self.age = age
+    }
+
+    /// Functions are exported as method properties, and can be re-named for export
+    @Jumped("haveBirthday") var _haveBirthday = haveBirthday
+    func haveBirthday() -> Int {
+        age += 1
+        return age
+    }
+
+    static func demo() throws {
+        let aj = AppleJack(name: "Jack Appleseed", age: 24)
+
+        let namejs = try aj.jxc.eval("name").stringValue
+        assert(namejs == aj.name)
+
+        let agejs = try aj.jxc.eval("age").numberValue
+        assert(agejs == Double(aj.age)) // JS numbers are doubles
+
+        assert(aj.haveBirthday() == 25) // direct Swift call
+        let newAge = try aj.jxc.eval("haveBirthday()").numberValue // scripted method invocation
+
+        assert(newAge == 26.0)
+        assert(aj.age == 26)
+    }
+}
+```
 
 Browse the [API Documentation].
+
+Jack uses [JXKit](https://www.jective.org/JXKit/documentation/jxkit/)
+to provide a simple way to export your Swift properties
+and functions to an embedded JavaScript context.
+
+The framework is cross-platform (iOS/macOS/tvOS/Linux) and 
+can be used to export Swift instanced to a scripting
+envrionment.
+
 
 This framework integrates transparently with SwiftUI's `EnvironmentObject` pattern, and so can be used to enhance existing `ObservableObject` instances with scriptable app-specific plug-ins.
 
@@ -35,12 +86,12 @@ class PingPongNative : ObservableObject {
 // An enhanced scriptable ObservableObject
 class PingPongScripted : JackedObject {
     @Jacked var score = 0
-    private lazy var jsc = jack() // a JSContext bound to this instance
+    private lazy var jxc = jack() // a JXObject bound to this instance
 
     /// - Returns: true if a point was scored
     func pong() throws -> Bool {
         // evaluate the javascript with "score" as a readable/writable property
-        try jsc.eval("Math.random() > 0.5 ? this.score += 1 : false").booleanValue
+        try jsc.env.eval("Math.random() > 0.5 ? this.score += 1 : false").booleanValue
     }
 }
 

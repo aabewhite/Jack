@@ -1,5 +1,51 @@
 # ``Jack``
 
+Jack is a cross-platform framework that enables you to export
+properties of your Swift classes to an embedded JavaScript environment,
+enabling your app to provide scriptable extensions.
+
+```swift
+import Jack
+
+class AppleJack : JackedObject { 
+    @Jacked var name: String // exports the property to JS and acts as Combine.Published 
+    @Jacked var age: Int
+
+    /// An embedded `JXKit` script context that has access to the jacked properties and jumped functions
+    lazy var jxc = jack().env
+
+    init(name: String, age: Int) {
+        self.name = name
+        self.age = age
+    }
+
+    /// Functions are exported as method properties, and can be re-named for export
+    @Jumped("haveBirthday") var _haveBirthday = haveBirthday
+    func haveBirthday() -> Int {
+        age += 1
+        return age
+    }
+
+    static func demo() throws {
+        let jackApp = AppleJack(name: "Jack Appleseed", age: 24)
+
+        let namejs = try jackApp.jxc.eval("name").stringValue
+        assert(namejs == jackApp.name)
+
+        let agejs = try jackApp.jxc.eval("age").numberValue
+        assert(agejs == Double(jackApp.age)) // JS numbers are doubles
+
+        assert(jackApp.haveBirthday() == 25) // direct Swift call
+        let newAge = try jackApp.jxc.eval("haveBirthday()").numberValue // script invocation
+
+        assert(newAge == 26.0)
+        assert(jackApp.age == 26)
+    }
+}
+
+```
+
+
 Jack uses [JXKit](https://www.jective.org/JXKit/documentation/jxkit/)
 to provide a simple way to export your Swift properties
 and functions to an embedded JavaScript context.

@@ -6,29 +6,29 @@ import OpenCombineShim
 /// This type extends from ``JackedObject``, which is a type of object with a publisher that emits before the object has changed.
 ///
 ///     class EnhancedObj : JackedObject {
-///         @Tracked var x = 0 // unexported to jsc
+///         @Tracked var x = 0 // unexported to jxc
 ///         @Jacked var i = 1 // exported as number
 ///         @Jacked("B") var b = false // exported as bool
 ///         @Coded var id = UUID() // exported (via codability) as string
 ///         @Jumped("now") private var _now = now // exported as function
 ///         func now() -> Date { Date(timeIntervalSince1970: 1_234) }
 ///
-///         lazy var jsc = jack()
+///         lazy var jxc = jack()
 ///     }
 ///
 ///     let obj = EnhancedObj()
 ///
-///     try obj.jsc.eval("typeof x").stringValue == "undefined"
-///     try obj.jsc.eval("typeof i").stringValue == "number"
+///     try obj.jxc.env.eval("typeof x").stringValue == "undefined"
+///     try obj.jxc.env.eval("typeof i").stringValue == "number"
 ///
-///     try obj.jsc.eval("typeof b").stringValue == "undefined"
-///     try obj.jsc.eval("typeof B").stringValue == "boolean"
+///     try obj.jxc.env.eval("typeof b").stringValue == "undefined"
+///     try obj.jxc.env.eval("typeof B").stringValue == "boolean"
 ///
-///     try obj.jsc.eval("typeof id").stringValue == "string"
+///     try obj.jxc.env.eval("typeof id").stringValue == "string"
 ///
-///     try obj.jsc.eval("typeof now").stringValue == "function"
-///     try obj.jsc.eval("typeof now()").stringValue == "object"
-///     try obj.jsc.eval("now()").numberValue ==  1_234_000
+///     try obj.jxc.env.eval("typeof now").stringValue == "function"
+///     try obj.jxc.env.eval("typeof now()").stringValue == "object"
+///     try obj.jxc.env.eval("now()").numberValue ==  1_234_000
 ///
 /// In addition, a `JackedObject` synthesizes an `objectWillChange` publisher that
 /// emits the changed value before any of its wrapped properties changes.
@@ -37,7 +37,7 @@ import OpenCombineShim
 ///          @Jacked var name: String
 ///          @Jacked var age: Int
 ///
-///          lazy var jsc = jack()
+///          lazy var jxc = jack()
 ///
 ///          init(name: String, age: Int) {
 ///             self.name = name
@@ -62,7 +62,7 @@ import OpenCombineShim
 ///     XCTAssertEqual(25, john.haveBirthday())
 ///     XCTAssertEqual(1, changes)
 ///
-///     XCTAssertEqual(26, try john.jsc.eval("haveBirthday()").numberValue)
+///     XCTAssertEqual(26, try john.jxc.env.eval("haveBirthday()").numberValue)
 ///     XCTAssertEqual(2, changes)
 ///
 ///     let _ = cancellable
@@ -84,9 +84,22 @@ public extension JackedObject {
     ///
     /// - Parameters:
     ///   - into context: the context to jack into; will create a new context if needed
-    ///   - as object: the object to use for exporting the properties and functions
+    ///   - as key: a key to use to create an object for the key
     /// - Returns: the context
-    @discardableResult func jack(into context: JXContext = JXContext(), as object: JXValue? = nil) -> JXContext {
+    @discardableResult func jack(into context: JXContext = JXContext(), as key: String? = nil) -> JXValue {
+        var object = context.global
+
+        if let key = key {
+            object = context.object()
+            do {
+                try context.global.setProperty(key, object)
+            } catch {
+                fatalError("ERROR: unable to set propery for object '\(key)': \(error)")
+            }
+        }
+
+        var addedProps: Set<String> = []
+
         for (label, prop) in props() {
             guard let prop = prop as? _JackableProperty else {
                 continue
@@ -97,14 +110,25 @@ public extension JackedObject {
                 continue
             }
 
+            // if the property has already been added, don't try to add it again;
+            // since we iterate from child to parent, this allows subclasses to override functions
+            if addedProps.insert(key).inserted == false {
+                //print("skipping already added property: \(key)")
+                continue
+            }
+
             let jprop = JXProperty(
                 getter: { [weak self] this in try prop[in: context, self] },
                 setter: { [weak self] this, newValue in try prop.setValue(newValue, in: context, owner: self) }
             )
 
-            try! (object ?? context.global).defineProperty(key, jprop)
+            do {
+                try object.defineProperty(key, jprop)
+            } catch {
+                fatalError("ERROR: error when setting property '\(key)': \(error)")
+            }
         }
-        return context
+        return object
     }
 
     /// The lazy list of all props in the hierarchy
