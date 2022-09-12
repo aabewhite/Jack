@@ -2,9 +2,6 @@ import Jack
 
 import struct Foundation.URL
 import struct Foundation.CharacterSet
-import class Foundation.NSAttributedString
-import func CoreText.CTLineDraw
-import func CoreText.CTLineCreateWithAttributedString
 
 #if canImport(CoreGraphics)
 
@@ -264,6 +261,10 @@ public struct DOMMatrixAPI : Codable, Conveyable {
 
 #if canImport(CoreGraphics)
 import CoreGraphics
+
+import class Foundation.NSAttributedString
+import func CoreText.CTLineDraw
+import func CoreText.CTLineCreateWithAttributedString
 
 //@available(*, deprecated, message: "TODO")
 func wipcanvas<T>(_ value: T) -> T { value }
