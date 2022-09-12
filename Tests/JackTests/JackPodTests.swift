@@ -144,8 +144,11 @@ public class LoggingConsolePod : JackPod, ConsolePod {
 
 // fetch('https://example.org/resource.json')
 
+#if canImport(Foundation)
+
 #if canImport(FoundationNetworking)
 import FoundationNetworking
+#endif
 
 @available(macOS 11, iOS 13, tvOS 13, *)
 public class FetchPod : JackPod {
@@ -161,13 +164,12 @@ public class FetchPod : JackPod {
 
     // TODO
     func fetch(url: String) async throws -> Bool{
-
+        false
     }
 
     public lazy var pod = jack()
 }
 #endif
-
 
 // MARK: CoreLocationPod
 
