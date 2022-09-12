@@ -666,7 +666,7 @@ public class CoreGraphicsCanvasPod : AbstractCanvasPod {
     /// Returns the current text attributes for drawing text
     func textAttributes(stroke: Bool? = nil) -> [NSAttributedString.Key: NSObject] {
         var attrs: [NSAttributedString.Key: NSObject] = [:]
-
+        attrs.removeAll()
         let _ = wipcanvas("need CSS")
 //        if let font = CSS.parseFontStyle(css: self.font) {
 //            attrs[NSAttributedString.Key.font] = font

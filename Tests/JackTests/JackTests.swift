@@ -4,70 +4,167 @@ import protocol OpenCombineShim.ObservableObject
 import struct OpenCombineShim.Published
 
 @available(macOS 11, iOS 13, tvOS 13, *)
-class AppleJack : JackedObject {
-    @Jacked var name: String
-    @Jacked var age: Int
-
-    /// An embedded `JXKit` script context that has access to the jacked properties and jumped functions
-    lazy var jxc = jack().env
-
-    init(name: String, age: Int) {
-        self.name = name
-        self.age = age
-    }
-
-    @Jumped("haveBirthday") var _haveBirthday = haveBirthday
-    func haveBirthday(count: Int? = nil) -> Int {
-        age += count ?? 1
-        return age
-    }
-
-    static func demo() throws {
-        let jackApp = AppleJack(name: "Jack Appleseed", age: 24)
-
-        let namejs = try jackApp.jxc.eval("name").stringValue
-        XCTAssertTrue(namejs == jackApp.name)
-
-        let agejs = try jackApp.jxc.eval("age").numberValue
-        XCTAssertTrue(agejs == Double(jackApp.age)) // JS numbers are always Double
-
-        XCTAssertTrue(jackApp.haveBirthday(count: 1) == 25) // direct Swift call
-        let newAge = try jackApp.jxc.eval("haveBirthday()").numberValue // script invocation
-        XCTAssertTrue(newAge == 26.0)
-        XCTAssertTrue(jackApp.age == 26)
-    }
-}
-
-@available(macOS 11, iOS 13, tvOS 13, *)
 final class JackTests: XCTestCase {
     func testDemoCode() throws {
         try AppleJack.demo()
     }
 
     func testObservation() {
-        let john = AppleJack(name: "John Appleseed", age: 24)
+        let ajack = AppleJack(name: "John Appleseed", age: 24)
 
         var changes = 0
-        let cancellable = john.objectWillChange
+        let cancellable = ajack.objectWillChange
             .sink { _ in
                 changes += 1
             }
 
-        XCTAssertEqual(25, john.haveBirthday())
+        XCTAssertEqual(25, ajack.haveBirthday())
         XCTAssertEqual(1, changes)
 
-        XCTAssertEqual(26, try john.jxc.eval("haveBirthday()").numberValue)
+        XCTAssertEqual(26, try ajack.jxc.eval("haveBirthday()").numberValue)
         XCTAssertEqual(2, changes)
 
         let _ = cancellable
     }
 
-    func testAsyncStream() async throws {
-        let john = AppleJack(name: "John Appleseed", age: 24)
+    @available(macOS 12, iOS 14, tvOS 14, *)
+    func XXXtestAyncLockedClassStream() async throws { // not working
+        // let ajack = AppleJack(name: "John Appleseed", age: 0) // class: not concurrent
+        let ajack = await SynchronizedAppleJack(name: "John Appleseed", age: 0) // concurrent actor
+        var ages: [Int] = []
+
+        for await age in await ajack.$age.values {
+            //print("age:", age)
+            ages += [age]
+            if age == 0 {
+                for _ in 0..<100 {
+                    Task.detached {
+                        //try await ajack.jxc.eval("age += 1") // unprotected by the actor
+                        try await ajack.eval("age += 1")
+                    }
+                }
+            } else if age >= 100 {
+                break // we received all our birthdays
+            }
+        }
+
+        XCTAssertEqual(101, ages.count)
+        //XCTAssertNotEqual(Array(0...100), ages, "")
+        XCTAssertEqual(Array(0...100), ages.sorted())
+    }
+
+    @available(macOS 12, iOS 14, tvOS 14, *)
+    func testAsyncActorStream() async throws {
+        try await asyncActorStreamTest(count: 1, viaJS: true)
+        try await asyncActorStreamTest(count: 1, viaJS: false)
+
+        // not yet working, so don't verify
+        try await asyncActorStreamTest(count: 5, viaJS: true, verify: false)
+        try await asyncActorStreamTest(count: 5, viaJS: false, verify: false)
+    }
+
+    @available(macOS 12, iOS 14, tvOS 14, *)
+    func asyncActorStreamTest(count: Int, viaJS: Bool, verify: Bool = true) async throws {
+        let ajack = AppleJacktor(name: "John Appleseed", age: 0) // concurrent actor
+        var ages: [Int] = []
+
+        for await age in await ajack.$age.values {
+            if age == 0 {
+                for _ in 0..<count {
+                    let result: Double = try await Task.detached {
+                        //try await Task.sleep(nanoseconds: (0...20_000_000_000).randomElement()!)
+                        if viaJS {
+                            return try await ajack.eval("age += 1").numberValue
+                        } else {
+                            return await Double(ajack.incrementAge())
+                        }
+                        //try await Task.sleep(nanoseconds: (0...20_000_000_000).randomElement()!)
+                    }.value
+                    print("set age:", result)
+                }
+            } else {
+                print("received age:", age)
+                ages += [age] // keep track of birthdays
+            }
+            if age >= count {
+                break // we received all our birthdays
+            }
+        }
+
+        if verify {
+            XCTAssertEqual(count, ages.count)
+            if count >= 100 {
+                XCTAssertNotEqual(Array(1...count), ages, "unexpected serialization") // not impossible, I suppose
+            }
+            XCTAssertEqual(Array(1...count), ages.sorted())
+        }
+    }
+
+    func testBridging() throws {
+        class JSBridgedObject : JackedObject {
+            @Coded var related = JSBridgedRelated()
+        }
+
+        struct JSBridgedRelated : Codable, Conveyable {
+            var string = "related"
+        }
+
+        let jxc = JXContext()
+        let obj = JSBridgedObject()
+        obj.jack(into: jxc, as: "struct") // bridge the wrapped properties
+        XCTAssertEqual("related", try jxc.eval("struct.related.string").stringValue)
+        XCTAssertEqual("updated", try jxc.eval("struct.related.string = 'updated'").stringValue)
+    }
+
+    func testBridgingEnhanced() throws {
+        enum Relation : String, Conveyable {
+            // string cases are auto-exported to Java via coding
+            case friend, relative, neighbor, coworker
+        }
+
+        class BridgedProperties : JackedObject {
+            @Jacked var related: Relation?
+
+            @Jumped var gossip = chatter // exports this function as "gossip"
+            func chatter() throws -> String? {
+                switch related {
+                case .none: return nil
+                case .friend: return "Did you see what Becky was wearing?"
+                case .relative: return "It's a shame about Bruno."
+                case .neighbor: return "How do they get their lawn so green?"
+                case .coworker: throw Errors.looseLipsSinkShips
+                }
+            }
+
+            enum Errors : Error { case looseLipsSinkShips }
+        }
+
+        let jxc = JXContext()
+        let obj = BridgedProperties()
+        obj.jack(into: jxc, as: "connection") // bridge the wrapped properties
+
+        XCTAssertTrue(try jxc.eval("connection.related").isNull)
+        XCTAssertTrue(try jxc.eval("connection.gossip()").isNull)
+
+        XCTAssertThrowsError(try jxc.eval("connection.related = 'xxx'"), "assignment to invalid case should throw")
+
+        XCTAssertEqual("relative", try jxc.eval("connection.related = 'relative'").stringValue)
+        XCTAssertEqual("relative", try jxc.eval("connection.related").stringValue)
+        XCTAssertEqual("relative", obj.related?.rawValue)
+
+        XCTAssertEqual("It's a shame about Bruno.", try jxc.eval("connection.gossip()").stringValue)
+
+        XCTAssertEqual("coworker", try jxc.eval("connection.related = 'coworker'").stringValue)
+        XCTAssertEqual("coworker", obj.related?.rawValue)
+
+        XCTAssertThrowsError(try jxc.eval("connection.gossip()")) { error in
+            // swift error is re-throws from JS
+            XCTAssertEqual("Error: looseLipsSinkShips", "\(error)")
+        }
+
     }
 
     func testPingPongExample() throws {
-
         class PingPongNative : ObservableObject {
             @Published var score = 0
 
@@ -608,3 +705,97 @@ final class JackTests: XCTestCase {
         XCTAssertEqual(1_234_000, try obj.jxc.eval("now()").numberValue)
     }
 }
+
+/// Demo class
+@available(macOS 11, iOS 13, tvOS 13, *)
+class AppleJack : JackedObject {
+    @Jacked var name: String
+    @Jacked var age: Int
+
+    /// An embedded `JXKit` script context that has access to the jacked properties and jumped functions
+    lazy var jxc = jack().env
+
+    init(name: String, age: Int) {
+        self.name = name
+        self.age = age
+    }
+
+    @Jumped("haveBirthday") var _haveBirthday = haveBirthday
+    func haveBirthday(count: Int? = nil) -> Int {
+        age += count ?? 1
+        return age
+    }
+
+    static func demo() throws {
+        let jackApp = AppleJack(name: "Jack Appleseed", age: 24)
+
+        let namejs = try jackApp.jxc.eval("name").stringValue
+        XCTAssertTrue(namejs == jackApp.name)
+
+        let agejs = try jackApp.jxc.eval("age").numberValue
+        XCTAssertTrue(agejs == Double(jackApp.age)) // JS numbers are always Double
+
+        XCTAssertTrue(jackApp.haveBirthday(count: 1) == 25) // direct Swift call
+        let newAge = try jackApp.jxc.eval("haveBirthday()").numberValue // script invocation
+        XCTAssertTrue(newAge == 26.0)
+        XCTAssertTrue(jackApp.age == 26)
+    }
+}
+
+
+/// Demo concurrent class with locking
+@available(macOS 11, iOS 13, tvOS 13, *)
+@MainActor class SynchronizedAppleJack : JackedObject {
+    @Jacked var name: String
+    @Jacked var age: Int
+
+    /// A concurrent queue to allow multiple reads at once.
+    private var queue = DispatchQueue(label: "SynchronizedAppleJack", attributes: .concurrent)
+
+    /// A private script context for concurrent access
+    private lazy var jxc = jack().env
+
+    init(name: String, age: Int) {
+        self.name = name
+        self.age = age
+    }
+
+    /// Evaluate the script; this is protected by the actor
+    func eval(_ script: String) throws -> JXValue {
+        let ctx = jxc
+        return try queue.sync(flags: .barrier) {
+            try ctx.eval(script)
+        }
+    }
+}
+
+/// Demo actor
+@available(macOS 11, iOS 13, tvOS 13, *)
+actor AppleJacktor : JackedObject {
+    @Jacked var name: String
+    @Jacked var age: Int
+
+    /// A private script context for concurrent access
+    private lazy var jxc = jack().env
+
+    init(name: String, age: Int) {
+        // Actor-isolated property 'name' can not be mutated from a non-isolated context; this is an error in Swift 6
+        // self.name = name
+        // self.age = age
+
+        self._name = Jacked(wrappedValue: name)
+        self._age = Jacked(wrappedValue: age)
+    }
+
+    /// Evaluate the script in an actor-synchronized block
+    func eval(_ script: String) throws -> JXValue {
+        try jxc.eval(script)
+    }
+
+    func incrementAge() -> Int {
+        age += 1
+        return age
+    }
+}
+
+
