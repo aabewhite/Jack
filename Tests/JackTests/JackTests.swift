@@ -27,7 +27,7 @@ final class JackTests: XCTestCase {
         let _ = cancellable
     }
 
-    @available(macOS 12, iOS 14, tvOS 14, *)
+    @available(macOS 13, iOS 15, tvOS 15, *)
     func XXXtestAyncLockedClassStream() async throws { // not working
         // let ajack = AppleJack(name: "John Appleseed", age: 0) // class: not concurrent
         let ajack = await SynchronizedAppleJack(name: "John Appleseed", age: 0) // concurrent actor
@@ -53,7 +53,7 @@ final class JackTests: XCTestCase {
         XCTAssertEqual(Array(0...100), ages.sorted())
     }
 
-    @available(macOS 12, iOS 14, tvOS 14, *)
+    @available(macOS 13, iOS 15, tvOS 15, *)
     func testAsyncActorStream() async throws {
         try await asyncActorStreamTest(count: 1, viaJS: true)
         try await asyncActorStreamTest(count: 1, viaJS: false)
@@ -63,12 +63,12 @@ final class JackTests: XCTestCase {
         try await asyncActorStreamTest(count: 5, viaJS: false, verify: false)
     }
 
-    @available(macOS 12, iOS 14, tvOS 14, *)
+    @available(macOS 13, iOS 15, tvOS 15, *)
     func asyncActorStreamTest(count: Int, viaJS: Bool, verify: Bool = true) async throws {
         let ajack = AppleJacktor(name: "John Appleseed", age: 0) // concurrent actor
         var ages: [Int] = []
 
-        for await age in await ajack.$age.values {
+        for await age in await ajack.$age.values { // requires macOS 13/iOS 15
             if age == 0 {
                 for _ in 0..<count {
                     let result: Double = try await Task.detached {

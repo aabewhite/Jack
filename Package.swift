@@ -9,7 +9,7 @@ let package = Package(
             targets: ["Jack"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/jectivex/JXKit.git", branch: "HEAD"),
+        .package(url: "https://github.com/jectivex/JXKit.git", from: "2.0.0"),
         .package(url: "https://github.com/OpenCombine/OpenCombine.git", from: "0.13.0"),
     ],
     targets: [
