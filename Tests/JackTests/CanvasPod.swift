@@ -3,10 +3,6 @@ import Jack
 import struct Foundation.URL
 import struct Foundation.CharacterSet
 
-#if canImport(CoreGraphics)
-
-#endif
-
 // MARK: CanvasPod
 
 @available(macOS 11, iOS 13, tvOS 13, *)
@@ -742,14 +738,15 @@ extension CoreGraphicsCanvasPod {
 #endif
 
 
+#if canImport(CoreGraphics)
 #if canImport(SwiftUI)
 import SwiftUI
 
 @available(macOS 12, iOS 15, tvOS 15, *)
-public class SwiftUICanvasPod<Symbols : View> : JackPod, CanvasPod {
-    private let canvas: Canvas<Symbols>
+public class SwiftUICanvasPod<Symbols : SwiftUI.View> : JackPod, CanvasPod {
+    private let canvas: SwiftUI.Canvas<Symbols>
 
-    public init(canvas: Canvas<Symbols>) {
+    public init(canvas: SwiftUI.Canvas<Symbols>) {
         self.canvas = canvas
     }
 
@@ -760,7 +757,7 @@ public class SwiftUICanvasPod<Symbols : View> : JackPod, CanvasPod {
     public lazy var pod = jack()
 }
 #endif
-
+#endif
 
 
 #if canImport(XCTest)
