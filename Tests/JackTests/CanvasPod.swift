@@ -737,7 +737,7 @@ extension CoreGraphicsCanvasPod {
 }
 #endif
 
-
+#if !os(iOS)
 #if canImport(CoreGraphics)
 #if canImport(SwiftUI)
 import SwiftUI
@@ -758,7 +758,7 @@ public class SwiftUICanvasPod<Symbols : SwiftUI.View> : JackPod, CanvasPod {
 }
 #endif
 #endif
-
+#endif
 
 #if canImport(XCTest)
 import XCTest
