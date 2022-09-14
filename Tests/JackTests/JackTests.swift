@@ -56,7 +56,7 @@ final class JackTests: XCTestCase {
     @available(macOS 13, iOS 15, tvOS 15, *)
     func testAsyncActorStream() async throws {
         if true {
-            XCTSkip("disabled due to crashing on CI")
+            throw XCTSkip("disabled due to crashing on CI")
         } else {
             try await asyncActorStreamTest(count: 1, viaJS: true)
             try await asyncActorStreamTest(count: 1, viaJS: false)

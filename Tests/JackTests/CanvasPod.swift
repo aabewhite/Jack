@@ -746,7 +746,7 @@ extension CoreGraphicsCanvasPod {
 import SwiftUI
 
 @available(macOS 12, iOS 15, tvOS 15, *)
-public class SwiftUICanvasPod<Symbols : SwiftUI.View> : JackPod, CanvasPod {
+public class SwiftUICanvasPod<Symbols : View> : JackPod, CanvasPod {
     private let canvas: Canvas<Symbols>
 
     public init(canvas: Canvas<Symbols>) {
@@ -768,6 +768,7 @@ import XCTest
 
 @available(macOS 11, iOS 13, tvOS 13, *)
 class CanvasPodTest : XCTestCase {
+    #if canImport(CoreGraphics)
     func testCoreGraphicsCanvasPod() throws {
         let properties: [String: Any] = [:]
         let size = CGSize(width: 512, height: 512)
@@ -799,7 +800,9 @@ class CanvasPodTest : XCTestCase {
         XCTAssertEqual(99, try metrics("this is a long string\nwith a newline").width, accuracy: 1.0) // not naïve
 
     }
+    #endif
 
+    #if canImport(CoreGraphics)
     func testPDFCanvasPod() throws {
         let pdf = try CoreGraphicsCanvasPod.drawPDF(size: CGSize(width: 512, height: 512)) { ctx in
             ctx.moveTo(x: 10, y: 10)
@@ -809,5 +812,6 @@ class CanvasPodTest : XCTestCase {
         print("created PDF size:", pdf)
         try pdf.write(to: URL(fileURLWithPath: "/tmp/canvasdemo.pdf"))
     }
+    #endif
 }
 #endif

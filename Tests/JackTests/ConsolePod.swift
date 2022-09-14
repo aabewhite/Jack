@@ -40,10 +40,12 @@ import XCTest
 
 @available(macOS 11, iOS 13, tvOS 13, *)
 final class ConsolePodTests: XCTestCase {
+    #if canImport(OSLog)
     func testConsolePod() async throws {
         let pod = OSLogConsolePod()
 
         XCTAssertEqual(3, try pod.jxc.eval("1+2").numberValue)
     }
+    #endif
 }
 #endif
