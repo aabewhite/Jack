@@ -5,52 +5,6 @@ import struct Foundation.CharacterSet
 
 #if canImport(CoreGraphics)
 
-import XCTest
-
-@available(macOS 11, iOS 13, tvOS 13, *)
-extension JackPodTests {
-    func testCoreGraphicsCanvasPod() throws {
-        let properties: [String: Any] = [:]
-        let size = CGSize(width: 512, height: 512)
-        let outputData = NSMutableData()
-
-        var imageRect = CGRect(x: 0, y: 0, width: size.width, height: size.height)
-
-        guard let dataConsumer = CGDataConsumer(data: outputData) else {
-            return XCTFail("no consumer")
-        }
-
-        guard let ctx = CGContext(consumer: dataConsumer, mediaBox: &imageRect, properties as NSDictionary) else {
-            return XCTFail("no context")
-        }
-
-        let pod = CoreGraphicsCanvasPod(context: ctx, size: size)
-        ctx.beginPDFPage(nil)
-
-        let jxc = pod.jack(as: "canvas").env
-        //try pod.jxc.eval("transform(1,2,3,4,5,6)")
-
-        func metrics(_ string: String) throws -> CoreGraphicsCanvasPod.TextMetrics {
-            try jxc.global.setProperty("txt", jxc.string(string))
-            return try jxc.eval("canvas.measureText(txt)").convey(in: jxc)
-        }
-
-        XCTAssertEqual(24, try metrics("ABC").width, accuracy: 1.0)
-        XCTAssertEqual(99, try metrics("this is a long string").width, accuracy: 1.0)
-        XCTAssertEqual(99, try metrics("this is a long string\nwith a newline").width, accuracy: 1.0) // not naïve
-
-    }
-
-    func testPDFCanvasPod() throws {
-        let pdf = try CoreGraphicsCanvasPod.drawPDF(size: CGSize(width: 512, height: 512)) { ctx in
-            ctx.moveTo(x: 10, y: 10)
-            ctx.lineTo(x: 20, y: 20)
-            ctx.fillRect(x: 10, y: 10, w: 20, h: 20)
-        }
-        print("created PDF size:", pdf)
-        try pdf.write(to: URL(fileURLWithPath: "/tmp/canvasdemo.pdf"))
-    }
-}
 #endif
 
 // MARK: CanvasPod
@@ -783,6 +737,77 @@ extension CoreGraphicsCanvasPod {
         ctx.closePDF()
 
         return outputData as Data
+    }
+}
+#endif
+
+
+#if canImport(SwiftUI)
+import SwiftUI
+
+@available(macOS 12, iOS 15, tvOS 15, *)
+public class SwiftUICanvasPod<Symbols : SwiftUI.View> : JackPod, CanvasPod {
+    private let canvas: Canvas<Symbols>
+
+    public init(canvas: Canvas<Symbols>) {
+        self.canvas = canvas
+    }
+
+    public var metadata: JackPodMetaData {
+        JackPodMetaData(homePage: URL(string: "https://www.example.com")!)
+    }
+
+    public lazy var pod = jack()
+}
+#endif
+
+
+
+#if canImport(XCTest)
+import XCTest
+
+@available(macOS 11, iOS 13, tvOS 13, *)
+class CanvasPodTest : XCTestCase {
+    func testCoreGraphicsCanvasPod() throws {
+        let properties: [String: Any] = [:]
+        let size = CGSize(width: 512, height: 512)
+        let outputData = NSMutableData()
+
+        var imageRect = CGRect(x: 0, y: 0, width: size.width, height: size.height)
+
+        guard let dataConsumer = CGDataConsumer(data: outputData) else {
+            return XCTFail("no consumer")
+        }
+
+        guard let ctx = CGContext(consumer: dataConsumer, mediaBox: &imageRect, properties as NSDictionary) else {
+            return XCTFail("no context")
+        }
+
+        let pod = CoreGraphicsCanvasPod(context: ctx, size: size)
+        ctx.beginPDFPage(nil)
+
+        let jxc = pod.jack(as: "canvas").env
+        //try pod.jxc.eval("transform(1,2,3,4,5,6)")
+
+        func metrics(_ string: String) throws -> CoreGraphicsCanvasPod.TextMetrics {
+            try jxc.global.setProperty("txt", jxc.string(string))
+            return try jxc.eval("canvas.measureText(txt)").convey(in: jxc)
+        }
+
+        XCTAssertEqual(24, try metrics("ABC").width, accuracy: 1.0)
+        XCTAssertEqual(99, try metrics("this is a long string").width, accuracy: 1.0)
+        XCTAssertEqual(99, try metrics("this is a long string\nwith a newline").width, accuracy: 1.0) // not naïve
+
+    }
+
+    func testPDFCanvasPod() throws {
+        let pdf = try CoreGraphicsCanvasPod.drawPDF(size: CGSize(width: 512, height: 512)) { ctx in
+            ctx.moveTo(x: 10, y: 10)
+            ctx.lineTo(x: 20, y: 20)
+            ctx.fillRect(x: 10, y: 10, w: 20, h: 20)
+        }
+        print("created PDF size:", pdf)
+        try pdf.write(to: URL(fileURLWithPath: "/tmp/canvasdemo.pdf"))
     }
 }
 #endif

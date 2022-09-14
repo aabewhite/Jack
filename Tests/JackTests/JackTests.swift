@@ -115,9 +115,9 @@ final class JackTests: XCTestCase {
 
         let jxc = JXContext()
         let obj = JSBridgedObject()
-        obj.jack(into: jxc, as: "struct") // bridge the wrapped properties
-        XCTAssertEqual("related", try jxc.eval("struct.related.string").stringValue)
-        XCTAssertEqual("updated", try jxc.eval("struct.related.string = 'updated'").stringValue)
+        obj.jack(into: jxc, as: "ref") // bridge the wrapped properties
+        XCTAssertEqual("related", try jxc.eval("ref.related.string").stringValue)
+        XCTAssertEqual("updated", try jxc.eval("ref.related.string = 'updated'").stringValue)
     }
 
     func testBridgingEnhanced() throws {
@@ -802,4 +802,8 @@ actor AppleJacktor : JackedObject {
     }
 }
 
+
+/// Work-in-Progress marker
+@available(*, deprecated, message: "work in progress")
+@inlinable internal func wip<T>(_ value: T) -> T { value }
 
