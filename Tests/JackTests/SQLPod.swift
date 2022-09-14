@@ -27,10 +27,13 @@ import XCTest
 
 @available(macOS 11, iOS 13, tvOS 13, *)
 final class SQLPodTests: XCTestCase {
+
+    #if canImport(SQLite3)
     func testSQLitePod() async throws {
         let pod = SQLitePod()
         //try await pod.jxc.eval("sleep()", priority: .high)
         XCTAssertEqual(3, try pod.jxc.eval("1+2").numberValue)
     }
+    #endif
 }
 #endif

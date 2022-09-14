@@ -60,6 +60,9 @@ public class CoreLocationPod : NSObject, CLLocationManagerDelegate, LocationPod 
 #if canImport(XCTest)
 import XCTest
 
+#if canImport(CoreLocation)
+import CoreLocation
+
 @available(macOS 11, iOS 13, tvOS 13, *)
 final class LocationPodTests: XCTestCase {
     func testLocationPod() async throws {
@@ -68,4 +71,6 @@ final class LocationPodTests: XCTestCase {
         XCTAssertEqual(3, try pod.jxc.eval("1+2").numberValue)
     }
 }
+#endif
+
 #endif
