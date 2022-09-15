@@ -638,8 +638,9 @@ final class ThemePodTests: XCTestCase {
             }
         }
 
-        XCTAssertEqual(1, try parse("blue").nativeColor.blue)
-        XCTAssertEqual(0.5, try parse(#"{ "r": 0.5, "g": 1.0, "b": 0.7, "a": 0.75 }"#, quote: false).nativeColor.red)
+        XCTAssertEqual("\"blue\"", try parse("blue").description)
+        XCTAssertEqual("#7FFFB2", try parse(#"{ "r": 0.5, "g": 1.0, "b": 0.7 }"#, quote: false).description)
+        XCTAssertEqual("#7FFFB2BF", try parse(#"{ "r": 0.5, "g": 1.0, "b": 0.7, "a": 0.75 }"#, quote: false).description)
 
         // color samples from https://developer.mozilla.org/en-US/docs/Web/CSS/color_value
 
@@ -792,7 +793,7 @@ final class ThemePodTests: XCTestCase {
         try pod.jxc.eval("setNavigationBarTintColor({ r: 0.5, g: 1.0, b: 0.7, a: 0.75 })")
 
         // eventually we can do this
-        
+
 //        try pod.jxc.eval("""
 //        var blue = 0.8;
 //
