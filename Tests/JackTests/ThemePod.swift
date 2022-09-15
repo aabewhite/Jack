@@ -1,17 +1,17 @@
 import Jack
 import Foundation
+import OpenCombineShim
 
 // MARK: ThemePod
 
 // theme.backgroundColor = 'purple';
 // theme.defaultTabItemHighlight = 'red';
 
-#if canImport(UIKit)
-import UIKit
-
 @available(macOS 11, iOS 13, tvOS 13, *)
 public class ThemePod : JackPod {
-    init() {
+    /// Should this be shared instead?
+    public init() {
+        setupListeners()
     }
 
     public var metadata: JackPodMetaData {
@@ -20,22 +20,62 @@ public class ThemePod : JackPod {
 
     public lazy var pod = jack()
 
-    @Jumped("setNavigationBarTintColor") var _setNavigationBarTintColor = setNavigationBarTintColor
-    func setNavigationBarTintColor(color: CSSColor) throws {
-        print("setNavigationBarTintColor:", wip(color))
-        // UINavigationBar.appearance().tintColor = parseCSSColor
+    @Jacked public var backgroundColor: CSSColor?
+
+    private var observers: [AnyCancellable] = []
+
+    deinit {
+        // clear circular references
+        observers.removeAll()
     }
 
-    //    @Jumped("setNavigationBarTintColor") var _setNavigationBarTintColor = setNavigationBarTintColor
-    //    func setNavigationBarTintColor(color: ThemeColor) throws {
-    //        print("setNavigationBarTintColor:", wip(color))
-    //        // UINavigationBar.appearance().tintColor = parseCSSColor
-    //    }
+    // MARK: UI-Kit-specific properties
+    #if canImport(UIKit)
+    static var navbar: UINavigationBar { UINavigationBar.appearance() }
+
+    @Coded public var navigationBarTintColor: CSSColor? = (navbar.tintColor?.ciColor).flatMap(CSSColor.init(nativeColor:))
+
+    func setupListeners() {
+        self.$navigationBarTintColor.receive(on: RunLoop.main)
+            .sink(receiveValue: { newValue in
+                Self.navbar.tintColor = newValue?.nativeColor.uiColor
+            })
+            .store(in: &observers)
+    }
+
+    #else
+    func setupListeners() {
+        // TODO: AppKit
+    }
+
+    #endif
 }
 
-// public struct ThemeColor = XOr<RGBColor>.Or<HSLColor>.Or<ParsedCSSColor>
+// MARK: UIKit-specific properties
+
+#if canImport(UIKit)
+import UIKit
+
+@available(macOS 11, iOS 13, tvOS 13, *)
+extension ThemePod {
+
+}
 
 #endif
+
+// MARK: AppKit-specific properties
+
+#if canImport(AppKit)
+import AppKit
+
+@available(macOS 11, iOS 13, tvOS 13, *)
+extension ThemePod {
+
+}
+#endif
+
+
+// public struct ThemeColor = XOr<RGBColor>.Or<HSLColor>.Or<ParsedCSSColor>
 
 
 /**
@@ -125,12 +165,18 @@ public class ThemePod : JackPod {
  xyz-d65
  ```
  */
-public struct CSSColor : Codable, Hashable, CustomStringConvertible {
+public struct CSSColor : Codable, Hashable, CustomStringConvertible, JXConvertible {
     public var rep: ColorRepresentation
 
-    //    public init?(rawValue: String) {
-    //        return nil
-    //    }
+    /// Create this color with a CSS named color
+    public init(name color: NamedColor) {
+        self.rep = .name(color)
+    }
+
+    /// Create this color with an RGB description
+    public init(rgb color: RGBColor) {
+        self.rep = .rgb(color)
+    }
 
     public var description: String {
         switch rep {
@@ -588,11 +634,31 @@ public struct CSSColor : Codable, Hashable, CustomStringConvertible {
     }
 }
 
-extension CSSColor : Conveyable {
+#if canImport(CoreImage)
+
+#if canImport(UIKit)
+extension CIColor {
+    var uiColor: UIColor {
+        UIColor(ciColor: self)
+    }
+}
+#endif
+
+#if canImport(AppKit)
+extension CIColor {
+    var uiColor: NSColor {
+        NSColor(ciColor: self)
+    }
+}
+#endif
+
+extension CSSColor {
+    /// Creates this `CSSColor` from a native CoreImage ``CIColor``.`
+    public init(nativeColor: CIColor) {
+        self.init(rgb: RGBColor(r: nativeColor.red, g: nativeColor.green, b: nativeColor.blue, a: nativeColor.alpha))
+    }
 }
 
-
-#if canImport(CoreImage)
 public extension CSSColor {
     var nativeColor: CIColor {
         switch self.rep {
@@ -761,7 +827,6 @@ final class ThemePodTests: XCTestCase {
         // hwb(90 10% 10% / 0.5)
         // hwb(90 10% 10% / 50%)
 
-
         // HSL transparency variations
         // try parse("hsla(240, 100%, 50%, .05)")     /*   5% opaque blue */
         // try parse("hsla(240, 100%, 50%, .4)")      /*  40% opaque blue */
@@ -775,22 +840,19 @@ final class ThemePodTests: XCTestCase {
         // try parse("hsla(240 100% 50% / 5%)")       /*   5% opaque blue */
     }
 
-#if canImport(UIKit)
-    func testThemePod() async throws {
+    @MainActor func testThemePod() async throws {
         let pod = ThemePod()
         //try await pod.jxc.eval("sleep()", priority: .high)
         XCTAssertEqual(3, try pod.jxc.eval("1+2").numberValue)
 
-        try pod.jxc.eval("setNavigationBarTintColor('blue')")
-        try pod.jxc.eval("setNavigationBarTintColor('#FFAA0055')")
+        try pod.jxc.global.set("c", object: CSSColor(rgb: CSSColor.RGBColor(r: 0.1, g: 0.2, b: 0.3)))
+        XCTAssertEqual(#"{"r":0.1,"g":0.2,"b":0.3}"#, try pod.jxc.eval("JSON.stringify(c)").stringValue)
 
-        // UINavigationBarAppearance.shared.setTint
+        try pod.jxc.global.set("c", object: CSSColor(name: CSSColor.NamedColor.aqua))
+        XCTAssertEqual(#""aqua""#, try pod.jxc.eval("JSON.stringify(c)").stringValue)
 
-        // try pod.jxc.eval("setNavigationBarTintColor('rgba(50%, 1.324, 948, 0.7)')")
-
-        XCTAssertThrowsError(try pod.jxc.eval("setNavigationBarTintColor({ BADPROP: 0.5, g: 1.0, b: 0.7, a: 0.75 })"), "color struct with bad property should not parse")
-
-        try pod.jxc.eval("setNavigationBarTintColor({ r: 0.5, g: 1.0, b: 0.7, a: 0.75 })")
+        pod.backgroundColor = .init(.init(name: .aqua))
+        XCTAssertEqual(#""aqua""#, try pod.jxc.eval("JSON.stringify(backgroundColor)").stringValue)
 
         // eventually we can do this
 
@@ -802,7 +864,49 @@ final class ThemePodTests: XCTestCase {
 //        backgroundColor = 'red';
 //        """)
 
+        #if canImport(UIKit)
+        XCTAssertEqual(false, try pod.jxc.eval("navigationBarTintColor").isUndefined)
+        XCTAssertEqual(true, try pod.jxc.eval("navigationBarTintColor").isNull)
+
+        // FIXME: not invoking didSet for some reason
+        try pod.jxc.eval("navigationBarTintColor = { r: 1.0, g: 0.5, b: 0.8, a: 1.0 };")
+
+        XCTAssertEqual(false, try pod.jxc.eval("navigationBarTintColor").isUndefined)
+        XCTAssertEqual(false, try pod.jxc.eval("navigationBarTintColor").isNull)
+        XCTAssertEqual(true, try pod.jxc.eval("navigationBarTintColor").isObject)
+        XCTAssertEqual(#"{"r":1,"g":0.5,"b":0.8,"a":1}"#, try pod.jxc.eval("JSON.stringify(navigationBarTintColor)").stringValue)
+
+        //try pod.jxc.eval("setNavigationBarTintColor('#FFAA0055')")
+//        XCTAssertEqual("", UINavigationBar.appearance().tintColor?.ciColor.description)
+        // XCTAssertThrowsError(try pod.jxc.eval("setNavigationBarTintColor({ BADPROP: 0.5, g: 1.0, b: 0.7, a: 0.75 })"), "color struct with bad property should not parse")
+
+        // try pod.jxc.eval("setNavigationBarTintColor({ r: 0.5, g: 1.0, b: 0.7, a: 0.75 })")
+        #endif
     }
-#endif
+
+    func testDidSet() throws {
+        class TestObject : JackedObject {
+            @Coded public var XXX: String = "" {
+                didSet {
+                    testDidSetCount += 1
+                }
+            }
+
+            lazy var jxc = jack()
+        }
+
+        XCTAssertEqual(0, testDidSetCount)
+        let ob = TestObject()
+        ob.XXX = "XYZ";
+        XCTAssertEqual(1, testDidSetCount)
+        try ob.jxc.env.eval("XXX = 'abc';") // doesn't invoke didSet
+        //XCTAssertEqual(2, testDidSetCount) // TODO: didSet is not getting called from the JS side; need to fix this
+        ob.XXX = "XYZ";
+        //XCTAssertEqual(3, testDidSetCount)
+
+    }
+
 }
+
+var testDidSetCount = 0
 #endif

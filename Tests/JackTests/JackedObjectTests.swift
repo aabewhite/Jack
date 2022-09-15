@@ -195,7 +195,7 @@ final class JackedObjectTests: XCTestCase {
         try await jumpedTests(arg: UUID.self, ret: String.self)
         try await jumpedTests(arg: UUID.self, ret: Int32.self)
 
-        struct RandoThing : Codable, Equatable, Randomizable, Conveyable, JSConvertable {
+        struct RandoThing : Codable, Equatable, Randomizable, JXConvertible, JSConvertable {
             let str: String
             let num: Double
 
@@ -220,7 +220,7 @@ final class JackedObjectTests: XCTestCase {
         try await jumpedTests(arg: Date.self, ret: Date.self)
     }
 
-    private func jumpedTests<A: Conveyable & Randomizable & JSConvertable & Equatable, R: Conveyable & Randomizable & Equatable>(arg: A.Type, ret: R.Type) async throws {
+    private func jumpedTests<A: JXConvertible & Randomizable & JSConvertable & Equatable, R: JXConvertible & Randomizable & Equatable>(arg: A.Type, ret: R.Type) async throws {
         let obj = RandoJack<A, R>()
 
         XCTAssertNotEqual(R.rnd(), try obj.jxc.eval("func0()").convey(in: obj.jxc))
@@ -366,7 +366,7 @@ final class JackedObjectTests: XCTestCase {
         }
 
         /// A sample of codable passing
-        struct Coded : Codable, Equatable, Conveyable {
+        struct Coded : Codable, Equatable, JXConvertible {
             var id = UUID()
             var str = ""
             var num: Int?
@@ -453,7 +453,7 @@ fileprivate protocol JSConvertable { var js: String { get } }
 
 // MARK: UUID
 
-extension UUID : Conveyable {
+extension UUID : JXConvertible {
 }
 
 extension UUID : Randomizable {
@@ -521,7 +521,7 @@ extension Int32 : JSConvertable {
 
 /// A generic jumpable type that represents functions with all the possible arities.
 @available(macOS 10.15, macCatalyst 13, iOS 13, tvOS 13, watchOS 6, *)
-private class RandoJack<A: Conveyable, ReturnType: Randomizable & Conveyable> : JackedObject {
+private class RandoJack<A: JXConvertible, ReturnType: Randomizable & JXConvertible> : JackedObject {
     private func cast(_ value: Any) -> ReturnType {
         value as? ReturnType ?? .rnd()
     }

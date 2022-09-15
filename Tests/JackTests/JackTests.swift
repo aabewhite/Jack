@@ -109,7 +109,7 @@ final class JackTests: XCTestCase {
             @Coded var related = JSBridgedRelated()
         }
 
-        struct JSBridgedRelated : Codable, Conveyable {
+        struct JSBridgedRelated : Codable, JXConvertible {
             var string = "related"
         }
 
@@ -121,7 +121,7 @@ final class JackTests: XCTestCase {
     }
 
     func testBridgingEnhanced() throws {
-        enum Relation : String, Conveyable {
+        enum Relation : String, JXConvertible {
             // string cases are auto-exported to Java via coding
             case friend, relative, neighbor, coworker
         }
@@ -656,7 +656,7 @@ final class JackTests: XCTestCase {
         }
 
         /// A sample of codable passing
-        struct CodedCodable : Codable, Equatable, Conveyable {
+        struct CodedCodable : Codable, Equatable, JXConvertible {
             var id = UUID()
             var str = ""
             var num: Int?

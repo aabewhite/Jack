@@ -6,7 +6,7 @@ import OpenCombineShim
 ///
 /// To support for passing codable types through serialization, use ``Jugglable``
 @available(macOS 11, iOS 13, tvOS 13, *)
-public protocol Jackable : Conveyable {
+public protocol Jackable : JXConvertible {
     /// Sets the value of this property.
     ///
     /// - SeeAlso: ``makeJX``
@@ -343,39 +343,11 @@ extension Float : Jackable {
 
 
 @available(macOS 11, iOS 13, tvOS 13, *)
-extension Optional : Jackable, Conveyable where Wrapped : Conveyable {
-    public static func makeJX(from value: JXValue, in context: JXContext) throws -> Self {
-        if value.isNull {
-            return .none
-        } else {
-            return try Wrapped.makeJX(from: value, in: context)
-        }
-    }
-
-    public func getJX(from context: JXContext) throws -> JXValue {
-        try self?.getJX(from: context) ?? context.null()
-    }
+extension Optional : Jackable where Wrapped : JXConvertible {
 }
 
 @available(macOS 11, iOS 13, tvOS 13, *)
-extension Array : Jackable, Conveyable where Element : Conveyable {
-    public static func makeJX(from value: JXValue, in context: JXContext) throws -> Self {
-        guard try value.isArray else {
-            throw JackError.valueNotArray(value, .init(context: context))
-        }
-
-        let arrayValue = try value.array
-
-        return try arrayValue.map({ jx in
-            try Element.makeJX(from: jx, in: context)
-        })
-    }
-
-    public func getJX(from context: JXContext) throws -> JXValue {
-        try context.array(self.map({ x in
-            try x.getJX(from: context)
-        }))
-    }
+extension Array : Jackable where Element : JXConvertible {
 }
 
 

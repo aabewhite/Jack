@@ -10,7 +10,7 @@ public protocol LocationPod : JackPod {
 }
 
 /// A location on earth.
-public struct Location : Codable, Equatable, Conveyable {
+public struct Location : Codable, Equatable, JXConvertible {
     public var latitude: Double
     public var longitude: Double
     public var altitude: Double

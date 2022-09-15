@@ -116,7 +116,7 @@ open class AbstractCanvasPod : CanvasPod {
     /// A structure describing text measurments.
     ///
     /// See: [MDN](https://developer.mozilla.org/en-US/docs/Web/API/TextMetrics)
-    public struct TextMetrics : Codable, Equatable, Conveyable {
+    public struct TextMetrics : Codable, Equatable, JXConvertible {
         /// TextMetrics.width Read only
         /// Is a double giving the calculated width of a segment of inline text in CSS pixels. It takes into account the current font of the context.
         public var width: Double
@@ -186,28 +186,28 @@ open class AbstractCanvasPod : CanvasPod {
 /// The CanvasGradient interface represents an opaque object describing a gradient. It is returned by the methods CanvasRenderingContext2D.createLinearGradient() or CanvasRenderingContext2D.createRadialGradient().
 ///
 /// See: [MDN](https://developer.mozilla.org/en-US/docs/Web/API/CanvasGradient)
-public struct CanvasGradientAPI : Codable, Conveyable {
+public struct CanvasGradientAPI : Codable, JXConvertible {
     /// adds a new color stop, defined by an offset and a color, to a given canvas gradient.
     ///
     /// See: [MDN](https://developer.mozilla.org/en-US/docs/Web/API/CanvasGradient/addColorStop)
     //func addColorStop(offset: Double, color: String)
 }
 
-public struct CanvasPatternAPI : Codable, Conveyable {
+public struct CanvasPatternAPI : Codable, JXConvertible {
     /// Applies an SVGMatrix or DOMMatrix representing a linear transform to the pattern
     ///
     /// See: [MDN](https://developer.mozilla.org/en-US/docs/Web/API/CanvasPattern/setTransform)
     //func setTransform(a: Double, b: Double, c: Double, d: Double, e: Double, f: Double)
 }
 
-public struct ImageDataAPI : Codable, Conveyable {
+public struct ImageDataAPI : Codable, JXConvertible {
 }
 
-public struct CanvasRenderingContext2DSettingsAPI : Codable, Conveyable {
+public struct CanvasRenderingContext2DSettingsAPI : Codable, JXConvertible {
 }
 
 /// See: [MDN](https://developer.mozilla.org/en-US/docs/Web/API/DOMMatrix)
-public struct DOMMatrixAPI : Codable, Conveyable {
+public struct DOMMatrixAPI : Codable, JXConvertible {
 }
 
 
