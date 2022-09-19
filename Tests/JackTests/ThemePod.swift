@@ -29,21 +29,41 @@ public class ThemePod : JackPod {
         observers.removeAll()
     }
 
-    // MARK: UI-Kit-specific properties
+    // MARK: UIKit-specific properties
     #if canImport(UIKit)
-    static var navbar: UINavigationBar { UINavigationBar.appearance() }
+    static var navBar: UINavigationBar { UINavigationBar.appearance() }
 
-    @Coded public var navigationBarTintColor: CSSColor? = (navbar.tintColor?.ciColor).flatMap(CSSColor.init(nativeColor:))
+    @Coded public var navBarTintColor: CSSColor? = navBar.tintColor?.ciColor.cssColor
+    static func navBarTintColorDidSet(_ newValue: CSSColor?) {
+        navBar.tintColor = newValue?.nativeColor.uiColor
+    }
+
+    static var tabBar: UITabBar { UITabBar.appearance() }
+
+    @Coded public var tabBarTintColor: CSSColor? = tabBar.tintColor?.ciColor.cssColor
+    static func tabBarTintColorDidSet(_ newValue: CSSColor?) {
+        tabBar.tintColor = newValue?.nativeColor.uiColor
+    }
+
+    static var label: UILabel { UILabel.appearance() }
+
+    @Coded public var labelTintColor: CSSColor? = label.tintColor?.ciColor.cssColor
+    static func labelTintColorDidSet(_ newValue: CSSColor?) {
+        label.tintColor = newValue?.nativeColor.uiColor
+    }
+
 
     func setupListeners() {
-        self.$navigationBarTintColor.receive(on: RunLoop.main)
-            .sink(receiveValue: { newValue in
-                Self.navbar.tintColor = newValue?.nativeColor.uiColor
-            })
-            .store(in: &observers)
+        $navBarTintColor.sink(receiveValue: Self.navBarTintColorDidSet).store(in: &observers)
+        $tabBarTintColor.sink(receiveValue: Self.tabBarTintColorDidSet).store(in: &observers)
+        $labelTintColor.sink(receiveValue: Self.labelTintColorDidSet).store(in: &observers)
+        //$navBarTintColor.sink(receiveValue: { [weak self] _ in }).store(in: &observers)
     }
 
     #else
+
+    //static var textField: NSTextField { NSTextField.appearance }
+
     func setupListeners() {
         // TODO: AppKit
     }
@@ -233,7 +253,7 @@ public struct CSSColor : Codable, Hashable, CustomStringConvertible, JXConvertib
         }
     }
 
-    public struct RGBColor : Codable, Hashable, CustomStringConvertible {
+    public struct RGBColor : Codable, Hashable, CustomStringConvertible, ExpressibleByIntegerLiteral {
         public var r: Double
         public var g: Double
         public var b: Double
@@ -244,6 +264,15 @@ public struct CSSColor : Codable, Hashable, CustomStringConvertible, JXConvertib
             self.g = g
             self.b = b
             self.a = a
+        }
+
+        /// Create from a single integer like 0x55AA11FF
+        public init(integerLiteral value: IntegerLiteralType) {
+            let r = (value & 0xFF0000) >> 16
+            let g = (value & 0x00FF00) >> 8
+            let b = (value & 0x0000FF) >> 0
+
+            self.init(r: CGFloat(r) / 255, g: CGFloat(g) / 255, b: CGFloat(b) / 255, a: 1.0)
         }
 
         public static func parseColor(css: String) throws -> RGBColor {
@@ -482,155 +511,159 @@ public struct CSSColor : Codable, Hashable, CustomStringConvertible, JXConvertib
             ]
         }
 
+        private static func named(_ name: String, _ color: RGBColor) -> NamedColor {
+            NamedColor(name: name, color: color)
+        }
 
-        static let transparent = NamedColor(name: "transparent", color: RGBColor(r: 0, g: 0, b: 0, a: 0))
-        static let black = NamedColor(name: "black", color: RGBColor(r: 0x00/255, g: 0x00/255, b: 0x00/255))
-        static let silver = NamedColor(name: "silver", color: RGBColor(r: 0xc0/255, g: 0xc0/255, b: 0xc0/255))
-        static let gray = NamedColor(name: "gray", color: RGBColor(r: 0x80/255, g: 0x80/255, b: 0x80/255))
-        static let white = NamedColor(name: "white", color: RGBColor(r: 0xff/255, g: 0xff/255, b: 0xff/255))
-        static let maroon = NamedColor(name: "maroon", color: RGBColor(r: 0x80/255, g: 0x00/255, b: 0x00/255))
-        static let red = NamedColor(name: "red", color: RGBColor(r: 0xff/255, g: 0x00/255, b: 0x00/255))
-        static let purple = NamedColor(name: "purple", color: RGBColor(r: 0x80/255, g: 0x00/255, b: 0x80/255))
-        static let fuchsia = NamedColor(name: "fuchsia", color: RGBColor(r: 0xff/255, g: 0x00/255, b: 0xff/255))
-        static let green = NamedColor(name: "green", color: RGBColor(r: 0x00/255, g: 0x80/255, b: 0x00/255))
-        static let lime = NamedColor(name: "lime", color: RGBColor(r: 0x00/255, g: 0xff/255, b: 0x00/255))
-        static let olive = NamedColor(name: "olive", color: RGBColor(r: 0x80/255, g: 0x80/255, b: 0x00/255))
-        static let yellow = NamedColor(name: "yellow", color: RGBColor(r: 0xff/255, g: 0xff/255, b: 0x00/255))
-        static let navy = NamedColor(name: "navy", color: RGBColor(r: 0x00/255, g: 0x00/255, b: 0x80/255))
-        static let blue = NamedColor(name: "blue", color: RGBColor(r: 0x00/255, g: 0x00/255, b: 0xff/255))
-        static let teal = NamedColor(name: "teal", color: RGBColor(r: 0x00/255, g: 0x80/255, b: 0x80/255))
-        static let aqua = NamedColor(name: "aqua", color: RGBColor(r: 0x00/255, g: 0xff/255, b: 0xff/255))
-        static let orange = NamedColor(name: "orange", color: RGBColor(r: 0xff/255, g: 0xa5/255, b: 0x00/255))
-        static let aliceblue = NamedColor(name: "aliceblue", color: RGBColor(r: 0xf0/255, g: 0xf8/255, b: 0xff/255))
-        static let antiquewhite = NamedColor(name: "antiquewhite", color: RGBColor(r: 0xfa/255, g: 0xeb/255, b: 0xd7/255))
-        static let aquamarine = NamedColor(name: "aquamarine", color: RGBColor(r: 0x7f/255, g: 0xff/255, b: 0xd4/255))
-        static let azure = NamedColor(name: "azure", color: RGBColor(r: 0xf0/255, g: 0xff/255, b: 0xff/255))
-        static let beige = NamedColor(name: "beige", color: RGBColor(r: 0xf5/255, g: 0xf5/255, b: 0xdc/255))
-        static let bisque = NamedColor(name: "bisque", color: RGBColor(r: 0xff/255, g: 0xe4/255, b: 0xc4/255))
-        static let blanchedalmond = NamedColor(name: "blanchedalmond", color: RGBColor(r: 0xff/255, g: 0xeb/255, b: 0xcd/255))
-        static let blueviolet = NamedColor(name: "blueviolet", color: RGBColor(r: 0x8a/255, g: 0x2b/255, b: 0xe2/255))
-        static let brown = NamedColor(name: "brown", color: RGBColor(r: 0xa5/255, g: 0x2a/255, b: 0x2a/255))
-        static let burlywood = NamedColor(name: "burlywood", color: RGBColor(r: 0xde/255, g: 0xb8/255, b: 0x87/255))
-        static let cadetblue = NamedColor(name: "cadetblue", color: RGBColor(r: 0x5f/255, g: 0x9e/255, b: 0xa0/255))
-        static let chartreuse = NamedColor(name: "chartreuse", color: RGBColor(r: 0x7f/255, g: 0xff/255, b: 0x00/255))
-        static let chocolate = NamedColor(name: "chocolate", color: RGBColor(r: 0xd2/255, g: 0x69/255, b: 0x1e/255))
-        static let coral = NamedColor(name: "coral", color: RGBColor(r: 0xff/255, g: 0x7f/255, b: 0x50/255))
-        static let cornflowerblue = NamedColor(name: "cornflowerblue", color: RGBColor(r: 0x64/255, g: 0x95/255, b: 0xed/255))
-        static let cornsilk = NamedColor(name: "cornsilk", color: RGBColor(r: 0xff/255, g: 0xf8/255, b: 0xdc/255))
-        static let crimson = NamedColor(name: "crimson", color: RGBColor(r: 0xdc/255, g: 0x14/255, b: 0x3c/255))
-        static let cyan = NamedColor(name: "cyan", color: RGBColor(r: 0x00/255, g: 0xff/255, b: 0xff/255))
-        static let darkblue = NamedColor(name: "darkblue", color: RGBColor(r: 0x00/255, g: 0x00/255, b: 0x8b/255))
-        static let darkcyan = NamedColor(name: "darkcyan", color: RGBColor(r: 0x00/255, g: 0x8b/255, b: 0x8b/255))
-        static let darkgoldenrod = NamedColor(name: "darkgoldenrod", color: RGBColor(r: 0xb8/255, g: 0x86/255, b: 0x0b/255))
-        static let darkgray = NamedColor(name: "darkgray", color: RGBColor(r: 0xa9/255, g: 0xa9/255, b: 0xa9/255))
-        static let darkgreen = NamedColor(name: "darkgreen", color: RGBColor(r: 0x00/255, g: 0x64/255, b: 0x00/255))
-        static let darkgrey = NamedColor(name: "darkgrey", color: RGBColor(r: 0xa9/255, g: 0xa9/255, b: 0xa9/255))
-        static let darkkhaki = NamedColor(name: "darkkhaki", color: RGBColor(r: 0xbd/255, g: 0xb7/255, b: 0x6b/255))
-        static let darkmagenta = NamedColor(name: "darkmagenta", color: RGBColor(r: 0x8b/255, g: 0x00/255, b: 0x8b/255))
-        static let darkolivegreen = NamedColor(name: "darkolivegreen", color: RGBColor(r: 0x55/255, g: 0x6b/255, b: 0x2f/255))
-        static let darkorange = NamedColor(name: "darkorange", color: RGBColor(r: 0xff/255, g: 0x8c/255, b: 0x00/255))
-        static let darkorchid = NamedColor(name: "darkorchid", color: RGBColor(r: 0x99/255, g: 0x32/255, b: 0xcc/255))
-        static let darkred = NamedColor(name: "darkred", color: RGBColor(r: 0x8b/255, g: 0x00/255, b: 0x00/255))
-        static let darksalmon = NamedColor(name: "darksalmon", color: RGBColor(r: 0xe9/255, g: 0x96/255, b: 0x7a/255))
-        static let darkseagreen = NamedColor(name: "darkseagreen", color: RGBColor(r: 0x8f/255, g: 0xbc/255, b: 0x8f/255))
-        static let darkslateblue = NamedColor(name: "darkslateblue", color: RGBColor(r: 0x48/255, g: 0x3d/255, b: 0x8b/255))
-        static let darkslategray = NamedColor(name: "darkslategray", color: RGBColor(r: 0x2f/255, g: 0x4f/255, b: 0x4f/255))
-        static let darkslategrey = NamedColor(name: "darkslategrey", color: RGBColor(r: 0x2f/255, g: 0x4f/255, b: 0x4f/255))
-        static let darkturquoise = NamedColor(name: "darkturquoise", color: RGBColor(r: 0x00/255, g: 0xce/255, b: 0xd1/255))
-        static let darkviolet = NamedColor(name: "darkviolet", color: RGBColor(r: 0x94/255, g: 0x00/255, b: 0xd3/255))
-        static let deeppink = NamedColor(name: "deeppink", color: RGBColor(r: 0xff/255, g: 0x14/255, b: 0x93/255))
-        static let deepskyblue = NamedColor(name: "deepskyblue", color: RGBColor(r: 0x00/255, g: 0xbf/255, b: 0xff/255))
-        static let dimgray = NamedColor(name: "dimgray", color: RGBColor(r: 0x69/255, g: 0x69/255, b: 0x69/255))
-        static let dimgrey = NamedColor(name: "dimgrey", color: RGBColor(r: 0x69/255, g: 0x69/255, b: 0x69/255))
-        static let dodgerblue = NamedColor(name: "dodgerblue", color: RGBColor(r: 0x1e/255, g: 0x90/255, b: 0xff/255))
-        static let firebrick = NamedColor(name: "firebrick", color: RGBColor(r: 0xb2/255, g: 0x22/255, b: 0x22/255))
-        static let floralwhite = NamedColor(name: "floralwhite", color: RGBColor(r: 0xff/255, g: 0xfa/255, b: 0xf0/255))
-        static let forestgreen = NamedColor(name: "forestgreen", color: RGBColor(r: 0x22/255, g: 0x8b/255, b: 0x22/255))
-        static let gainsboro = NamedColor(name: "gainsboro", color: RGBColor(r: 0xdc/255, g: 0xdc/255, b: 0xdc/255))
-        static let ghostwhite = NamedColor(name: "ghostwhite", color: RGBColor(r: 0xf8/255, g: 0xf8/255, b: 0xff/255))
-        static let gold = NamedColor(name: "gold", color: RGBColor(r: 0xff/255, g: 0xd7/255, b: 0x00/255))
-        static let goldenrod = NamedColor(name: "goldenrod", color: RGBColor(r: 0xda/255, g: 0xa5/255, b: 0x20/255))
-        static let greenyellow = NamedColor(name: "greenyellow", color: RGBColor(r: 0xad/255, g: 0xff/255, b: 0x2f/255))
-        static let grey = NamedColor(name: "grey", color: RGBColor(r: 0x80/255, g: 0x80/255, b: 0x80/255))
-        static let honeydew = NamedColor(name: "honeydew", color: RGBColor(r: 0xf0/255, g: 0xff/255, b: 0xf0/255))
-        static let hotpink = NamedColor(name: "hotpink", color: RGBColor(r: 0xff/255, g: 0x69/255, b: 0xb4/255))
-        static let indianred = NamedColor(name: "indianred", color: RGBColor(r: 0xcd/255, g: 0x5c/255, b: 0x5c/255))
-        static let indigo = NamedColor(name: "indigo", color: RGBColor(r: 0x4b/255, g: 0x00/255, b: 0x82/255))
-        static let ivory = NamedColor(name: "ivory", color: RGBColor(r: 0xff/255, g: 0xff/255, b: 0xf0/255))
-        static let khaki = NamedColor(name: "khaki", color: RGBColor(r: 0xf0/255, g: 0xe6/255, b: 0x8c/255))
-        static let lavender = NamedColor(name: "lavender", color: RGBColor(r: 0xe6/255, g: 0xe6/255, b: 0xfa/255))
-        static let lavenderblush = NamedColor(name: "lavenderblush", color: RGBColor(r: 0xff/255, g: 0xf0/255, b: 0xf5/255))
-        static let lawngreen = NamedColor(name: "lawngreen", color: RGBColor(r: 0x7c/255, g: 0xfc/255, b: 0x00/255))
-        static let lemonchiffon = NamedColor(name: "lemonchiffon", color: RGBColor(r: 0xff/255, g: 0xfa/255, b: 0xcd/255))
-        static let lightblue = NamedColor(name: "lightblue", color: RGBColor(r: 0xad/255, g: 0xd8/255, b: 0xe6/255))
-        static let lightcoral = NamedColor(name: "lightcoral", color: RGBColor(r: 0xf0/255, g: 0x80/255, b: 0x80/255))
-        static let lightcyan = NamedColor(name: "lightcyan", color: RGBColor(r: 0xe0/255, g: 0xff/255, b: 0xff/255))
-        static let lightgoldenrodyellow = NamedColor(name: "lightgoldenrodyellow", color: RGBColor(r: 0xfa/255, g: 0xfa/255, b: 0xd2/255))
-        static let lightgray = NamedColor(name: "lightgray", color: RGBColor(r: 0xd3/255, g: 0xd3/255, b: 0xd3/255))
-        static let lightgreen = NamedColor(name: "lightgreen", color: RGBColor(r: 0x90/255, g: 0xee/255, b: 0x90/255))
-        static let lightgrey = NamedColor(name: "lightgrey", color: RGBColor(r: 0xd3/255, g: 0xd3/255, b: 0xd3/255))
-        static let lightpink = NamedColor(name: "lightpink", color: RGBColor(r: 0xff/255, g: 0xb6/255, b: 0xc1/255))
-        static let lightsalmon = NamedColor(name: "lightsalmon", color: RGBColor(r: 0xff/255, g: 0xa0/255, b: 0x7a/255))
-        static let lightseagreen = NamedColor(name: "lightseagreen", color: RGBColor(r: 0x20/255, g: 0xb2/255, b: 0xaa/255))
-        static let lightskyblue = NamedColor(name: "lightskyblue", color: RGBColor(r: 0x87/255, g: 0xce/255, b: 0xfa/255))
-        static let lightslategray = NamedColor(name: "lightslategray", color: RGBColor(r: 0x77/255, g: 0x88/255, b: 0x99/255))
-        static let lightslategrey = NamedColor(name: "lightslategrey", color: RGBColor(r: 0x77/255, g: 0x88/255, b: 0x99/255))
-        static let lightsteelblue = NamedColor(name: "lightsteelblue", color: RGBColor(r: 0xb0/255, g: 0xc4/255, b: 0xde/255))
-        static let lightyellow = NamedColor(name: "lightyellow", color: RGBColor(r: 0xff/255, g: 0xff/255, b: 0xe0/255))
-        static let limegreen = NamedColor(name: "limegreen", color: RGBColor(r: 0x32/255, g: 0xcd/255, b: 0x32/255))
-        static let linen = NamedColor(name: "linen", color: RGBColor(r: 0xfa/255, g: 0xf0/255, b: 0xe6/255))
-        static let magenta = NamedColor(name: "magenta", color: RGBColor(r: 0xff/255, g: 0x00/255, b: 0xff/255))
-        static let mediumaquamarine = NamedColor(name: "mediumaquamarine", color: RGBColor(r: 0x66/255, g: 0xcd/255, b: 0xaa/255))
-        static let mediumblue = NamedColor(name: "mediumblue", color: RGBColor(r: 0x00/255, g: 0x00/255, b: 0xcd/255))
-        static let mediumorchid = NamedColor(name: "mediumorchid", color: RGBColor(r: 0xba/255, g: 0x55/255, b: 0xd3/255))
-        static let mediumpurple = NamedColor(name: "mediumpurple", color: RGBColor(r: 0x93/255, g: 0x70/255, b: 0xdb/255))
-        static let mediumseagreen = NamedColor(name: "mediumseagreen", color: RGBColor(r: 0x3c/255, g: 0xb3/255, b: 0x71/255))
-        static let mediumslateblue = NamedColor(name: "mediumslateblue", color: RGBColor(r: 0x7b/255, g: 0x68/255, b: 0xee/255))
-        static let mediumspringgreen = NamedColor(name: "mediumspringgreen", color: RGBColor(r: 0x00/255, g: 0xfa/255, b: 0x9a/255))
-        static let mediumturquoise = NamedColor(name: "mediumturquoise", color: RGBColor(r: 0x48/255, g: 0xd1/255, b: 0xcc/255))
-        static let mediumvioletred = NamedColor(name: "mediumvioletred", color: RGBColor(r: 0xc7/255, g: 0x15/255, b: 0x85/255))
-        static let midnightblue = NamedColor(name: "midnightblue", color: RGBColor(r: 0x19/255, g: 0x19/255, b: 0x70/255))
-        static let mintcream = NamedColor(name: "mintcream", color: RGBColor(r: 0xf5/255, g: 0xff/255, b: 0xfa/255))
-        static let mistyrose = NamedColor(name: "mistyrose", color: RGBColor(r: 0xff/255, g: 0xe4/255, b: 0xe1/255))
-        static let moccasin = NamedColor(name: "moccasin", color: RGBColor(r: 0xff/255, g: 0xe4/255, b: 0xb5/255))
-        static let navajowhite = NamedColor(name: "navajowhite", color: RGBColor(r: 0xff/255, g: 0xde/255, b: 0xad/255))
-        static let oldlace = NamedColor(name: "oldlace", color: RGBColor(r: 0xfd/255, g: 0xf5/255, b: 0xe6/255))
-        static let olivedrab = NamedColor(name: "olivedrab", color: RGBColor(r: 0x6b/255, g: 0x8e/255, b: 0x23/255))
-        static let orangered = NamedColor(name: "orangered", color: RGBColor(r: 0xff/255, g: 0x45/255, b: 0x00/255))
-        static let orchid = NamedColor(name: "orchid", color: RGBColor(r: 0xda/255, g: 0x70/255, b: 0xd6/255))
-        static let palegoldenrod = NamedColor(name: "palegoldenrod", color: RGBColor(r: 0xee/255, g: 0xe8/255, b: 0xaa/255))
-        static let palegreen = NamedColor(name: "palegreen", color: RGBColor(r: 0x98/255, g: 0xfb/255, b: 0x98/255))
-        static let paleturquoise = NamedColor(name: "paleturquoise", color: RGBColor(r: 0xaf/255, g: 0xee/255, b: 0xee/255))
-        static let palevioletred = NamedColor(name: "palevioletred", color: RGBColor(r: 0xdb/255, g: 0x70/255, b: 0x93/255))
-        static let papayawhip = NamedColor(name: "papayawhip", color: RGBColor(r: 0xff/255, g: 0xef/255, b: 0xd5/255))
-        static let peachpuff = NamedColor(name: "peachpuff", color: RGBColor(r: 0xff/255, g: 0xda/255, b: 0xb9/255))
-        static let peru = NamedColor(name: "peru", color: RGBColor(r: 0xcd/255, g: 0x85/255, b: 0x3f/255))
-        static let pink = NamedColor(name: "pink", color: RGBColor(r: 0xff/255, g: 0xc0/255, b: 0xcb/255))
-        static let plum = NamedColor(name: "plum", color: RGBColor(r: 0xdd/255, g: 0xa0/255, b: 0xdd/255))
-        static let powderblue = NamedColor(name: "powderblue", color: RGBColor(r: 0xb0/255, g: 0xe0/255, b: 0xe6/255))
-        static let rosybrown = NamedColor(name: "rosybrown", color: RGBColor(r: 0xbc/255, g: 0x8f/255, b: 0x8f/255))
-        static let royalblue = NamedColor(name: "royalblue", color: RGBColor(r: 0x41/255, g: 0x69/255, b: 0xe1/255))
-        static let saddlebrown = NamedColor(name: "saddlebrown", color: RGBColor(r: 0x8b/255, g: 0x45/255, b: 0x13/255))
-        static let salmon = NamedColor(name: "salmon", color: RGBColor(r: 0xfa/255, g: 0x80/255, b: 0x72/255))
-        static let sandybrown = NamedColor(name: "sandybrown", color: RGBColor(r: 0xf4/255, g: 0xa4/255, b: 0x60/255))
-        static let seagreen = NamedColor(name: "seagreen", color: RGBColor(r: 0x2e/255, g: 0x8b/255, b: 0x57/255))
-        static let seashell = NamedColor(name: "seashell", color: RGBColor(r: 0xff/255, g: 0xf5/255, b: 0xee/255))
-        static let sienna = NamedColor(name: "sienna", color: RGBColor(r: 0xa0/255, g: 0x52/255, b: 0x2d/255))
-        static let skyblue = NamedColor(name: "skyblue", color: RGBColor(r: 0x87/255, g: 0xce/255, b: 0xeb/255))
-        static let slateblue = NamedColor(name: "slateblue", color: RGBColor(r: 0x6a/255, g: 0x5a/255, b: 0xcd/255))
-        static let slategray = NamedColor(name: "slategray", color: RGBColor(r: 0x70/255, g: 0x80/255, b: 0x90/255))
-        static let slategrey = NamedColor(name: "slategrey", color: RGBColor(r: 0x70/255, g: 0x80/255, b: 0x90/255))
-        static let snow = NamedColor(name: "snow", color: RGBColor(r: 0xff/255, g: 0xfa/255, b: 0xfa/255))
-        static let springgreen = NamedColor(name: "springgreen", color: RGBColor(r: 0x00/255, g: 0xff/255, b: 0x7f/255))
-        static let steelblue = NamedColor(name: "steelblue", color: RGBColor(r: 0x46/255, g: 0x82/255, b: 0xb4/255))
-        static let tan = NamedColor(name: "tan", color: RGBColor(r: 0xd2/255, g: 0xb4/255, b: 0x8c/255))
-        static let thistle = NamedColor(name: "thistle", color: RGBColor(r: 0xd8/255, g: 0xbf/255, b: 0xd8/255))
-        static let tomato = NamedColor(name: "tomato", color: RGBColor(r: 0xff/255, g: 0x63/255, b: 0x47/255))
-        static let turquoise = NamedColor(name: "turquoise", color: RGBColor(r: 0x40/255, g: 0xe0/255, b: 0xd0/255))
-        static let violet = NamedColor(name: "violet", color: RGBColor(r: 0xee/255, g: 0x82/255, b: 0xee/255))
-        static let wheat = NamedColor(name: "wheat", color: RGBColor(r: 0xf5/255, g: 0xde/255, b: 0xb3/255))
-        static let whitesmoke = NamedColor(name: "whitesmoke", color: RGBColor(r: 0xf5/255, g: 0xf5/255, b: 0xf5/255))
-        static let yellowgreen = NamedColor(name: "yellowgreen", color: RGBColor(r: 0x9a/255, g: 0xcd/255, b: 0x32/255))
+        static let transparent = named("transparent", RGBColor(r: 0, g: 0, b: 0, a: 0))
+
+        static let black = named("black", 0x000000)
+        static let silver = named("silver", 0xc0c0c0)
+        static let gray = named("gray", 0x808080)
+        static let white = named("white", 0xffffff)
+        static let maroon = named("maroon", 0x800000)
+        static let red = named("red", 0xff0000)
+        static let purple = named("purple", 0x800080)
+        static let fuchsia = named("fuchsia", 0xff00ff)
+        static let green = named("green", 0x008000)
+        static let lime = named("lime", 0x00ff00)
+        static let olive = named("olive", 0x808000)
+        static let yellow = named("yellow", 0xffff00)
+        static let navy = named("navy", 0x000080)
+        static let blue = named("blue", 0x0000ff)
+        static let teal = named("teal", 0x008080)
+        static let aqua = named("aqua", 0x00ffff)
+        static let orange = named("orange", 0xffa500)
+        static let aliceblue = named("aliceblue", 0xf0f8ff)
+        static let antiquewhite = named("antiquewhite", 0xfaebd7)
+        static let aquamarine = named("aquamarine", 0x7fffd4)
+        static let azure = named("azure", 0xf0ffff)
+        static let beige = named("beige", 0xf5f5dc)
+        static let bisque = named("bisque", 0xffe4c4)
+        static let blanchedalmond = named("blanchedalmond", 0xffebcd)
+        static let blueviolet = named("blueviolet", 0x8a2be2)
+        static let brown = named("brown", 0xa52a2a)
+        static let burlywood = named("burlywood", 0xdeb887)
+        static let cadetblue = named("cadetblue", 0x5f9ea0)
+        static let chartreuse = named("chartreuse", 0x7fff00)
+        static let chocolate = named("chocolate", 0xd2691e)
+        static let coral = named("coral", 0xff7f50)
+        static let cornflowerblue = named("cornflowerblue", 0x6495ed)
+        static let cornsilk = named("cornsilk", 0xfff8dc)
+        static let crimson = named("crimson", 0xdc143c)
+        static let cyan = named("cyan", 0x00ffff)
+        static let darkblue = named("darkblue", 0x00008b)
+        static let darkcyan = named("darkcyan", 0x008b8b)
+        static let darkgoldenrod = named("darkgoldenrod", 0xb8860b)
+        static let darkgray = named("darkgray", 0xa9a9a9)
+        static let darkgreen = named("darkgreen", 0x006400)
+        static let darkgrey = named("darkgrey", 0xa9a9a9)
+        static let darkkhaki = named("darkkhaki", 0xbdb76b)
+        static let darkmagenta = named("darkmagenta", 0x8b008b)
+        static let darkolivegreen = named("darkolivegreen", 0x556b2f)
+        static let darkorange = named("darkorange", 0xff8c00)
+        static let darkorchid = named("darkorchid", 0x9932cc)
+        static let darkred = named("darkred", 0x8b0000)
+        static let darksalmon = named("darksalmon", 0xe9967a)
+        static let darkseagreen = named("darkseagreen", 0x8fbc8f)
+        static let darkslateblue = named("darkslateblue", 0x483d8b)
+        static let darkslategray = named("darkslategray", 0x2f4f4f)
+        static let darkslategrey = named("darkslategrey", 0x2f4f4f)
+        static let darkturquoise = named("darkturquoise", 0x00ced1)
+        static let darkviolet = named("darkviolet", 0x9400d3)
+        static let deeppink = named("deeppink", 0xff1493)
+        static let deepskyblue = named("deepskyblue", 0x00bfff)
+        static let dimgray = named("dimgray", 0x696969)
+        static let dimgrey = named("dimgrey", 0x696969)
+        static let dodgerblue = named("dodgerblue", 0x1e90ff)
+        static let firebrick = named("firebrick", 0xb22222)
+        static let floralwhite = named("floralwhite", 0xfffaf0)
+        static let forestgreen = named("forestgreen", 0x228b22)
+        static let gainsboro = named("gainsboro", 0xdcdcdc)
+        static let ghostwhite = named("ghostwhite", 0xf8f8ff)
+        static let gold = named("gold", 0xffd700)
+        static let goldenrod = named("goldenrod", 0xdaa520)
+        static let greenyellow = named("greenyellow", 0xadff2f)
+        static let grey = named("grey", 0x808080)
+        static let honeydew = named("honeydew", 0xf0fff0)
+        static let hotpink = named("hotpink", 0xff69b4)
+        static let indianred = named("indianred", 0xcd5c5c)
+        static let indigo = named("indigo", 0x4b0082)
+        static let ivory = named("ivory", 0xfffff0)
+        static let khaki = named("khaki", 0xf0e68c)
+        static let lavender = named("lavender", 0xe6e6fa)
+        static let lavenderblush = named("lavenderblush", 0xfff0f5)
+        static let lawngreen = named("lawngreen", 0x7cfc00)
+        static let lemonchiffon = named("lemonchiffon", 0xfffacd)
+        static let lightblue = named("lightblue", 0xadd8e6)
+        static let lightcoral = named("lightcoral", 0xf08080)
+        static let lightcyan = named("lightcyan", 0xe0ffff)
+        static let lightgoldenrodyellow = named("lightgoldenrodyellow", 0xfafad2)
+        static let lightgray = named("lightgray", 0xd3d3d3)
+        static let lightgreen = named("lightgreen", 0x90ee90)
+        static let lightgrey = named("lightgrey", 0xd3d3d3)
+        static let lightpink = named("lightpink", 0xffb6c1)
+        static let lightsalmon = named("lightsalmon", 0xffa07a)
+        static let lightseagreen = named("lightseagreen", 0x20b2aa)
+        static let lightskyblue = named("lightskyblue", 0x87cefa)
+        static let lightslategray = named("lightslategray", 0x778899)
+        static let lightslategrey = named("lightslategrey", 0x778899)
+        static let lightsteelblue = named("lightsteelblue", 0xb0c4de)
+        static let lightyellow = named("lightyellow", 0xffffe0)
+        static let limegreen = named("limegreen", 0x32cd32)
+        static let linen = named("linen", 0xfaf0e6)
+        static let magenta = named("magenta", 0xff00ff)
+        static let mediumaquamarine = named("mediumaquamarine", 0x66cdaa)
+        static let mediumblue = named("mediumblue", 0x0000cd)
+        static let mediumorchid = named("mediumorchid", 0xba55d3)
+        static let mediumpurple = named("mediumpurple", 0x9370db)
+        static let mediumseagreen = named("mediumseagreen", 0x3cb371)
+        static let mediumslateblue = named("mediumslateblue", 0x7b68ee)
+        static let mediumspringgreen = named("mediumspringgreen", 0x00fa9a)
+        static let mediumturquoise = named("mediumturquoise", 0x48d1cc)
+        static let mediumvioletred = named("mediumvioletred", 0xc71585)
+        static let midnightblue = named("midnightblue", 0x191970)
+        static let mintcream = named("mintcream", 0xf5fffa)
+        static let mistyrose = named("mistyrose", 0xffe4e1)
+        static let moccasin = named("moccasin", 0xffe4b5)
+        static let navajowhite = named("navajowhite", 0xffdead)
+        static let oldlace = named("oldlace", 0xfdf5e6)
+        static let olivedrab = named("olivedrab", 0x6b8e23)
+        static let orangered = named("orangered", 0xff4500)
+        static let orchid = named("orchid", 0xda70d6)
+        static let palegoldenrod = named("palegoldenrod", 0xeee8aa)
+        static let palegreen = named("palegreen", 0x98fb98)
+        static let paleturquoise = named("paleturquoise", 0xafeeee)
+        static let palevioletred = named("palevioletred", 0xdb7093)
+        static let papayawhip = named("papayawhip", 0xffefd5)
+        static let peachpuff = named("peachpuff", 0xffdab9)
+        static let peru = named("peru", 0xcd853f)
+        static let pink = named("pink", 0xffc0cb)
+        static let plum = named("plum", 0xdda0dd)
+        static let powderblue = named("powderblue", 0xb0e0e6)
+        static let rosybrown = named("rosybrown", 0xbc8f8f)
+        static let royalblue = named("royalblue", 0x4169e1)
+        static let saddlebrown = named("saddlebrown", 0x8b4513)
+        static let salmon = named("salmon", 0xfa8072)
+        static let sandybrown = named("sandybrown", 0xf4a460)
+        static let seagreen = named("seagreen", 0x2e8b57)
+        static let seashell = named("seashell", 0xfff5ee)
+        static let sienna = named("sienna", 0xa0522d)
+        static let skyblue = named("skyblue", 0x87ceeb)
+        static let slateblue = named("slateblue", 0x6a5acd)
+        static let slategray = named("slategray", 0x708090)
+        static let slategrey = named("slategrey", 0x708090)
+        static let snow = named("snow", 0xfffafa)
+        static let springgreen = named("springgreen", 0x00ff7f)
+        static let steelblue = named("steelblue", 0x4682b4)
+        static let tan = named("tan", 0xd2b48c)
+        static let thistle = named("thistle", 0xd8bfd8)
+        static let tomato = named("tomato", 0xff6347)
+        static let turquoise = named("turquoise", 0x40e0d0)
+        static let violet = named("violet", 0xee82ee)
+        static let wheat = named("wheat", 0xf5deb3)
+        static let whitesmoke = named("whitesmoke", 0xf5f5f5)
+        static let yellowgreen = named("yellowgreen", 0x9acd32)
     }
 }
 
@@ -651,6 +684,13 @@ extension CIColor {
     }
 }
 #endif
+
+extension CIColor {
+    /// Converts this color into a CSSColor
+    var cssColor: CSSColor {
+        CSSColor(nativeColor: self)
+    }
+}
 
 extension CSSColor {
     /// Creates this `CSSColor` from a native CoreImage ``CIColor``.`
@@ -691,6 +731,9 @@ final class ThemePodTests: XCTestCase {
         XCTAssertEqual(1, CSSColor.NamedColor(rawValue: "red")?.color.r)
         XCTAssertEqual(0.5019607843137255, CSSColor.NamedColor(rawValue: "green")?.color.g)
         XCTAssertEqual(1, CSSColor.NamedColor(rawValue: "blue")?.color.b)
+
+        XCTAssertEqual("#112233FF", CSSColor.RGBColor(integerLiteral: 0x112233).description)
+
 
         let decoder = JSONDecoder()
 
@@ -755,7 +798,7 @@ final class ThemePodTests: XCTestCase {
         //        try parse ("rgb(255, 0, 153.0)")
         //        try parse ("rgb(100%,0%,60%)")
         //        try parse ("rgb(100%, 0%, 60%)")
-        //        //        try parse ("rgb(100%, 0, 60%)") /* ERROR! Don't mix numbers and percentages. */
+        //        try parse ("rgb(100%, 0, 60%)") /* ERROR! Don't mix numbers and percentages. */
         //        try parse ("rgb(255 0 153)")
 
         /* Hexadecimal syntax with alpha value */
@@ -865,22 +908,21 @@ final class ThemePodTests: XCTestCase {
 //        """)
 
         #if canImport(UIKit)
-        XCTAssertEqual(false, try pod.jxc.eval("navigationBarTintColor").isUndefined)
-        XCTAssertEqual(true, try pod.jxc.eval("navigationBarTintColor").isNull)
+        XCTAssertEqual(false, try pod.jxc.eval("navBarTintColor").isUndefined)
+        XCTAssertEqual(true, try pod.jxc.eval("navBarTintColor").isNull)
 
-        // FIXME: not invoking didSet for some reason
-        try pod.jxc.eval("navigationBarTintColor = { r: 1.0, g: 0.5, b: 0.8, a: 1.0 };")
+        XCTAssertThrowsError(try pod.jxc.eval("navBarTintColor = { X: 1.0, g: 0.5, b: 0.8, a: 1.0 };"))
 
-        XCTAssertEqual(false, try pod.jxc.eval("navigationBarTintColor").isUndefined)
-        XCTAssertEqual(false, try pod.jxc.eval("navigationBarTintColor").isNull)
-        XCTAssertEqual(true, try pod.jxc.eval("navigationBarTintColor").isObject)
-        XCTAssertEqual(#"{"r":1,"g":0.5,"b":0.8,"a":1}"#, try pod.jxc.eval("JSON.stringify(navigationBarTintColor)").stringValue)
+        XCTAssertThrowsError(try pod.jxc.eval("navBarTintColor = 'not a color';"))
+        XCTAssertNoThrow(try pod.jxc.eval("navBarTintColor = 'pink';"))
 
-        //try pod.jxc.eval("setNavigationBarTintColor('#FFAA0055')")
-//        XCTAssertEqual("", UINavigationBar.appearance().tintColor?.ciColor.description)
-        // XCTAssertThrowsError(try pod.jxc.eval("setNavigationBarTintColor({ BADPROP: 0.5, g: 1.0, b: 0.7, a: 0.75 })"), "color struct with bad property should not parse")
+        try pod.jxc.eval("navBarTintColor = { r: 1.0, g: 0.5, b: 0.8, a: 1.0 };")
 
-        // try pod.jxc.eval("setNavigationBarTintColor({ r: 0.5, g: 1.0, b: 0.7, a: 0.75 })")
+        XCTAssertEqual(false, try pod.jxc.eval("navBarTintColor").isUndefined)
+        XCTAssertEqual(false, try pod.jxc.eval("navBarTintColor").isNull)
+        XCTAssertEqual(true, try pod.jxc.eval("navBarTintColor").isObject)
+        XCTAssertEqual(#"{"r":1,"g":0.5,"b":0.8,"a":1}"#, try pod.jxc.eval("JSON.stringify(navBarTintColor)").stringValue)
+
         #endif
     }
 
@@ -899,11 +941,18 @@ final class ThemePodTests: XCTestCase {
         let ob = TestObject()
         ob.XXX = "XYZ";
         XCTAssertEqual(1, testDidSetCount)
-        try ob.jxc.env.eval("XXX = 'abc';") // doesn't invoke didSet
-        //XCTAssertEqual(2, testDidSetCount) // TODO: didSet is not getting called from the JS side; need to fix this
-        ob.XXX = "XYZ";
-        //XCTAssertEqual(3, testDidSetCount)
 
+        let cancellable = ob.$XXX.sink { val in
+            testDidSetCount += 1 // fired twice
+        }
+
+        try ob.jxc.env.eval("XXX = 'abc';") // doesn't invoke didSet
+        XCTAssertEqual(3, testDidSetCount) // TODO: didSet is not getting called from the JS side; need to fix this
+
+        ob.XXX = "XYZ";
+        XCTAssertEqual(5, testDidSetCount) // once from didSet, once from the cancellable
+
+        let _ = cancellable
     }
 
 }

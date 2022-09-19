@@ -30,7 +30,7 @@ final class JackTests: XCTestCase {
     @available(macOS 13, iOS 15, tvOS 15, *)
     func XXXtestAyncLockedClassStream() async throws { // not working
         // let ajack = AppleJack(name: "John Appleseed", age: 0) // class: not concurrent
-        let ajack = await SynchronizedAppleJack(name: "John Appleseed", age: 0) // concurrent actor
+        let ajack = await SynchronizedJackedObject(name: "John Appleseed", age: 0) // concurrent actor
         var ages: [Int] = []
 
         for await age in await ajack.$age.values {
@@ -69,7 +69,7 @@ final class JackTests: XCTestCase {
 
     @available(macOS 13, iOS 15, tvOS 15, *)
     func asyncActorStreamTest(count: Int, viaJS: Bool, verify: Bool = true) async throws {
-        let ajack = AppleJacktor(name: "John Appleseed", age: 0) // concurrent actor
+        let ajack = JackedActor(name: "John Appleseed", age: 0) // concurrent actor
         var ages: [Int] = []
 
         for await age in await ajack.$age.values { // requires macOS 13/iOS 15
@@ -749,12 +749,12 @@ class AppleJack : JackedObject {
 
 /// Demo concurrent class with locking
 @available(macOS 11, iOS 13, tvOS 13, *)
-@MainActor class SynchronizedAppleJack : JackedObject {
+@MainActor class SynchronizedJackedObject : JackedObject {
     @Jacked var name: String
     @Jacked var age: Int
 
     /// A concurrent queue to allow multiple reads at once.
-    private var queue = DispatchQueue(label: "SynchronizedAppleJack", attributes: .concurrent)
+    private var queue = DispatchQueue(label: "SynchronizedJackedObject", attributes: .concurrent)
 
     /// A private script context for concurrent access
     private lazy var jxc = jack().env
@@ -775,7 +775,7 @@ class AppleJack : JackedObject {
 
 /// Demo actor
 @available(macOS 11, iOS 13, tvOS 13, *)
-actor AppleJacktor : JackedObject {
+actor JackedActor : JackedObject {
     @Jacked var name: String
     @Jacked var age: Int
 
