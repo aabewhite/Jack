@@ -54,10 +54,12 @@ public class ThemePod : JackPod {
 
 
     func setupListeners() {
-        $navBarTintColor.sink(receiveValue: Self.navBarTintColorDidSet).store(in: &observers)
-        $tabBarTintColor.sink(receiveValue: Self.tabBarTintColorDidSet).store(in: &observers)
-        $labelTintColor.sink(receiveValue: Self.labelTintColorDidSet).store(in: &observers)
-        //$navBarTintColor.sink(receiveValue: { [weak self] _ in }).store(in: &observers)
+        observers += [
+            $navBarTintColor.sink(receiveValue: Self.navBarTintColorDidSet),
+            $tabBarTintColor.sink(receiveValue: Self.tabBarTintColorDidSet),
+            $labelTintColor.sink(receiveValue: Self.labelTintColorDidSet),
+            //$navBarTintColor.sink(receiveValue: { [weak self] _ in }),
+            ]
     }
 
     #else

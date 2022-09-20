@@ -441,6 +441,10 @@ extension JackedSubject {
 
 #if canImport(COpenCombineHelpers)
 import COpenCombineHelpers
+
+fileprivate typealias UnfairLock = __UnfairLock
+fileprivate typealias UnfairRecursiveLock = __UnfairRecursiveLock
+
 #elseif canImport(Foundation)
 import class Foundation.NSLock
 
