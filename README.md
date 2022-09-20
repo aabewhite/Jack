@@ -176,12 +176,20 @@ Add the following to your `Package.swift` file:
 [Open an issue]: https://github.com/jectivex/Jack/issues/new
 [Submit a pull request]: https://github.com/jectivex/Jack/fork
 
-## Related
+## License
 
-These projects are used by Jack:
+Like the JKit and [JavaScriptCore](https://webkit.org/licensing-webkit/) frameworks
+upon which it is built, Jack is licensed under the GNU LGPL license.
+See [LICENSE.LGPL](LICENSE.LGPL) for details.
 
- - [OpenCombine][] provides Combine on Linux
- - [JXKit][] Cross-platform Swift interface to JavaScriptCore
+
+## Dependencies
+
+ - [JXKit][] Cross-platform Swift interface to JavaScriptCore (LGPL)
+ - [JavaScriptCore][]: Cross-platform JavaScript engine (LGPL)[^1]
+ - [OpenCombine][] Cross-platform Combine implementation (MIT)
+
+[^1]: JavaScriptCore is included with macOS and iOS as part of the embedded [WebCore](https://webkit.org/licensing-webkit/) framework (LGPL); on Linux JXKit uses [WebKit GTK JavaScriptCore](https://webkitgtk.org/).
 
 
 [ProjectLink]: https://github.com/jectivex/Jack
@@ -192,6 +200,7 @@ These projects are used by Jack:
 [OpenCombine]: https://github.com/OpenCombine/OpenCombine
 [Jack]: https://github.com/jectivex/Jack
 [JXKit]: https://github.com/jectivex/JXKit
+[JavaScriptCore]: https://trac.webkit.org/wiki/JavaScriptCore
 
 [GitHubActionBadge]: https://img.shields.io/github/workflow/status/jectivex/Jack/Jack%20CI
 
