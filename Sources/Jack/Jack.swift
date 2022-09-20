@@ -1,6 +1,26 @@
 @_exported import JXKit
 
-import OpenCombineShim
+#if canImport(Combine)
+import Combine
+/// A type alias for the Combine framework’s type for an object with a publisher that emits before the object has changed.
+@available(macOS 11, iOS 13, tvOS 13, *)
+public typealias ObservableObject = Combine.ObservableObject
+/// A type alias for the Combine framework’s type that publishes a property marked with an attribute.
+@available(macOS 11, iOS 13, tvOS 13, *)
+public typealias Published = Combine.Published
+#else
+import OpenCombine
+/// A type alias for the Combine framework’s type for an object with a publisher that emits before the object has changed.
+public typealias ObservableObject = OpenCombine.ObservableObject
+/// A type alias for the Combine framework’s type that publishes a property marked with an attribute.
+public typealias Published = OpenCombine.Published
+#if canImport(OpenCombineDispatch)
+import OpenCombineDispatch
+#endif
+#if canImport(OpenCombineFoundation)
+import OpenCombineFoundation
+#endif
+#endif
 
 /// A publisher for properties marked with the `@Jacked` attribute.
 @available(macOS 11, iOS 13, tvOS 13, *)

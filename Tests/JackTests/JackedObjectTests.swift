@@ -1,7 +1,5 @@
 import XCTest
 import Jack
-import protocol OpenCombineShim.ObservableObject
-import struct OpenCombineShim.Published
 
 @available(macOS 10.15, macCatalyst 13, iOS 13, tvOS 13, watchOS 6, *)
 final class JackedObjectTests: XCTestCase {

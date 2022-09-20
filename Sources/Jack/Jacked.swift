@@ -1,4 +1,14 @@
-import OpenCombineShim
+#if canImport(Combine)
+import Combine
+#else
+import OpenCombine
+#if canImport(OpenCombineDispatch)
+import OpenCombineDispatch
+#endif
+#if canImport(OpenCombineFoundation)
+import OpenCombineFoundation
+#endif
+#endif
 
 /// A ``Jackable`` type can be passed efficiently back and forth to a ``JXContext`` without serialization.
 ///

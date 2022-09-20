@@ -1,4 +1,14 @@
-import OpenCombineShim
+#if canImport(Combine)
+import Combine
+#else
+import OpenCombine
+#if canImport(OpenCombineDispatch)
+import OpenCombineDispatch
+#endif
+#if canImport(OpenCombineFoundation)
+import OpenCombineFoundation
+#endif
+#endif
 
 /// A ``JackedObject`` is an ``ObservableObject`` with the ability to share their properties automatically with a ``JXContext``.
 /// This allows an embedded JavaScript context to access the properties and invoke the functions of the containing object.
@@ -431,27 +441,55 @@ extension JackedSubject {
 
 #if canImport(COpenCombineHelpers)
 import COpenCombineHelpers
-#endif
+#elseif canImport(Foundation)
+import class Foundation.NSLock
 
-#if WASI
-fileprivate struct __UnfairLock { // swiftlint:disable:this type_name
-    static func allocate() -> UnfairLock { return .init() }
-    func lock() {}
-    func unlock() {}
-    func assertOwner() {}
-    func deallocate() {}
+fileprivate class __UnfairLock {
+    let _lock = NSLock()
+
+    static func allocate() -> UnfairLock {
+        return .init()
+    }
+
+    func lock() {
+        _lock.lock()
+    }
+
+    func unlock() {
+        _lock.unlock()
+    }
+
+    func assertOwner() {
+    }
+
+    func deallocate() {
+    }
 }
 
-fileprivate struct __UnfairRecursiveLock { // swiftlint:disable:this type_name
-    static func allocate() -> UnfairRecursiveLock { return .init() }
-    func lock() {}
-    func unlock() {}
-    func deallocate() {}
+import class Foundation.NSRecursiveLock
+
+fileprivate class __UnfairRecursiveLock {
+    let _lock = NSRecursiveLock()
+
+    static func allocate() -> UnfairRecursiveLock {
+        return .init()
+    }
+
+    func lock() {
+        _lock.lock()
+    }
+
+    func unlock() {
+        _lock.unlock()
+    }
+
+    func deallocate() {
+    }
 }
-#endif // WASI
 
 fileprivate typealias UnfairLock = __UnfairLock
 fileprivate typealias UnfairRecursiveLock = __UnfairRecursiveLock
+#endif
 
 
 @available(macOS 11, iOS 13, tvOS 13, *)

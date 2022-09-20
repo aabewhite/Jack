@@ -1,4 +1,3 @@
-import OpenCombineShim
 
 /// A type that publishes a property with an exported function to an associated ``JXContext``.
 ///

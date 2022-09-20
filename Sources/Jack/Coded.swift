@@ -1,5 +1,15 @@
-import OpenCombineShim
 import class Foundation.JSONEncoder
+#if canImport(Combine)
+import Combine
+#else
+import OpenCombine
+#if canImport(OpenCombineDispatch)
+import OpenCombineDispatch
+#endif
+#if canImport(OpenCombineFoundation)
+import OpenCombineFoundation
+#endif
+#endif
 
 // MARK: Coded
 

@@ -1,6 +1,12 @@
 // swift-tools-version:5.5
 import PackageDescription
 
+#if canImport(Combine)
+let hasCombine = true
+#else
+let hasCombine = false
+#endif
+
 let package = Package(
     name: "Jack",
     products: [
@@ -10,15 +16,15 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/jectivex/JXKit.git", from: "2.0.0"),
-        .package(url: "https://github.com/OpenCombine/OpenCombine.git", from: "0.13.0"),
-    ],
+        hasCombine ? nil : .package(url: "https://github.com/OpenCombine/OpenCombine.git", from: "0.13.0"),
+    ].compactMap({ $0 }),
     targets: [
         .target(
             name: "Jack",
             dependencies: [
                 .product(name: "JXKit", package: "JXKit"),
-                .product(name: "OpenCombineShim", package: "OpenCombine"),
-            ],
+                hasCombine ? nil : .product(name: "OpenCombineShim", package: "OpenCombine"),
+            ].compactMap({ $0 }),
             resources: [.process("Resources")]),
         .testTarget(
             name: "JackTests",

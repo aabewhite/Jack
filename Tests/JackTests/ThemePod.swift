@@ -1,6 +1,6 @@
 import Jack
 import Foundation
-import OpenCombineShim
+
 
 // MARK: ThemePod
 
@@ -22,7 +22,7 @@ public class ThemePod : JackPod {
 
     @Jacked public var backgroundColor: CSSColor?
 
-    private var observers: [AnyCancellable] = []
+    private var observers: [AnyObject] = []
 
     deinit {
         // clear circular references
