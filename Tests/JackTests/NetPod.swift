@@ -24,8 +24,8 @@ public class NetPod : JackPod {
     }
 
     // TODO
-    func fetch(url: String) async throws -> Bool{
-        wip(false)
+    func fetch(url: String) async throws -> Bool {
+        false
     }
 
     public lazy var pod = jack()
