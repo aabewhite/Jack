@@ -147,8 +147,17 @@ public extension JackedObject {
     }
 }
 
+#if canImport(SwiftUI)
+import protocol SwiftUI.DynamicProperty
 @available(macOS 11, iOS 13, tvOS 13, *)
-internal protocol _ObservableObjectProperty {
+typealias _DynamicProperty = SwiftUI.DynamicProperty
+#else
+protocol _DynamicProperty {
+}
+#endif
+
+@available(macOS 11, iOS 13, tvOS 13, *)
+internal protocol _ObservableObjectProperty : _DynamicProperty {
     //var objectWillChange: ObservableObjectPublisher? { get nonmutating set }
 }
 
@@ -200,8 +209,7 @@ extension JackedObject where ObjectWillChangePublisher == ObservableObjectPublis
         var reflection: Mirror? = Mirror(reflecting: self)
         while let aClass = reflection {
             for (_, property) in aClass.children {
-
-                guard let property = property as? _ObservableObjectProperty else {
+                guard let property = property as? _DynamicProperty else {
                     // Visit other fields until we meet a @Published field
                     continue
                 }
@@ -211,32 +219,39 @@ extension JackedObject where ObjectWillChangePublisher == ObservableObjectPublis
                     fatalError("instances may not currently have both @Published and @Jacked properties (use @Tracked instead)")
                 }
 
-                if let property = property as? _TrackableProperty {
-                    // Now we know that the field is @Jacked.
-                    if let alreadyInstalledPublisher = property.objectWillChange {
-                        installedPublisher = alreadyInstalledPublisher
-                        // Don't visit other fields, as all @Jacked and @Published fields
-                        // already have a publisher installed.
-                        break
-                    }
-
-                    // Okay, this field doesn't have a publisher installed.
-                    // This means that other fields don't have it either
-                    // (because we install it only once and fields can't be added at runtime).
-                    var lazilyCreatedPublisher: ObjectWillChangePublisher {
-                        if let publisher = installedPublisher {
-                            return publisher
-                        }
-                        let publisher = ObservableObjectPublisher()
-                        installedPublisher = publisher
-                        return publisher
-                    }
-
-                    property.objectWillChange = lazilyCreatedPublisher
+                // we cannot integrate with other properties that have some built-in Combine support.
+                // notably, SwiftUI's `AppStorage`, `Environment`, and `StateObject` will not trigger
+                // objectWillChange, and thus should not be stores in the same instances as Jacked properties
+                guard let property = property as? _ObservableObjectProperty else {
+                    fatalError("unhandled property type cannot be used in a JackedObject: \(property) (use @Tracked or @Jacked instead)")
                 }
 
+                guard let property = property as? _TrackableProperty else {
+                    // skip over other read-only types (e.g., Jumped, Tracked) are left un-tracked
+                    continue
+                }
 
-                // other read-only types (e.g., Jumped, Tracked) are left un-tracked
+                // Now we know that the field is @Jacked.
+                if let alreadyInstalledPublisher = property.objectWillChange {
+                    installedPublisher = alreadyInstalledPublisher
+                    // Don't visit other fields, as all @Jacked and @Published fields
+                    // already have a publisher installed.
+                    break
+                }
+
+                // Okay, this field doesn't have a publisher installed.
+                // This means that other fields don't have it either
+                // (because we install it only once and fields can't be added at runtime).
+                var lazilyCreatedPublisher: ObjectWillChangePublisher {
+                    if let publisher = installedPublisher {
+                        return publisher
+                    }
+                    let publisher = ObservableObjectPublisher()
+                    installedPublisher = publisher
+                    return publisher
+                }
+
+                property.objectWillChange = lazilyCreatedPublisher
             }
             reflection = aClass.superclassMirror
         }
