@@ -11,6 +11,8 @@ import OpenCombineFoundation
 #endif
 #endif
 
+import Dispatch
+
 // MARK: Coded
 
 /// A type that publishes a property marked with an attribute and exports that property to an associated ``JXContext``
@@ -24,8 +26,11 @@ public struct Coded<Value : Codable> : _TrackableProperty {
     /// The key that will be used to export the instance; a nil key will prevent export.
     internal let key: String?
 
+    internal let queue: DispatchQueue?
+
     /// The key that will be used to export the instance; a nil key will prevent export.
     internal let encoder: JSONEncoder
+
 
     typealias Storage = JackPublisher<Value>.Storage
 
@@ -62,8 +67,8 @@ public struct Coded<Value : Codable> : _TrackableProperty {
     ///     @Jacked var lastUpdated: Date = Date()
     ///
     /// - Parameter wrappedValue: The publisher's initial value.
-    public init(initialValue: Value, _ key: String? = nil, encoder: JSONEncoder? = nil) {
-        self.init(wrappedValue: initialValue, key, encoder: encoder)
+    public init(initialValue: Value, _ key: String? = nil, queue: DispatchQueue? = nil, encoder: JSONEncoder? = nil) {
+        self.init(wrappedValue: initialValue, key, queue: queue, encoder: encoder)
     }
 
     /// Creates the published instance with an initial value.
@@ -74,9 +79,10 @@ public struct Coded<Value : Codable> : _TrackableProperty {
     ///     @Jacked var lastUpdated: Date = Date()
     ///
     /// - Parameter initialValue: The publisher's initial value.
-    public init(wrappedValue: Value, _ key: String? = nil, encoder: JSONEncoder? = nil) {
+    public init(wrappedValue: Value, _ key: String? = nil, queue: DispatchQueue? = nil, encoder: JSONEncoder? = nil) {
         _storage = Box(wrappedValue: .value(wrappedValue))
         self.key = key
+        self.queue = queue
         self.encoder = encoder ?? defaultEncoder
     }
 
@@ -90,7 +96,7 @@ public struct Coded<Value : Codable> : _TrackableProperty {
         set { // swiftlint:disable:this unused_setter_value
             switch storage {
             case .value(let value):
-                storage = .publisher(JackPublisher(value))
+                storage = .publisher(JackPublisher(value, queue: queue))
             case .publisher:
                 break
             }
@@ -101,7 +107,7 @@ public struct Coded<Value : Codable> : _TrackableProperty {
     fileprivate func getPublisher() -> JackPublisher<Value> {
         switch storage {
         case .value(let value):
-            let publisher = JackPublisher(value)
+            let publisher = JackPublisher(value, queue: queue)
             storage = .publisher(publisher)
             return publisher
         case .publisher(let publisher):
@@ -132,7 +138,7 @@ public struct Coded<Value : Codable> : _TrackableProperty {
         set {
             switch object[keyPath: storageKeyPath].storage {
             case .value:
-                object[keyPath: storageKeyPath].storage = .publisher(JackPublisher(newValue))
+                object[keyPath: storageKeyPath].storage = .publisher(JackPublisher(newValue, queue: object[keyPath: storageKeyPath].queue))
             case .publisher(let publisher):
                 publisher.subject.value = newValue
             }
@@ -168,7 +174,7 @@ extension Coded : _JackableProperty {
     func setValue(_ newValue: JXValue, in context: JXContext, owner: AnyObject?) throws {
         switch _storage.wrappedValue {
         case .value(_):
-            storage = .publisher(JackPublisher(try newValue.toDecodable(ofType: Value.self)))
+            storage = .publisher(JackPublisher(try newValue.toDecodable(ofType: Value.self), queue: queue))
         case .publisher(let publisher):
             publisher.subject.value = try newValue.toDecodable(ofType: Value.self)
         }

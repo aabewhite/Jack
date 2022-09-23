@@ -10,6 +10,8 @@ import OpenCombineFoundation
 #endif
 #endif
 
+import Dispatch
+
 // MARK: Tracked
 
 /// A value that is `@Published` but not available.
@@ -29,6 +31,8 @@ public struct Tracked<Value : Jackable> {
     }
 
     @Box private var storage: Storage
+
+    private var queue: DispatchQueue?
 
     public var objectWillChange: ObservableObjectPublisher? {
         get {
@@ -52,8 +56,8 @@ public struct Tracked<Value : Jackable> {
     ///     @Tracked var lastUpdated: Date = Date()
     ///
     /// - Parameter wrappedValue: The publisher's initial value.
-    public init(initialValue: Value) {
-        self.init(wrappedValue: initialValue)
+    public init(initialValue: Value, queue: DispatchQueue? = nil) {
+        self.init(wrappedValue: initialValue, queue: queue)
     }
 
     /// Creates the published instance with an initial value.
@@ -64,8 +68,9 @@ public struct Tracked<Value : Jackable> {
     ///     @Tracked var lastUpdated: Date = Date()
     ///
     /// - Parameter initialValue: The publisher's initial value.
-    public init(wrappedValue: Value) {
+    public init(wrappedValue: Value, queue: DispatchQueue? = nil) {
         _storage = Box(wrappedValue: .value(wrappedValue))
+        self.queue = queue
     }
 
     /// The property for which this instance exposes a publisher.
@@ -78,7 +83,7 @@ public struct Tracked<Value : Jackable> {
         set { // swiftlint:disable:this unused_setter_value
             switch storage {
             case .value(let value):
-                storage = .publisher(JackPublisher(value))
+                storage = .publisher(JackPublisher(value, queue: queue))
             case .publisher:
                 break
             }
@@ -89,7 +94,7 @@ public struct Tracked<Value : Jackable> {
     fileprivate func getPublisher() -> JackPublisher<Value> {
         switch storage {
         case .value(let value):
-            let publisher = JackPublisher(value)
+            let publisher = JackPublisher(value, queue: queue)
             storage = .publisher(publisher)
             return publisher
         case .publisher(let publisher):
@@ -120,7 +125,7 @@ public struct Tracked<Value : Jackable> {
         set {
             switch object[keyPath: storageKeyPath].storage {
             case .value:
-                object[keyPath: storageKeyPath].storage = .publisher(JackPublisher(newValue))
+                object[keyPath: storageKeyPath].storage = .publisher(JackPublisher(newValue, queue: object[keyPath: storageKeyPath].queue))
             case .publisher(let publisher):
                 publisher.subject.value = newValue
             }

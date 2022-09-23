@@ -250,8 +250,11 @@ extension JackedObject where ObjectWillChangePublisher == ObservableObjectPublis
     }
 }
 
+import Dispatch
+
 internal final class JackedSubject<Output>: Subject {
     typealias Failure = Never
+    private let queue: DispatchQueue?
     private let lock = UnfairLock.allocate()
     private var downstreams = ConduitList<Output, Failure>.empty
     private var currentValue: Output
@@ -277,14 +280,23 @@ internal final class JackedSubject<Output>: Subject {
             return changePublisher
         }
         set {
-            lock.lock()
-            defer { lock.unlock() }
-            changePublisher = newValue
+            if let queue = queue {
+                queue.async { [weak self] in
+                    self?.lock.lock()
+                    defer { self?.lock.unlock() }
+                    self?.changePublisher = newValue
+                }
+            } else {
+                lock.lock()
+                defer { lock.unlock() }
+                changePublisher = newValue
+            }
         }
     }
 
-    init(_ value: Output) {
+    init(_ value: Output, queue: DispatchQueue?) {
         self.currentValue = value
+        self.queue = queue
     }
 
     deinit {

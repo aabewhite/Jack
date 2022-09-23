@@ -10,16 +10,14 @@ import OpenCombineFoundation
 #endif
 #endif
 
+import Dispatch
+
 /// A ``Jackable`` type can be passed efficiently back and forth to a ``JXContext`` without serialization.
 ///
 /// This type is used to constrain arument and return types that should be passed efficiently between the host Swift environment and the embedded JSC.
 ///
 /// To support for passing codable types through serialization, use ``Jugglable``
 public protocol Jackable : JXConvertible {
-    /// Sets the value of this property.
-    ///
-    /// - SeeAlso: ``makeJX``
-    mutating func setJX(value: JXValue, in context: JXContext) throws
 }
 
 // MARK: Jacked
@@ -68,6 +66,9 @@ public struct Jacked<Value : Jackable> : _TrackableProperty {
     /// The key that will be used to export the instance; a nil key will prevent export.
     internal let key: String?
 
+    /// Whether changes should be published on a certai queue
+    internal let queue: DispatchQueue?
+
     typealias Storage = JackPublisher<Value>.Storage
 
     @propertyWrapper
@@ -103,8 +104,8 @@ public struct Jacked<Value : Jackable> : _TrackableProperty {
     ///     @Jacked var lastUpdated: Date = Date()
     ///
     /// - Parameter wrappedValue: The publisher's initial value.
-    public init(initialValue: Value, _ key: String? = nil) {
-        self.init(wrappedValue: initialValue, key)
+    public init(initialValue: Value, _ key: String? = nil, queue: DispatchQueue? = nil) {
+        self.init(wrappedValue: initialValue, key, queue: queue)
     }
 
     /// Creates the published instance with an initial value.
@@ -115,9 +116,10 @@ public struct Jacked<Value : Jackable> : _TrackableProperty {
     ///     @Jacked var lastUpdated: Date = Date()
     ///
     /// - Parameter initialValue: The publisher's initial value.
-    public init(wrappedValue: Value, _ key: String? = nil) {
+    public init(wrappedValue: Value, _ key: String? = nil, queue: DispatchQueue? = nil) {
         _storage = Box(wrappedValue: .value(wrappedValue))
         self.key = key
+        self.queue = queue
     }
 
     /// The property for which this instance exposes a publisher.
@@ -130,7 +132,7 @@ public struct Jacked<Value : Jackable> : _TrackableProperty {
         set { // swiftlint:disable:this unused_setter_value
             switch storage {
             case .value(let value):
-                storage = .publisher(JackPublisher(value))
+                storage = .publisher(JackPublisher(value, queue: queue))
             case .publisher:
                 break
             }
@@ -141,7 +143,7 @@ public struct Jacked<Value : Jackable> : _TrackableProperty {
     fileprivate func getPublisher() -> JackPublisher<Value> {
         switch storage {
         case .value(let value):
-            let publisher = JackPublisher(value)
+            let publisher = JackPublisher(value, queue: queue)
             storage = .publisher(publisher)
             return publisher
         case .publisher(let publisher):
@@ -172,7 +174,7 @@ public struct Jacked<Value : Jackable> : _TrackableProperty {
         set {
             switch object[keyPath: storageKeyPath].storage {
             case .value:
-                object[keyPath: storageKeyPath].storage = .publisher(JackPublisher(newValue))
+                object[keyPath: storageKeyPath].storage = .publisher(JackPublisher(newValue, queue: object[keyPath: storageKeyPath].queue))
             case .publisher(let publisher):
                 publisher.subject.value = newValue
             }
@@ -202,12 +204,18 @@ extension Jacked: _JackableProperty where Value : Jackable {
 
     func setValue(_ newValue: JXValue, in context: JXContext, owner: AnyObject?) throws {
         switch _storage.wrappedValue {
-        case .value(let value):
-            var v = value
-            try v.setJX(value: newValue, in: context)
-            storage = .publisher(JackPublisher(v))
+        case .value(var value):
+            value = try Value.makeJX(from: newValue, in: context)
+            storage = .publisher(JackPublisher(value, queue: queue))
         case .publisher(let publisher):
-            try publisher.subject.value.setJX(value: newValue, in: context)
+            let jx = try Value.makeJX(from: newValue, in: context)
+            if let queue = queue {
+                queue.async {
+                    publisher.subject.value = jx
+                }
+            } else {
+                publisher.subject.value = jx
+            }
         }
     }
 }
@@ -224,12 +232,6 @@ extension RawRepresentable where RawValue : Jackable {
 
     public func getJX(from context: JXContext) throws -> JXValue {
         try self.rawValue.getJX(from: context)
-    }
-}
-
-public extension Jackable {
-    mutating func setJX(value: JXValue, in context: JXContext) throws {
-        self = try Self.makeJX(from: value, in: context)
     }
 }
 

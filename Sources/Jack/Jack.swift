@@ -20,6 +20,8 @@ import OpenCombineFoundation
 #endif
 #endif
 
+import Dispatch
+
 /// A publisher for properties marked with the `@Jacked` attribute.
 public struct JackPublisher<Value>: Publisher {
     public typealias Output = Value
@@ -32,8 +34,8 @@ public struct JackPublisher<Value>: Publisher {
         subject.subscribe(subscriber)
     }
 
-    internal init(_ output: Output) {
-        subject = .init(output)
+    internal init(_ output: Output, queue: DispatchQueue?) {
+        subject = .init(output, queue: queue)
     }
 
     enum Storage {
