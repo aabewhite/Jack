@@ -3,7 +3,6 @@ import Jack
 
 // MARK: SQLPod
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 public protocol SQLPod : JackPod {
 }
 
@@ -12,7 +11,6 @@ public protocol SQLPod : JackPod {
 #if canImport(SQLite3)
 import SQLite3
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 public class SQLitePod : JackPod, SQLPod {
     public var metadata: JackPodMetaData {
         JackPodMetaData(homePage: URL(string: "https://www.example.com")!)
@@ -25,7 +23,6 @@ public class SQLitePod : JackPod, SQLPod {
 #if canImport(XCTest)
 import XCTest
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 final class SQLPodTests: XCTestCase {
 
     #if canImport(SQLite3)

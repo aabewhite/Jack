@@ -19,7 +19,6 @@
 /// ### See Also
 ///
 /// - `Publisher.assign(to:)`
-@available(macOS 11, iOS 13, tvOS 13, *)
 @propertyWrapper
 public struct Jumped<O: JackedObject, U> : _JackableProperty {
     typealias JumpFunc = (_ context: JXContext, _ owner: AnyObject?) -> JXValue
@@ -48,7 +47,6 @@ public struct Jumped<O: JackedObject, U> : _JackableProperty {
 }
 
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 private extension JXContext {
     func casting<O>(_ value: AnyObject?) throws -> O {
         if let value = value as? O {
@@ -69,7 +67,6 @@ private extension JXContext {
 // 3. synchronous JXConvertible return
 // 4. asynchronous JXConvertible return
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension Jumped {
     
     fileprivate static func createFunction<J: JXConvertible>(block: @escaping (JXContext, AnyObject?, [JXValue]) throws -> J) -> JumpFunc {
@@ -131,7 +128,6 @@ extension Jumped {
 
 // MARK: Jumped Arity 0
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension Jumped {
     public init(wrappedValue f: @escaping (O) -> () throws -> U, _ key: String? = nil) where U : JXConvertible {
         self.function = Self.createFunction() { ctx, owner, args in
@@ -164,7 +160,6 @@ extension Jumped {
 
 // MARK: Jumped Arity 1
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension Jumped {
     public init<X1: JXConvertible>(wrappedValue f: @escaping (O) -> (X1) throws -> U, _ key: String? = nil) where U : JXConvertible {
         self.function = Self.createFunction() { ctx, owner, args in
@@ -197,7 +192,6 @@ extension Jumped {
 
 // MARK: Jumped Arity 2
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension Jumped {
     public init<X1: JXConvertible, X2: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2) throws -> U, _ key: String? = nil) where U : JXConvertible {
         self.function = Self.createFunction() { ctx, owner, args in
@@ -230,7 +224,6 @@ extension Jumped {
 
 // MARK: Jumped Arity 3
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension Jumped {
     public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3) throws -> U, _ key: String? = nil) where U : JXConvertible {
         self.function = Self.createFunction() { ctx, owner, args in
@@ -263,7 +256,6 @@ extension Jumped {
 
 // MARK: Jumped Arity 4
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension Jumped {
     public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible, X4: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4) throws -> U, _ key: String? = nil) where U : JXConvertible {
         self.function = Self.createFunction() { ctx, owner, args in
@@ -296,7 +288,6 @@ extension Jumped {
 
 // MARK: Jumped Arity 5
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension Jumped {
     public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible, X4: JXConvertible, X5: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5) throws -> U, _ key: String? = nil) where U : JXConvertible {
         self.function = Self.createFunction() { ctx, owner, args in
@@ -329,7 +320,6 @@ extension Jumped {
 
 // MARK: Jumped Arity 6
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension Jumped {
     public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible, X4: JXConvertible, X5: JXConvertible, X6: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6) throws -> U, _ key: String? = nil) where U : JXConvertible {
         self.function = Self.createFunction() { ctx, owner, args in
@@ -362,7 +352,6 @@ extension Jumped {
 
 // MARK: Jumped Arity 7
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension Jumped {
     public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible, X4: JXConvertible, X5: JXConvertible, X6: JXConvertible, X7: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7) throws -> U, _ key: String? = nil) where U : JXConvertible {
         self.function = Self.createFunction() { ctx, owner, args in
@@ -395,7 +384,6 @@ extension Jumped {
 
 // MARK: Jumped Arity 8
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension Jumped {
     public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible, X4: JXConvertible, X5: JXConvertible, X6: JXConvertible, X7: JXConvertible, X8: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7, X8) throws -> U, _ key: String? = nil) where U : JXConvertible {
         self.function = Self.createFunction() { ctx, owner, args in
@@ -428,7 +416,6 @@ extension Jumped {
 
 // MARK: Jumped Arity 9
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension Jumped {
     public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible, X4: JXConvertible, X5: JXConvertible, X6: JXConvertible, X7: JXConvertible, X8: JXConvertible, X9: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7, X8, X9) throws -> U, _ key: String? = nil) where U : JXConvertible {
         self.function = Self.createFunction() { ctx, owner, args in
@@ -461,7 +448,6 @@ extension Jumped {
 
 // MARK: Jumped Arity 10
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension Jumped {
     public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible, X4: JXConvertible, X5: JXConvertible, X6: JXConvertible, X7: JXConvertible, X8: JXConvertible, X9: JXConvertible, X10: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7, X8, X9, X10) throws -> U, _ key: String? = nil) where U : JXConvertible {
         self.function = Self.createFunction() { ctx, owner, args in

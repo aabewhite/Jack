@@ -4,14 +4,12 @@ import Jack
 
 // MARK: ConsolePod
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 public protocol ConsolePod : JackPod {
 }
 
 // console.log('message…')
 
 /// A ``ConsolePod`` that stores messages in a buffer
-@available(macOS 11, iOS 13, tvOS 13, *)
 public class CapturingConsolePod : JackPod, ConsolePod {
     public var metadata: JackPodMetaData {
         JackPodMetaData(homePage: URL(string: "https://www.example.com")!)
@@ -24,7 +22,6 @@ public class CapturingConsolePod : JackPod, ConsolePod {
 import OSLog
 
 /// A ``ConsolePod`` that forwards logged messages to the system consle
-@available(macOS 11, iOS 13, tvOS 13, *)
 public class OSLogConsolePod : JackPod, ConsolePod {
     public var metadata: JackPodMetaData {
         JackPodMetaData(homePage: URL(string: "https://www.example.com")!)
@@ -38,7 +35,6 @@ public class OSLogConsolePod : JackPod, ConsolePod {
 #if canImport(XCTest)
 import XCTest
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 final class ConsolePodTests: XCTestCase {
     #if canImport(OSLog)
     func testConsolePod() async throws {

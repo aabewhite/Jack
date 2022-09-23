@@ -15,7 +15,6 @@ import OpenCombineFoundation
 /// A value that is `@Published` but not available.
 ///
 /// - `Publisher.assign(to:)`
-@available(macOS 11, iOS 13, tvOS 13, *)
 @propertyWrapper
 public struct Tracked<Value : Jackable> {
     typealias Storage = JackPublisher<Value>.Storage
@@ -129,6 +128,5 @@ public struct Tracked<Value : Jackable> {
     }
 }
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension Tracked : _TrackableProperty {
 }

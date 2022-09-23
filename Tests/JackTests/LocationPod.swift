@@ -4,7 +4,6 @@ import Jack
 
 // MARK: LocationPod
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 public protocol LocationPod : JackPod {
     func currentLocation() async throws -> Location
 }
@@ -24,7 +23,6 @@ public struct Location : Codable, Equatable, JXConvertible {
 #if canImport(CoreLocation)
 import CoreLocation
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 public class CoreLocationPod : NSObject, CLLocationManagerDelegate, LocationPod {
     private let manager: CLLocationManager
 
@@ -63,7 +61,6 @@ import XCTest
 #if canImport(CoreLocation)
 import CoreLocation
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 final class LocationPodTests: XCTestCase {
     func testLocationPod() async throws {
         let pod = CoreLocationPod()

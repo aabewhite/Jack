@@ -19,7 +19,6 @@ import OpenCombineFoundation
 /// Publishing a property with the `@Coded` attribute creates a publisher of this
 /// type. You access the publisher with the `$` operator, as with ``Jacked``.
 ///
-@available(macOS 11, iOS 13, tvOS 13, *)
 @propertyWrapper
 public struct Coded<Value : Codable> : _TrackableProperty {
     /// The key that will be used to export the instance; a nil key will prevent export.
@@ -143,7 +142,6 @@ public struct Coded<Value : Codable> : _TrackableProperty {
 
 
 /// The shared default encoder for `Coded` types
-@available(macOS 11, iOS 13, tvOS 13, *)
 private let defaultEncoder : JSONEncoder = {
     let encoder = JSONEncoder()
     encoder.dateEncodingStrategy = .iso8601
@@ -153,7 +151,6 @@ private let defaultEncoder : JSONEncoder = {
 
 // This is similar to the OpenCombine implementation except we handle both `*Combine.Published` and `Jack.Jacked`
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension Coded : _JackableProperty {
     var exportedKey: String? { key }
 

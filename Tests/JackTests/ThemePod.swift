@@ -7,7 +7,6 @@ import Foundation
 // theme.backgroundColor = 'purple';
 // theme.defaultTabItemHighlight = 'red';
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 public class ThemePod : JackPod {
     /// Should this be shared instead?
     public init() {
@@ -78,7 +77,6 @@ public class ThemePod : JackPod {
 #if canImport(UIKit)
 import UIKit
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension ThemePod {
 
 }
@@ -90,7 +88,6 @@ extension ThemePod {
 #if canImport(AppKit)
 import AppKit
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension ThemePod {
 
 }
@@ -726,7 +723,6 @@ public extension CSSColor.RGBColor {
 #if canImport(XCTest)
 import XCTest
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 final class ThemePodTests: XCTestCase {
 
     func testColor() async throws {

@@ -6,7 +6,6 @@ import Foundation
 // setTimeout()
 // await sleep(123)
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 public class TimersPod : JackPod {
     public var metadata: JackPodMetaData {
         JackPodMetaData(homePage: URL(string: "https://www.example.com")!)
@@ -34,7 +33,6 @@ public class TimersPod : JackPod {
 #if canImport(XCTest)
 import XCTest
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 final class TimePodTests: XCTestCase {
     func testTimePod() async throws {
         let pod = TimersPod()

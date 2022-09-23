@@ -83,12 +83,10 @@ import OpenCombineFoundation
 /// result in a crash at initialization time. In order to support ``@Published``behavior
 /// without needing to export the property to the JSC, use the equivalent ``@Tracked`` wrapper,
 /// which will behave the same way.
-@available(macOS 11, iOS 13, tvOS 13, *)
 public protocol JackedObject : ObservableObject {
 }
 
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 public extension JackedObject {
     /// Jack into the given context, exposing all this instance's `@Jacked` properties into the given `JXContext`.
     ///
@@ -149,25 +147,21 @@ public extension JackedObject {
 
 #if canImport(SwiftUI)
 import protocol SwiftUI.DynamicProperty
-@available(macOS 11, iOS 13, tvOS 13, *)
 typealias _DynamicProperty = SwiftUI.DynamicProperty
 #else
 protocol _DynamicProperty {
 }
 #endif
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 internal protocol _ObservableObjectProperty : _DynamicProperty {
     //var objectWillChange: ObservableObjectPublisher? { get nonmutating set }
 }
 
 /// A marker for a property that can trigger a state change
-@available(macOS 11, iOS 13, tvOS 13, *)
 internal protocol _TrackableProperty : _ObservableObjectProperty {
     var objectWillChange: ObservableObjectPublisher? { get nonmutating set }
 }
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 internal protocol _JackableProperty : _ObservableObjectProperty {
     var exportedKey: String? { get }
 
@@ -176,14 +170,12 @@ internal protocol _JackableProperty : _ObservableObjectProperty {
     func setValue(_ newValue: JXValue, in context: JXContext, owner: AnyObject?) throws
 }
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension Published: _ObservableObjectProperty {
 }
 
 // this is what we need to be able to suport both @Jacked and @Published, but it relies on internal Published details
 
-//@available(macOS 11, iOS 13, tvOS 13, *)
-//extension Published: _JackableProperty {
+////extension Published: _JackableProperty {
 //    internal var objectWillChange: ObservableObjectPublisher? {
 //        get {
 //            switch storage {
@@ -200,7 +192,6 @@ extension Published: _ObservableObjectProperty {
 //
 //}
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension JackedObject where ObjectWillChangePublisher == ObservableObjectPublisher {
 
     /// A publisher that emits before the object has changed.
@@ -259,7 +250,6 @@ extension JackedObject where ObjectWillChangePublisher == ObservableObjectPublis
     }
 }
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 internal final class JackedSubject<Output>: Subject {
     typealias Failure = Never
     private let lock = UnfairLock.allocate()
@@ -346,7 +336,6 @@ internal final class JackedSubject<Output>: Subject {
     }
 }
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension JackedSubject {
 
     private final class Conduit<Downstream: Subscriber>
@@ -511,7 +500,6 @@ fileprivate typealias UnfairRecursiveLock = __UnfairRecursiveLock
 #endif
 
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 fileprivate class ConduitBase<Output, Failure: Error>: Subscription {
 
     fileprivate init() {}
@@ -533,7 +521,6 @@ fileprivate class ConduitBase<Output, Failure: Error>: Subscription {
     }
 }
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension ConduitBase: Equatable {
     static func == (lhs: ConduitBase<Output, Failure>,
                              rhs: ConduitBase<Output, Failure>) -> Bool {
@@ -541,14 +528,12 @@ extension ConduitBase: Equatable {
     }
 }
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension ConduitBase: Hashable {
     func hash(into hasher: inout Hasher) {
         hasher.combine(ObjectIdentifier(self))
     }
 }
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 fileprivate enum ConduitList<Output, Failure: Error> {
     case empty
     case single(ConduitBase<Output, Failure>)
@@ -579,14 +564,12 @@ extension Optional: HasDefaultValue {
     }
 }
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension ConduitList: HasDefaultValue {
     init() {
         self = .empty
     }
 }
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 fileprivate extension ConduitList {
     mutating func insert(_ conduit: ConduitBase<Output, Failure>) {
         switch self {
@@ -628,7 +611,6 @@ fileprivate extension ConduitList {
     }
 }
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 fileprivate extension Subscribers.Demand {
     func assertNonZero(file: StaticString = #file,
                                 line: UInt = #line) {

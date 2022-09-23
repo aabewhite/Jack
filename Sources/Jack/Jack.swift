@@ -3,10 +3,8 @@
 #if canImport(Combine)
 import Combine
 /// A type alias for the Combine framework’s type for an object with a publisher that emits before the object has changed.
-@available(macOS 11, iOS 13, tvOS 13, *)
 public typealias ObservableObject = Combine.ObservableObject
 /// A type alias for the Combine framework’s type that publishes a property marked with an attribute.
-@available(macOS 11, iOS 13, tvOS 13, *)
 public typealias Published = Combine.Published
 #else
 import OpenCombine
@@ -23,7 +21,6 @@ import OpenCombineFoundation
 #endif
 
 /// A publisher for properties marked with the `@Jacked` attribute.
-@available(macOS 11, iOS 13, tvOS 13, *)
 public struct JackPublisher<Value>: Publisher {
     public typealias Output = Value
     public typealias Failure = Never
@@ -45,7 +42,6 @@ public struct JackPublisher<Value>: Publisher {
     }
 }
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 public enum JackError : Error {
     /// The context in which the error occurred.
     public struct Context {

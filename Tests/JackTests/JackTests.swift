@@ -1,7 +1,6 @@
 import XCTest
 import Jack
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 final class JackTests: XCTestCase {
     func testDemoCode() throws {
         try AppleJack.demo()
@@ -709,7 +708,6 @@ final class JackTests: XCTestCase {
 }
 
 /// Demo class
-@available(macOS 11, iOS 13, tvOS 13, *)
 class AppleJack : JackedObject {
     @Jacked var name: String
     @Jacked var age: Int
@@ -746,7 +744,6 @@ class AppleJack : JackedObject {
 
 
 /// Demo concurrent class with locking
-@available(macOS 11, iOS 13, tvOS 13, *)
 @MainActor class SynchronizedJackedObject : JackedObject {
     @Jacked var name: String
     @Jacked var age: Int
@@ -772,7 +769,6 @@ class AppleJack : JackedObject {
 }
 
 /// Demo actor
-@available(macOS 11, iOS 13, tvOS 13, *)
 actor JackedActor : JackedObject {
     @Jacked var name: String
     @Jacked var age: Int

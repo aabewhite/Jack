@@ -6,7 +6,6 @@ import Jack
 #if canImport(SwiftUI)
 import SwiftUI
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 open class UIPod : JackPod {
     public var metadata: JackPodMetaData {
         JackPodMetaData(homePage: URL(string: "https://www.example.com")!)
@@ -19,7 +18,7 @@ open class UIPod : JackPod {
 #if canImport(XCTest)
 import XCTest
 
-@available(macOS 11, iOS 13, tvOS 13, *)
+@available(macOS 11, iOS 14, tvOS 14, *)
 final class UIPodTests: XCTestCase {
 
     #if canImport(SwiftUI)

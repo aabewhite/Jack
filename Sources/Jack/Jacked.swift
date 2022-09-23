@@ -15,7 +15,6 @@ import OpenCombineFoundation
 /// This type is used to constrain arument and return types that should be passed efficiently between the host Swift environment and the embedded JSC.
 ///
 /// To support for passing codable types through serialization, use ``Jugglable``
-@available(macOS 11, iOS 13, tvOS 13, *)
 public protocol Jackable : JXConvertible {
     /// Sets the value of this property.
     ///
@@ -64,7 +63,6 @@ public protocol Jackable : JXConvertible {
 /// ### See Also
 ///
 /// - `Publisher.assign(to:)`
-@available(macOS 11, iOS 13, tvOS 13, *)
 @propertyWrapper
 public struct Jacked<Value : Jackable> : _TrackableProperty {
     /// The key that will be used to export the instance; a nil key will prevent export.
@@ -188,7 +186,6 @@ public struct Jacked<Value : Jackable> : _TrackableProperty {
 
 
 // Jacked is always a _TrackableProperty, but is only a _JackableProperty when the embedded type is itself `Jackable`
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension Jacked: _JackableProperty where Value : Jackable {
     var exportedKey: String? { key }
 
@@ -217,7 +214,6 @@ extension Jacked: _JackableProperty where Value : Jackable {
 
 // MARK: Default Implementations
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension RawRepresentable where RawValue : Jackable {
     public static func makeJX(from value: JXValue, in context: JXContext) throws -> Self {
         guard let newSelf = Self(rawValue: try .makeJX(from: value, in: context)) else {
@@ -231,14 +227,12 @@ extension RawRepresentable where RawValue : Jackable {
     }
 }
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 public extension Jackable {
     mutating func setJX(value: JXValue, in context: JXContext) throws {
         self = try Self.makeJX(from: value, in: context)
     }
 }
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension Bool : Jackable {
     public static func makeJX(from value: JXValue, in context: JXContext) throws -> Self {
         guard value.isBoolean else {
@@ -252,7 +246,6 @@ extension Bool : Jackable {
     }
 }
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension String : Jackable {
     public static func makeJX(from value: JXValue, in context: JXContext) throws -> Self {
         try value.stringValue
@@ -263,7 +256,6 @@ extension String : Jackable {
     }
 }
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension BinaryInteger where Self : _ExpressibleByBuiltinIntegerLiteral {
     static func _makeJX(from value: JXValue, in context: JXContext) throws -> Self {
         let num = try value.numberValue
@@ -278,56 +270,47 @@ extension BinaryInteger where Self : _ExpressibleByBuiltinIntegerLiteral {
     }
 }
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension Int : Jackable {
     public static func makeJX(from value: JXValue, in context: JXContext) throws -> Self { try _makeJX(from: value, in: context) }
     public func getJX(from context: JXContext) -> JXValue { _getJX(from: context) }
 }
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension Int16 : Jackable {
     public static func makeJX(from value: JXValue, in context: JXContext) throws -> Self { try _makeJX(from: value, in: context) }
     public func getJX(from context: JXContext) -> JXValue { _getJX(from: context) }
 }
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension Int32 : Jackable {
     public static func makeJX(from value: JXValue, in context: JXContext) throws -> Self { try _makeJX(from: value, in: context) }
     public func getJX(from context: JXContext) -> JXValue { _getJX(from: context) }
 }
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension Int64 : Jackable {
     public static func makeJX(from value: JXValue, in context: JXContext) throws -> Self { try _makeJX(from: value, in: context) }
     public func getJX(from context: JXContext) -> JXValue { _getJX(from: context) }
 }
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension UInt : Jackable {
     public static func makeJX(from value: JXValue, in context: JXContext) throws -> Self { try _makeJX(from: value, in: context) }
     public func getJX(from context: JXContext) -> JXValue { _getJX(from: context) }
 }
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension UInt16 : Jackable {
     public static func makeJX(from value: JXValue, in context: JXContext) throws -> Self { try _makeJX(from: value, in: context) }
     public func getJX(from context: JXContext) -> JXValue { _getJX(from: context) }
 }
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension UInt32 : Jackable {
     public static func makeJX(from value: JXValue, in context: JXContext) throws -> Self { try _makeJX(from: value, in: context) }
     public func getJX(from context: JXContext) -> JXValue { _getJX(from: context) }
 }
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension UInt64 : Jackable {
     public static func makeJX(from value: JXValue, in context: JXContext) throws -> Self { try _makeJX(from: value, in: context) }
     public func getJX(from context: JXContext) -> JXValue { _getJX(from: context) }
 }
 
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension BinaryFloatingPoint where Self : ExpressibleByFloatLiteral {
     static func _makeJX(from value: JXValue, in context: JXContext) throws -> Self {
         Self(try value.numberValue)
@@ -339,24 +322,20 @@ extension BinaryFloatingPoint where Self : ExpressibleByFloatLiteral {
 }
 
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension Double : Jackable {
     public static func makeJX(from value: JXValue, in context: JXContext) throws -> Self { try _makeJX(from: value, in: context) }
     public func getJX(from context: JXContext) -> JXValue { _getJX(from: context) }
 }
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension Float : Jackable {
     public static func makeJX(from value: JXValue, in context: JXContext) throws -> Self { try _makeJX(from: value, in: context) }
     public func getJX(from context: JXContext) -> JXValue { _getJX(from: context) }
 }
 
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension Optional : Jackable where Wrapped : JXConvertible {
 }
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension Array : Jackable where Element : JXConvertible {
 }
 
@@ -364,7 +343,6 @@ extension Array : Jackable where Element : JXConvertible {
 #if canImport(Foundation)
 import struct Foundation.Date
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension Date : Jackable {
     public static func makeJX(from value: JXValue, in context: JXContext) throws -> Self {
         try value.dateValue ?? Date(timeIntervalSinceReferenceDate: 0)
@@ -380,7 +358,6 @@ extension Date : Jackable {
 #if canImport(Foundation)
 import struct Foundation.Data
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension Data : Jackable {
     public static func makeJX(from value: JXValue, in context: JXContext) throws -> Self {
 //        if value.isArrayBuffer { // fast track

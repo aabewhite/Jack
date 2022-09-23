@@ -9,6 +9,7 @@ let hasCombine = false
 
 let package = Package(
     name: "Jack",
+    platforms: [ .macOS(.v11), .iOS(.v14), .tvOS(.v14) ],
     products: [
         .library(
             name: "Jack",

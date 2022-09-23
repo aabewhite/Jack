@@ -5,11 +5,9 @@ import struct Foundation.CharacterSet
 
 // MARK: CanvasPod
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 public protocol CanvasPod : JackPod {
 }
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 open class AbstractCanvasPod : CanvasPod {
     public var metadata: JackPodMetaData {
         JackPodMetaData(homePage: URL(string: "https://www.example.com")!)
@@ -225,7 +223,6 @@ func wipcanvas<T>(_ value: T) -> T { value }
 func wipgrad<T>(_ value: T) -> T { value }
 
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 public class CoreGraphicsCanvasPod : AbstractCanvasPod {
     private let ctx: CGContext
 
@@ -698,7 +695,6 @@ public class CoreGraphicsCanvasPod : AbstractCanvasPod {
 
 }
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 extension CoreGraphicsCanvasPod {
     /// Creates a PDF graphics context and invokes the hanlder with a temporary
     /// - Parameters:
@@ -763,7 +759,6 @@ public class SwiftUICanvasPod<Symbols : SwiftUI.View> : JackPod, CanvasPod {
 #if canImport(XCTest)
 import XCTest
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 class CanvasPodTest : XCTestCase {
     #if canImport(CoreGraphics)
     func testCoreGraphicsCanvasPod() throws {

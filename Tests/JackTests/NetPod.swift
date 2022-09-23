@@ -11,7 +11,6 @@ import Jack
 import FoundationNetworking
 #endif
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 public class NetPod : JackPod {
     private let session: URLSession
 
@@ -35,7 +34,6 @@ public class NetPod : JackPod {
 #if canImport(XCTest)
 import XCTest
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 final class NetPodTests: XCTestCase {
     func testNetPod() async throws {
         let pod = NetPod()

@@ -5,7 +5,6 @@ import Jack
 
 // fs.mkdir('/tmp/dir')
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 public class FilePod : JackPod {
     let fm: FileManager
 
@@ -34,7 +33,6 @@ public class FilePod : JackPod {
 #if canImport(XCTest)
 import XCTest
 
-@available(macOS 11, iOS 13, tvOS 13, *)
 final class FilePodTests: XCTestCase {
     func testFilePod() async throws {
         let pod = FilePod()
