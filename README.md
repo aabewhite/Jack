@@ -57,8 +57,7 @@ to provide a simple way to export your Swift properties
 and functions to an embedded JavaScript context.
 
 The framework is cross-platform (iOS/macOS/tvOS/Linux) and 
-can be used to export Swift instanced to a scripting
-envrionment.
+can be used to export Swift instances to a scripting envrionment.
 
 
 This framework integrates transparently with SwiftUI's `EnvironmentObject` pattern, and so can be used to enhance existing `ObservableObject` instances with scriptable app-specific plug-ins.

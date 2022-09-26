@@ -26,6 +26,14 @@ final class UIPodTests: XCTestCase {
         let pod = UIPod()
         //try await pod.jxc.eval("sleep()", priority: .high)
         XCTAssertEqual(3, try pod.jxc.eval("1+2").numberValue)
+
+//        try pod.jxc.eval("""
+//VStack(
+//    Text("TITLE"),
+//    Divider(),
+//    HStack(Button("ABC"), Button("XYZ"))
+//)
+//""")
     }
 
     func testAppStorageObservableObject() throws {
