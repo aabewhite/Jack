@@ -97,7 +97,6 @@ final class UIPodTests: XCTestCase {
 
         XCTAssertEqual(1, try view("Slider(Text(`Slide Me`), $sliderValue)").childViews?.count)
 
-
 //        XCTAssertEqual(0, try view("VStack({alignment: 'leading'})").childViews?.count)
 //        XCTAssertEqual(0, try view("VStack({alignment: 'center'})").childViews?.count)
 //        XCTAssertEqual(1, try view("VStack({}, [Group()])").childViews?.count)
