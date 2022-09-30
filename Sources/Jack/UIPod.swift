@@ -193,9 +193,13 @@ open class UIPod : JackPod {
             }
 
             var body: some View {
+                #if os(tvOS)
+                Text("Slider unavailable in tvOS", bundle: .module, comment: "error message string")
+                #else
                 Slider(value: binding, label: {
                     label.anyView
                 })
+                #endif
             }
         }
 

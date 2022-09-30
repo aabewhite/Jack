@@ -1,8 +1,10 @@
 import Foundation
 import Jack
 import JXKit
-import SwiftUI
 import XCTest
+#if canImport(SwiftUI)
+import SwiftUI
+#endif
 
 @available(macOS 11, iOS 14, tvOS 14, *)
 final class UIPodTests: XCTestCase {
