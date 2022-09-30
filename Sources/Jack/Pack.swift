@@ -1,3 +1,4 @@
+import class Foundation.JSONEncoder
 #if canImport(Combine)
 import Combine
 #else
@@ -12,13 +13,25 @@ import OpenCombineFoundation
 
 import Dispatch
 
-// MARK: Tracked
+// MARK: Pack
 
-/// A value that is `@Published` but not available.
+/// A type that publishes a property marked with an attribute and exports that property to an associated ``JXContext``
+/// by serializing the codable type.
 ///
-/// - `Publisher.assign(to:)`
+/// Publishing a property with the `@Pack` attribute creates a publisher of this
+/// type. You access the publisher with the `$` operator, as with ``Jacked``.
+///
 @propertyWrapper
-public struct Tracked<Value : Jackable> {
+public struct Pack<Value : Codable> : _TrackableProperty {
+    /// The key that will be used to export the instance; a nil key will prevent export.
+    internal let key: String?
+
+    internal let queue: DispatchQueue?
+
+    /// The key that will be used to export the instance; a nil key will prevent export.
+    internal let encoder: JSONEncoder
+
+
     typealias Storage = JackPublisher<Value>.Storage
 
     @propertyWrapper
@@ -31,8 +44,6 @@ public struct Tracked<Value : Jackable> {
     }
 
     @Box private var storage: Storage
-
-    private var queue: DispatchQueue?
 
     public var objectWillChange: ObservableObjectPublisher? {
         get {
@@ -51,26 +62,28 @@ public struct Tracked<Value : Jackable> {
     /// Creates the published instance with an initial wrapped value.
     ///
     /// Don't use this initializer directly. Instead, create a property with
-    /// the `@Tracked` attribute, as shown here:
+    /// the `@Stack` attribute, as shown here:
     ///
-    ///     @Tracked var lastUpdated: Date = Date()
+    ///     @Stack var lastUpdated: Date = Date()
     ///
     /// - Parameter wrappedValue: The publisher's initial value.
-    public init(initialValue: Value, queue: DispatchQueue? = nil) {
-        self.init(wrappedValue: initialValue, queue: queue)
+    public init(initialValue: Value, _ key: String? = nil, queue: DispatchQueue? = nil, encoder: JSONEncoder? = nil) {
+        self.init(wrappedValue: initialValue, key, queue: queue, encoder: encoder)
     }
 
     /// Creates the published instance with an initial value.
     ///
     /// Don't use this initializer directly. Instead, create a property with
-    /// the `@Tracked` attribute, as shown here:
+    /// the `@Stack` attribute, as shown here:
     ///
-    ///     @Tracked var lastUpdated: Date = Date()
+    ///     @Stack var lastUpdated: Date = Date()
     ///
     /// - Parameter initialValue: The publisher's initial value.
-    public init(wrappedValue: Value, queue: DispatchQueue? = nil) {
+    public init(wrappedValue: Value, _ key: String? = nil, queue: DispatchQueue? = nil, encoder: JSONEncoder? = nil) {
         _storage = Box(wrappedValue: .value(wrappedValue))
+        self.key = key
         self.queue = queue
+        self.encoder = encoder ?? defaultEncoder
     }
 
     /// The property for which this instance exposes a publisher.
@@ -102,7 +115,7 @@ public struct Tracked<Value : Jackable> {
         }
     }
     // swiftlint:disable let_var_whitespace
-    @available(*, unavailable, message: "@Tracked is only available on properties of classes")
+    @available(*, unavailable, message: "@Stack is only available on properties of classes")
     public var wrappedValue: Value {
         get { fatalError() }
         set { fatalError() } // swiftlint:disable:this unused_setter_value
@@ -112,7 +125,7 @@ public struct Tracked<Value : Jackable> {
     public static subscript<EnclosingSelf: AnyObject>(
         _enclosingInstance object: EnclosingSelf,
         wrapped wrappedKeyPath: ReferenceWritableKeyPath<EnclosingSelf, Value>,
-        storage storageKeyPath: ReferenceWritableKeyPath<EnclosingSelf, Tracked<Value>>
+        storage storageKeyPath: ReferenceWritableKeyPath<EnclosingSelf, Pack<Value>>
     ) -> Value {
         get {
             switch object[keyPath: storageKeyPath].storage {
@@ -133,5 +146,37 @@ public struct Tracked<Value : Jackable> {
     }
 }
 
-extension Tracked : _TrackableProperty {
+
+/// The shared default encoder for `Pack` types
+private let defaultEncoder : JSONEncoder = {
+    let encoder = JSONEncoder()
+    encoder.dateEncodingStrategy = .iso8601
+    return encoder
+}()
+
+
+// This is similar to the OpenCombine implementation except we handle both `*Combine.Published` and `Jack.Jacked`
+
+extension Pack : _JackableProperty {
+    var exportedKey: String? { key }
+
+    subscript(in context: JXContext, owner: AnyObject?) -> JXValue {
+        get throws {
+            switch _storage.wrappedValue {
+            case .value(let value):
+                return try context.encode(value)
+            case .publisher(let publisher):
+                return try context.encode(publisher.subject.value)
+            }
+        }
+    }
+
+    func setValue(_ newValue: JXValue, in context: JXContext, owner: AnyObject?) throws {
+        switch _storage.wrappedValue {
+        case .value(_):
+            storage = .publisher(JackPublisher(try newValue.toDecodable(ofType: Value.self), queue: queue))
+        case .publisher(let publisher):
+            publisher.subject.value = try newValue.toDecodable(ofType: Value.self)
+        }
+    }
 }

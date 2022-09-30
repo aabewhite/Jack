@@ -103,7 +103,7 @@ final class JackTests: XCTestCase {
 
     func testBridging() throws {
         class JSBridgedObject : JackedObject {
-            @Coded var related = JSBridgedRelated()
+            @Pack var related = JSBridgedRelated()
         }
 
         struct JSBridgedRelated : Codable, JXConvertible {
@@ -128,9 +128,9 @@ final class JackTests: XCTestCase {
         }
 
         class BridgedProperties : JackedObject {
-            @Jacked var related: Relation?
+            @Stack var related: Relation?
 
-            @Jumped var gossip = chatter // exports this function as "gossip"
+            @Jack var gossip = chatter // exports this function as "gossip"
             func chatter() throws -> String? {
                 switch related {
                 case .none: return nil
@@ -185,7 +185,7 @@ final class JackTests: XCTestCase {
         }
 
         class PingPongScripted : JackedObject {
-            @Jacked var score = 0
+            @Stack var score = 0
             private lazy var jxc = jack().env // a JSContext bound to this instance
 
             /// - Returns: true if a point was scored
@@ -232,10 +232,10 @@ final class JackTests: XCTestCase {
 
     func testJacked() throws {
         class JackedObj : JackedObject {
-            @Jacked("n") var integer = 0
-            @Jacked("f") var float = 0.0
-            @Jacked("b") var bool = false
-            @Jacked("s") var string = ""
+            @Stack("n") var integer = 0
+            @Stack("f") var float = 0.0
+            @Stack("b") var bool = false
+            @Stack("s") var string = ""
         }
 
         let obj = JackedObj()
@@ -316,11 +316,11 @@ final class JackTests: XCTestCase {
 
     func testJackedSubclass() throws {
         class JackedSuper : JackedObject {
-            @Jacked var sup = 1
+            @Stack var sup = 1
         }
 
         class JackedSub : JackedSuper {
-            @Jacked var sub = 0
+            @Stack var sub = 0
         }
 
         let obj = JackedSub()
@@ -371,11 +371,11 @@ final class JackTests: XCTestCase {
     func testTracked() throws {
 
         class TrackedObj : JackedObject {
-            @Tracked var integer = 0
-            @Tracked var float = 0.0
+            @Track var integer = 0
+            @Track var float = 0.0
 
-            @Jacked("b") var bool = false
-            @Jacked("s") var string = ""
+            @Stack("b") var bool = false
+            @Stack("s") var string = ""
 
             //@Published var published = 0 // this would crash: we cannot mix Jacked and Published properties
         }
@@ -404,7 +404,7 @@ final class JackTests: XCTestCase {
 
     func testJackedArray() throws {
         class JackedObj : JackedObject {
-            @Jacked("sa") var stringArray = ["a", "b", "c"]
+            @Stack("sa") var stringArray = ["a", "b", "c"]
             lazy var jxc = jack().env
         }
 
@@ -441,7 +441,7 @@ final class JackTests: XCTestCase {
 
     func testJackedDate() throws {
         class JackedDate : JackedObject {
-            @Jacked var date = Date(timeIntervalSince1970: 0)
+            @Stack var date = Date(timeIntervalSince1970: 0)
             lazy var jxc = jack().env
         }
 
@@ -473,7 +473,7 @@ final class JackTests: XCTestCase {
 
     func testJackedData() throws {
         class JackedData : JackedObject {
-            @Jacked var data = Data()
+            @Stack var data = Data()
             lazy var jxc = jack().env
         }
 
@@ -510,8 +510,8 @@ final class JackTests: XCTestCase {
         enum Direction : Int, Jackable { case up, down, left, right }
 
         class JackedObj : JackedObject {
-            @Jacked("c") var stringEnum = Compass.north
-            @Jacked("d") var intEnum = Direction.left
+            @Stack("c") var stringEnum = Compass.north
+            @Stack("d") var intEnum = Direction.left
             lazy var jxc = jack().env
         }
 
@@ -566,7 +566,7 @@ final class JackTests: XCTestCase {
 
     func testJackedNumbers() throws {
         class JackedObj : JackedObject {
-            @Jacked var dbl = 0.0
+            @Stack var dbl = 0.0
             lazy var jxc = jack().env
         }
 
@@ -587,7 +587,7 @@ final class JackTests: XCTestCase {
 
     func testJugglable() throws {
         class JackedCode : JackedObject {
-            @Coded var info = SomeInfo(str: "XYZ", int: 123, extra: SomeInfo.ExtraInfo(dbl: 1.2, strs: ["A", "B", "C"]))
+            @Pack var info = SomeInfo(str: "XYZ", int: 123, extra: SomeInfo.ExtraInfo(dbl: 1.2, strs: ["A", "B", "C"]))
             lazy var jxc = jack().env
 
             struct SomeInfo : Codable, Equatable {
@@ -635,19 +635,19 @@ final class JackTests: XCTestCase {
 
     func testJumped() throws {
         class JumpedObj : JackedObject {
-            @Jumped private var f0 = hi
+            @Jack private var f0 = hi
             func hi() -> Date { Date(timeIntervalSince1970: 1234) }
 
-            @Jumped private var f1 = hello // expose the 1-arg function
+            @Jack private var f1 = hello // expose the 1-arg function
             func hello(name: String) -> String { "Hello \(name)!" }
 
-            @Jumped("F2") private var f2 = happyBirthday // expose the 2-arg function
+            @Jack("F2") private var f2 = happyBirthday // expose the 2-arg function
             func happyBirthday(name: String, age: Int) -> String { "Happy Birthday \(name), you are \(age)!" }
 
-            @Jumped("replicate") private var _replicate = replicate
-            func replicate(_ coded: CodedCodable, count: Int) -> [CodedCodable] { Array(Array(repeating: coded, count: count)) }
+            @Jack("replicate") private var _replicate = replicate
+            func replicate(_ pack: PackedCodable, count: Int) -> [PackedCodable] { Array(Array(repeating: pack, count: count)) }
 
-            @Jumped("exceptional") private var _exceptional = exceptional
+            @Jack("exceptional") private var _exceptional = exceptional
             func exceptional() throws -> Bool { throw SomeError(reason: "YOLO") }
 
             struct SomeError : Error {
@@ -658,7 +658,7 @@ final class JackTests: XCTestCase {
         }
 
         /// A sample of codable passing
-        struct CodedCodable : Codable, Equatable, JXConvertible {
+        struct PackedCodable : Codable, Equatable, JXConvertible {
             var id = UUID()
             var str = ""
             var num: Int?
@@ -677,8 +677,8 @@ final class JackTests: XCTestCase {
         XCTAssertEqual("Hello x!", try obj.jxc.eval("f1('x')").stringValue)
         XCTAssertEqual("Happy Birthday x, you are 9!", try obj.jxc.eval("F2('x', 9)").stringValue)
 
-        let c = CodedCodable(id: UUID(uuidString: "4991E2A0-DE05-4BB3-B502-42F7584C9973")!, str: "abc", num: 9)
-        XCTAssertEqual([c, c, c], try obj.jxc.eval("replicate({ id: '4991E2A0-DE05-4BB3-B502-42F7584C9973', str: 'abc', num: 9 }, 3)").toDecodable(ofType: Array<CodedCodable>.self))
+        let c = PackedCodable(id: UUID(uuidString: "4991E2A0-DE05-4BB3-B502-42F7584C9973")!, str: "abc", num: 9)
+        XCTAssertEqual([c, c, c], try obj.jxc.eval("replicate({ id: '4991E2A0-DE05-4BB3-B502-42F7584C9973', str: 'abc', num: 9 }, 3)").toDecodable(ofType: Array<PackedCodable>.self))
 
         // make sure we are blocked from setting the function property from JS
         XCTAssertThrowsError(try obj.jxc.eval("f0 = null")) { error in
@@ -689,11 +689,11 @@ final class JackTests: XCTestCase {
 
     func testAllPropertyWrappers() throws {
         class EnhancedObj : JackedObject {
-            @Tracked var x = 0 // unexported to jxc
-            @Jacked var i = 1 // exported as number
-            @Jacked("B") var b = false // exported as bool
-            @Coded var id = UUID() // exported (via codability) as string
-            @Jumped("now") private var _now = now // exported as function
+            @Track var x = 0 // unexported to jxc
+            @Stack var i = 1 // exported as number
+            @Stack("B") var b = false // exported as bool
+            @Pack var id = UUID() // exported (via codability) as string
+            @Jack("now") private var _now = now // exported as function
             func now() -> Date { Date(timeIntervalSince1970: 1_234) }
 
             lazy var jxc = jack().env
@@ -714,8 +714,8 @@ final class JackTests: XCTestCase {
 
 /// Demo class
 class AppleJack : JackedObject {
-    @Jacked var name: String
-    @Jacked var age: Int
+    @Stack var name: String
+    @Stack var age: Int
 
     /// An embedded `JXKit` script context that has access to the jacked properties and jumped functions
     lazy var jxc = jack().env
@@ -725,7 +725,7 @@ class AppleJack : JackedObject {
         self.age = age
     }
 
-    @Jumped("haveBirthday") var _haveBirthday = haveBirthday
+    @Jack("haveBirthday") var _haveBirthday = haveBirthday
     func haveBirthday(count: Int? = nil) -> Int {
         age += count ?? 1
         return age
@@ -750,8 +750,8 @@ class AppleJack : JackedObject {
 
 /// Demo concurrent class with locking
 @MainActor class SynchronizedJackedObject : JackedObject {
-    @Jacked var name: String
-    @Jacked var age: Int
+    @Stack var name: String
+    @Stack var age: Int
 
     /// A concurrent queue to allow multiple reads at once.
     private var queue = DispatchQueue(label: "SynchronizedJackedObject", attributes: .concurrent)
@@ -775,8 +775,8 @@ class AppleJack : JackedObject {
 
 /// Demo actor
 actor JackedActor : JackedObject {
-    @Jacked var name: String
-    @Jacked var age: Int
+    @Stack var name: String
+    @Stack var age: Int
 
     /// A private script context for concurrent access
     private lazy var jxc = jack().env
@@ -786,8 +786,8 @@ actor JackedActor : JackedObject {
         // self.name = name
         // self.age = age
 
-        self._name = Jacked(wrappedValue: name)
-        self._age = Jacked(wrappedValue: age)
+        self._name = Stack(wrappedValue: name)
+        self._age = Stack(wrappedValue: age)
     }
 
     /// Evaluate the script in an actor-synchronized block

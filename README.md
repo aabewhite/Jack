@@ -14,10 +14,10 @@ enabling your app to provide scriptable extensions.
 import Jack
 
 class AppleJack : JackedObject { 
-    @Jacked var name: String // exports the property to JS and acts as Combine.Published 
-    @Jacked var age: Int
+    @Stack var name: String // exports the property to JS and acts as Combine.Published 
+    @Stack var age: Int
 
-    /// An embedded `JXKit` script context that has access to the jacked properties and jumped functions
+    /// An embedded `JXKit` script context that has access to the jacked functions and stacked properties
     lazy var jxc = jack().env
 
     init(name: String, age: Int) {
@@ -26,7 +26,7 @@ class AppleJack : JackedObject {
     }
 
     /// Functions are exported as method properties, and can be re-named for export
-    @Jumped("haveBirthday") var _haveBirthday = haveBirthday
+    @Jack("haveBirthday") var _haveBirthday = haveBirthday
     func haveBirthday() -> Int {
         age += 1
         return age
@@ -84,7 +84,7 @@ class PingPongNative : ObservableObject {
 
 // An enhanced scriptable ObservableObject
 class PingPongScripted : JackedObject {
-    @Jacked var score = 0
+    @Stack var score = 0
     private lazy var jxc = jack() // a JXObject bound to this instance
 
     /// - Returns: true if a point was scored

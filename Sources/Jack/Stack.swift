@@ -20,7 +20,7 @@ import Dispatch
 public protocol Jackable : JXConvertible {
 }
 
-// MARK: Jacked
+// MARK: Stack
 
 // Sadly, this is mostly just a copy & paste re-implementation of OpenCombile.Published.
 // This is because the Combine & OpenCombine type implementations are private or internal, and so cannot be re-used.
@@ -28,11 +28,11 @@ public protocol Jackable : JXConvertible {
 
 /// A type that publishes a property marked with an attribute and exports that property to an associated ``JXKit\\JXContext``.
 ///
-/// Publishing a property with the `@Jacked` attribute creates a publisher of this
+/// Publishing a property with the `@Stack` attribute creates a publisher of this
 /// type. You access the publisher with the `$` operator, as shown here:
 ///
 ///     class Weather {
-///         @Jacked var temperature: Double
+///         @Stack var temperature: Double
 ///         init(temperature: Double) {
 ///             self.temperature = temperature
 ///         }
@@ -55,14 +55,14 @@ public protocol Jackable : JXConvertible {
 /// the parameter value `25`. However, if the closure evaluated `weather.temperature`,
 /// the value returned would be `20`.
 ///
-/// > Important: The `@Jacked` attribute is class constrained. Use it with properties
+/// > Important: The `@Stack` attribute is class constrained. Use it with properties
 /// of classes, not with non-class types like structures.
 ///
 /// ### See Also
 ///
 /// - `Publisher.assign(to:)`
 @propertyWrapper
-public struct Jacked<Value : Jackable> : _TrackableProperty {
+public struct Stack<Value : Jackable> : _TrackableProperty {
     /// The key that will be used to export the instance; a nil key will prevent export.
     public let key: String?
 
@@ -102,9 +102,9 @@ public struct Jacked<Value : Jackable> : _TrackableProperty {
     /// Creates the published instance with an initial wrapped value.
     ///
     /// Don't use this initializer directly. Instead, create a property with
-    /// the `@Jacked` attribute, as shown here:
+    /// the `@Stack` attribute, as shown here:
     ///
-    ///     @Jacked var lastUpdated: Date = Date()
+    ///     @Stack var lastUpdated: Date = Date()
     ///
     /// - Parameter wrappedValue: The publisher's initial value.
     public init(initialValue: Value, _ key: String? = nil, bind: String? = nil, queue: DispatchQueue? = nil) {
@@ -114,9 +114,9 @@ public struct Jacked<Value : Jackable> : _TrackableProperty {
     /// Creates the published instance with an initial value.
     ///
     /// Don't use this initializer directly. Instead, create a property with
-    /// the `@Jacked` attribute, as shown here:
+    /// the `@Stack` attribute, as shown here:
     ///
-    ///     @Jacked var lastUpdated: Date = Date()
+    ///     @Stack var lastUpdated: Date = Date()
     ///
     /// - Parameter initialValue: The publisher's initial value.
     public init(wrappedValue: Value, _ key: String? = nil, bind bindingPrefix: String? = nil, queue: DispatchQueue? = nil) {
@@ -155,7 +155,7 @@ public struct Jacked<Value : Jackable> : _TrackableProperty {
         }
     }
     // swiftlint:disable let_var_whitespace
-    @available(*, unavailable, message: "@Jacked is only available on properties of classes")
+    @available(*, unavailable, message: "@Stack is only available on properties of classes")
     public var wrappedValue: Value {
         get { fatalError() }
         set { fatalError() } // swiftlint:disable:this unused_setter_value
@@ -165,7 +165,7 @@ public struct Jacked<Value : Jackable> : _TrackableProperty {
     public static subscript<EnclosingSelf: AnyObject>(
         _enclosingInstance object: EnclosingSelf,
         wrapped wrappedKeyPath: ReferenceWritableKeyPath<EnclosingSelf, Value>,
-        storage storageKeyPath: ReferenceWritableKeyPath<EnclosingSelf, Jacked<Value>>
+        storage storageKeyPath: ReferenceWritableKeyPath<EnclosingSelf, Stack<Value>>
     ) -> Value {
         get {
             switch object[keyPath: storageKeyPath].storage {
@@ -188,11 +188,11 @@ public struct Jacked<Value : Jackable> : _TrackableProperty {
 
 
 
-// This is close to the OpenCombine implementation except we handle both `*Combine.Published` and `Jack.Jacked`
+// This is close to the OpenCombine implementation except we handle both `*Combine.Published` and `Jack.Stack`
 
 
-// Jacked is always a _TrackableProperty, but is only a _JackableProperty when the embedded type is itself `Jackable`
-extension Jacked: _JackableProperty where Value : Jackable {
+// Stack is always a _TrackableProperty, but is only a _JackableProperty when the embedded type is itself `Jackable`
+extension Stack: _JackableProperty where Value : Jackable {
     var exportedKey: String? { key }
 
     subscript(in context: JXContext, owner: AnyObject?) -> JXValue {
@@ -353,6 +353,13 @@ extension Optional : Jackable where Wrapped : JXConvertible {
 extension Array : Jackable where Element : JXConvertible {
 }
 
+#if canImport(CoreGraphics)
+import typealias CoreGraphics.CGFloat
+extension CGFloat : Jackable {
+    public static func makeJX(from value: JXValue) throws -> Self { try _makeJX(from: value) }
+    public func getJX(from context: JXContext) -> JXValue { _getJX(from: context) }
+}
+#endif
 
 #if canImport(Foundation)
 import struct Foundation.Date

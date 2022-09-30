@@ -16,11 +16,11 @@ import OpenCombineFoundation
 /// This type extends from ``JackedObject``, which is a type of object with a publisher that emits before the object has changed.
 ///
 ///     class EnhancedObj : JackedObject {
-///         @Tracked var x = 0 // unexported to jxc
-///         @Jacked var i = 1 // exported as number
-///         @Jacked("B") var b = false // exported as bool
-///         @Coded var id = UUID() // exported (via codability) as string
-///         @Jumped("now") private var _now = now // exported as function
+///         @Track var x = 0 // unexported to jxc
+///         @Stack var i = 1 // exported as number
+///         @Stack("B") var b = false // exported as bool
+///         @Pack var id = UUID() // exported (via codability) as string
+///         @Jack("now") private var _now = now // exported as function
 ///         func now() -> Date { Date(timeIntervalSince1970: 1_234) }
 ///
 ///         lazy var jxc = jack()
@@ -44,8 +44,8 @@ import OpenCombineFoundation
 /// emits the changed value before any of its wrapped properties changes.
 ///
 ///      class Contact : JackedObject {
-///          @Jacked var name: String
-///          @Jacked var age: Int
+///          @Stack var name: String
+///          @Stack var age: Int
 ///
 ///          lazy var jxc = jack()
 ///
@@ -54,7 +54,7 @@ import OpenCombineFoundation
 ///             self.age = age
 ///          }
 ///
-///          @Jumped("haveBirthday") var _haveBirthday = haveBirthday
+///          @Jack("haveBirthday") var _haveBirthday = haveBirthday
 ///          func haveBirthday() -> Int {
 ///             age += 1
 ///             return age
@@ -79,9 +79,9 @@ import OpenCombineFoundation
 ///
 /// Note: even though ``JackedObject`` extends ``ObservableObject``, and can be used
 /// in its place in SwiftUI hierarchies with ``@EnvironmentObject``, it is *not* possible to
-/// mix ``@Published`` and ``@Jacked`` properties in the same object. Doing so will
+/// mix ``@Published`` and ``@Stack`` properties in the same object. Doing so will
 /// result in a crash at initialization time. In order to support ``@Published``behavior
-/// without needing to export the property to the JSC, use the equivalent ``@Tracked`` wrapper,
+/// without needing to export the property to the JSC, use the equivalent ``@Track`` wrapper,
 /// which will behave the same way.
 public protocol JackedObject : ObservableObject {
 }
@@ -92,7 +92,7 @@ public extension JackedObject {
         sequence(first: Mirror(reflecting: self), next: \.superclassMirror).lazy.map(\.children).joined()
     }
 
-    /// Jack into the given context, exposing all this instance's `@Jacked` properties into the given `JXContext`.
+    /// Jack into the given context, exposing all this instance's `@Stack` properties into the given `JXContext`.
     ///
     /// - Parameters:
     ///   - context: the context to jack into; will create a new context if needed
@@ -125,7 +125,7 @@ public extension JackedObject {
         return object
     }
 
-    /// Inject all this instance's `@Jacked` and `@Jumped` properties into the JXValue object.
+    /// Inject all this instance's `@Stack` and `@Jack` properties into the JXValue object.
     /// The resuling object will have properties created for each of the corresponding property
     /// wrappers in the `JackedObject`.
     ///
@@ -280,7 +280,7 @@ extension _JackableProperty {
 extension Published: _ObservableObjectProperty {
 }
 
-// this is what we need to be able to suport both @Jacked and @Published, but it relies on internal Published details
+// this is what we need to be able to suport both @Stack and @Published, but it relies on internal Published details
 
 ////extension Published: _JackableProperty {
 //    internal var objectWillChange: ObservableObjectPublisher? {
@@ -313,15 +313,15 @@ extension JackedObject where ObjectWillChangePublisher == ObservableObjectPublis
                 }
 
                 if property is Published<ObjectWillChangePublisher.Output> {
-                    // TODO: how can we implement support for @Published and @Jacked at the same time?
-                    fatalError("instances may not currently have both @Published and @Jacked properties (use @Tracked instead)")
+                    // TODO: how can we implement support for @Published and @Stack at the same time?
+                    fatalError("instances may not currently have both @Published and @Stack properties (use @Track instead)")
                 }
 
                 // we cannot integrate with other properties that have some built-in Combine support.
                 // notably, SwiftUI's `AppStorage`, `Environment`, and `StateObject` will not trigger
                 // objectWillChange, and thus should not be stores in the same instances as Jacked properties
                 guard let property = property as? _ObservableObjectProperty else {
-                    fatalError("unhandled property type cannot be used in a JackedObject: \(property) (use @Tracked or @Jacked instead)")
+                    fatalError("unhandled property type cannot be used in a JackedObject: \(property) (use @Track or @Stack instead)")
                 }
 
                 guard let property = property as? _TrackableProperty else {
@@ -329,10 +329,10 @@ extension JackedObject where ObjectWillChangePublisher == ObservableObjectPublis
                     continue
                 }
 
-                // Now we know that the field is @Jacked.
+                // Now we know that the field is @Stack.
                 if let alreadyInstalledPublisher = property.objectWillChange {
                     installedPublisher = alreadyInstalledPublisher
-                    // Don't visit other fields, as all @Jacked and @Published fields
+                    // Don't visit other fields, as all @Stack and @Published fields
                     // already have a publisher installed.
                     break
                 }

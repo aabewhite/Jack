@@ -5,125 +5,125 @@ import Jack
 final class JackedObjectTests: XCTestCase {
     func testJumpedVoidSignatures() async throws {
         class VoidReturns : JackedObject {
-            @Jumped("void0") private var _void0 = void0
+            @Jack("void0") private var _void0 = void0
             func void0() -> Void { }
 
-            @Jumped("tvoid0") private var _tvoid0 = tvoid0
+            @Jack("tvoid0") private var _tvoid0 = tvoid0
             func tvoid0() throws -> Void { }
 
-            @Jumped("atvoid0", priority: .low) private var _atvoid0 = atvoid0
+            @Jack("atvoid0", priority: .low) private var _atvoid0 = atvoid0
             func atvoid0() async throws -> Void { }
 
 
-            @Jumped("void1") private var _void1 = void1
+            @Jack("void1") private var _void1 = void1
             func void1(i0: Int) -> Void { }
 
-            @Jumped("tvoid1") private var _tvoid1 = tvoid1
+            @Jack("tvoid1") private var _tvoid1 = tvoid1
             func tvoid1(i0: Int) throws -> Void { }
 
-            @Jumped("atvoid1", priority: .low) private var _atvoid1 = atvoid1
+            @Jack("atvoid1", priority: .low) private var _atvoid1 = atvoid1
             func atvoid1(i0: Int) async throws -> Void { }
 
 
-            @Jumped("void2") private var _void2 = void2
+            @Jack("void2") private var _void2 = void2
             func void2(i0: Int, i1: Int) -> Void { }
 
-            @Jumped("tvoid2") private var _tvoid2 = tvoid2
+            @Jack("tvoid2") private var _tvoid2 = tvoid2
             func tvoid2(i0: Int, i1: Int) throws -> Void { }
 
-            @Jumped("atvoid2", priority: .low) private var _atvoid2 = atvoid2
+            @Jack("atvoid2", priority: .low) private var _atvoid2 = atvoid2
             func atvoid2(i0: Int, i1: Int) async throws -> Void { }
 
 
-            @Jumped("void3") private var _void3 = void3
+            @Jack("void3") private var _void3 = void3
             func void3(i0: Int, i1: Int, i2: Int) -> Void { }
 
-            @Jumped("tvoid3") private var _tvoid3 = tvoid3
+            @Jack("tvoid3") private var _tvoid3 = tvoid3
             func tvoid3(i0: Int, i1: Int, i2: Int) throws -> Void { }
 
-            @Jumped("atvoid3", priority: .low) private var _atvoid3 = atvoid3
+            @Jack("atvoid3", priority: .low) private var _atvoid3 = atvoid3
             func atvoid3(i0: Int, i1: Int, i2: Int) async throws -> Void { }
 
 
-            @Jumped("void4") private var _void4 = void4
+            @Jack("void4") private var _void4 = void4
             func void4(i0: Int, i1: Int, i2: Int, i3: Int) -> Void { }
 
-            @Jumped("tvoid4") private var _tvoid4 = tvoid4
+            @Jack("tvoid4") private var _tvoid4 = tvoid4
             func tvoid4(i0: Int, i1: Int, i2: Int, i3: Int) throws -> Void { }
 
-            @Jumped("atvoid4", priority: .low) private var _atvoid4 = atvoid4
+            @Jack("atvoid4", priority: .low) private var _atvoid4 = atvoid4
             func atvoid4(i0: Int, i1: Int, i2: Int, i3: Int) async throws -> Void { }
 
 
-            @Jumped("void5") private var _void5 = void5
+            @Jack("void5") private var _void5 = void5
             func void5(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int) -> Void { }
 
-            @Jumped("tvoid5") private var _tvoid5 = tvoid5
+            @Jack("tvoid5") private var _tvoid5 = tvoid5
             func tvoid5(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int) throws -> Void { }
 
-            @Jumped("atvoid5", priority: .low) private var _atvoid5 = atvoid5
+            @Jack("atvoid5", priority: .low) private var _atvoid5 = atvoid5
             func atvoid5(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int) async throws -> Void { }
 
 
-            @Jumped("void6") private var _void6 = void6
+            @Jack("void6") private var _void6 = void6
             func void6(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int) -> Void { }
 
-            @Jumped("tvoid6") private var _tvoid6 = tvoid6
+            @Jack("tvoid6") private var _tvoid6 = tvoid6
             func tvoid6(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int) throws -> Void { }
 
-            @Jumped("atvoid6", priority: .low) private var _atvoid6 = atvoid6
+            @Jack("atvoid6", priority: .low) private var _atvoid6 = atvoid6
             func atvoid6(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int) async throws -> Void { }
 
 
-            @Jumped("void7") private var _void7 = void7
+            @Jack("void7") private var _void7 = void7
             func void7(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int, i6: Int) -> Void { }
 
-            @Jumped("tvoid7") private var _tvoid7 = tvoid7
+            @Jack("tvoid7") private var _tvoid7 = tvoid7
             func tvoid7(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int, i6: Int) throws -> Void { }
 
-            @Jumped("atvoid7", priority: .low) private var _atvoid7 = atvoid7
+            @Jack("atvoid7", priority: .low) private var _atvoid7 = atvoid7
             func atvoid7(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int, i6: Int) async throws -> Void { }
 
 
-            @Jumped("void8") private var _void8 = void8
+            @Jack("void8") private var _void8 = void8
             func void8(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int, i6: Int, i7: Int) -> Void { }
 
-            @Jumped("tvoid8") private var _tvoid8 = tvoid8
+            @Jack("tvoid8") private var _tvoid8 = tvoid8
             func tvoid8(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int, i6: Int, i7: Int) throws -> Void { }
 
-            @Jumped("atvoid8", priority: .low) private var _atvoid8 = atvoid8
+            @Jack("atvoid8", priority: .low) private var _atvoid8 = atvoid8
             func atvoid8(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int, i6: Int, i7: Int) async throws -> Void { }
 
 
-            @Jumped("void9") private var _void9 = void9
+            @Jack("void9") private var _void9 = void9
             func void9(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int, i6: Int, i7: Int, i8: Int) -> Void { }
 
-            @Jumped("tvoid9") private var _tvoid9 = tvoid9
+            @Jack("tvoid9") private var _tvoid9 = tvoid9
             func tvoid9(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int, i6: Int, i7: Int, i8: Int) throws -> Void { }
 
-            @Jumped("atvoid9", priority: .low) private var _atvoid9 = atvoid9
+            @Jack("atvoid9", priority: .low) private var _atvoid9 = atvoid9
             func atvoid9(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int, i6: Int, i7: Int, i8: Int) async throws -> Void { }
 
 
-            @Jumped("void10") private var _void10 = void10
+            @Jack("void10") private var _void10 = void10
             func void10(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int, i6: Int, i7: Int, i8: Int, i9: Int) -> Void { }
 
-            @Jumped("tvoid10") private var _tvoid10 = tvoid10
+            @Jack("tvoid10") private var _tvoid10 = tvoid10
             func tvoid10(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int, i6: Int, i7: Int, i8: Int, i9: Int) throws -> Void { }
 
-            @Jumped("atvoid10", priority: .low) private var _atvoid10 = atvoid10
+            @Jack("atvoid10", priority: .low) private var _atvoid10 = atvoid10
             func atvoid10(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int, i6: Int, i7: Int, i8: Int, i9: Int) async throws -> Void { }
 
 
             // we don't go to 11
 
-            //@Jumped("void11") private var _void11 = void11
+            //@Jack("void11") private var _void11 = void11
             //func void11(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int, i6: Int, i7: Int, i8: Int, i9: Int, i10: Int) -> Void { }
 
-            //@Jumped("tvoid11") private var _tvoid11 = tvoid11
+            //@Jack("tvoid11") private var _tvoid11 = tvoid11
             //func tvoid11(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int, i6: Int, i7: Int, i8: Int, i9: Int, i10: Int) throws -> Void { }
 
-            //@Jumped("atvoid11", priority: .low) private var _atvoid11 = atvoid11
+            //@Jack("atvoid11", priority: .low) private var _atvoid11 = atvoid11
             //func atvoid11(i0: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int, i6: Int, i7: Int, i8: Int, i9: Int, i10: Int) async throws -> Void { }
 
             lazy var jxc = jack().env
@@ -282,17 +282,17 @@ final class JackedObjectTests: XCTestCase {
 
     func testJumpedAsync() async throws {
         class JumpedObj : JackedObject {
-            @Jumped("promise0", priority: .background) private var _promise0 = promise0
+            @Jack("promise0", priority: .background) private var _promise0 = promise0
             func promise0() async throws -> Int {
                 13
             }
 
-            @Jumped("promise1", priority: .background) private var _promise1 = promise1
+            @Jack("promise1", priority: .background) private var _promise1 = promise1
             func promise1(number: Int) async throws -> String {
                 "\(number)"
             }
 
-            @Jumped("sleepTask", priority: .high) private var _sleepTask = sleepTask
+            @Jack("sleepTask", priority: .high) private var _sleepTask = sleepTask
             func sleepTask(duration: TimeInterval) async throws -> TimeInterval {
                 try await Task.sleep(nanoseconds: UInt64(duration * 1_000_000_000))
                 return duration
@@ -335,28 +335,28 @@ final class JackedObjectTests: XCTestCase {
 
     func testJumpedAsyncParams() async throws {
         class JumpedObj : JackedObject {
-            @Jumped private var h0 = hi
+            @Jack private var h0 = hi
             func hi() async throws -> Date { Date(timeIntervalSince1970: 1234) }
 
-            @Jumped private var h1 = hello // expose the 1-arg function
+            @Jack private var h1 = hello // expose the 1-arg function
             func hello(name: String) async throws -> String { "Hello \(name)!" }
 
-            @Jumped("H2") private var h2 = happyBirthday // expose the 2-arg function
+            @Jack("H2") private var h2 = happyBirthday // expose the 2-arg function
             func happyBirthday(name: String, age: Int) async throws -> String { "Happy Birthday \(name), you are \(age)!" }
 
-            @Jumped("replicate") private var _replicate = replicate
+            @Jack("replicate") private var _replicate = replicate
             func replicate(_ coded: Coded, count: Int) async throws -> [Coded] { Array(Array(repeating: coded, count: count)) }
 
-            @Jumped private var _sleep = sleep
+            @Jack private var _sleep = sleep
             func sleep(interval: TimeInterval) async throws -> Bool {
                 try await Task.sleep(nanoseconds: UInt64(interval * 1_000_000_000))
                 return true // TODO: hanle returning void
             }
 
-            @Jumped("bye") private var _goodbye = goodbye // expose a void function
+            @Jack("bye") private var _goodbye = goodbye // expose a void function
             func goodbye() throws { print("goodbye called") }
 
-            @Jumped("byebye") private var _goodbye1 = goodbye1 // expose a void function
+            @Jack("byebye") private var _goodbye1 = goodbye1 // expose a void function
             func goodbye1(x: Int) throws { print("goodbye1 called") }
 
 
@@ -415,8 +415,8 @@ final class JackedObjectTests: XCTestCase {
     func testSimpleJack() throws {
         @available(macOS 10.15, macCatalyst 13, iOS 13, tvOS 13, watchOS 6, *)
         class JackDemo : JackedObject {
-            @Jacked var str = "ABC"
-            @Jacked var num = 0
+            @Stack var str = "ABC"
+            @Stack var num = 0
             lazy var jxc = jack().env
         }
 
@@ -431,8 +431,8 @@ final class JackedObjectTests: XCTestCase {
     func testBoundJack() throws {
         @available(macOS 10.15, macCatalyst 13, iOS 13, tvOS 13, watchOS 6, *)
         class JackDemo : JackedObject {
-            @Jacked(bind: "$") var str = "ABC"
-            @Jacked(bind: "$") var num = 0
+            @Stack(bind: "$") var str = "ABC"
+            @Stack(bind: "$") var num = 0
             lazy var jxc = jack().env
         }
 
@@ -451,14 +451,14 @@ final class JackedObjectTests: XCTestCase {
     func testActors() async throws {
         @available(macOS 10.15, macCatalyst 13, iOS 13, tvOS 13, watchOS 6, *)
         actor ActorDemo : JackedObject {
-            @Jacked var str = ""
-            @Jacked var num = 0
+            @Stack var str = ""
+            @Stack var num = 0
 
             // Errors when trying to use the async function:
             // Generic parameter 'O' could not be inferred
             // No exact matches in call to initializer
             // Reference: Actor-isolated instance method 'func0()' can not be partially applied
-            // @Jumped("func0") private var _func0 = func0
+            // @Jack("func0") private var _func0 = func0
             // func func0() -> UUID { .rnd() }
 
             lazy var jxc = jack().env
@@ -475,7 +475,7 @@ final class JackedObjectTests: XCTestCase {
 
     func testJackedReferences() throws {
         class J1 : JackedReference {
-            @Jacked var j2: J2?
+            @Stack var j2: J2?
 
             static var j1s = 0 // track live instances
             override init() { Self.j1s += 1 }
@@ -483,7 +483,7 @@ final class JackedObjectTests: XCTestCase {
         }
 
         class J2 : JackedReference {
-            @Jacked var x: Int? = 1 // exported as number
+            @Stack var x: Int? = 1 // exported as number
 
             static var j2s = 0 // track live instances
             override init() { Self.j2s += 1 }
@@ -526,9 +526,7 @@ final class JackedObjectTests: XCTestCase {
         XCTAssertEqual(0, J1.j1s, "reference cycle detected for J1")
         XCTAssertEqual(wip(1), J2.j2s, "reference cycle detected for J2") // TODO: fix ref cycle
     }
-
 }
-
 
 /// Helper function to assist with the lack of async support in XCTAssertEqual functions
 private func with<T, U>(_ x: T, f: (T) throws -> U) rethrows -> U {
@@ -615,123 +613,123 @@ private class RandoJack<A: JXConvertible, ReturnType: Randomizable & JXConvertib
         value as? ReturnType ?? .rnd()
     }
 
-    @Jumped("func0") private var _func0 = func0
+    @Jack("func0") private var _func0 = func0
     func func0() -> ReturnType { .rnd() }
 
-    @Jumped("tfunc0") private var _tfunc0 = tfunc0
+    @Jack("tfunc0") private var _tfunc0 = tfunc0
     func tfunc0() throws -> ReturnType { .rnd() }
 
-    @Jumped("atfunc0", priority: .low) private var _atfunc0 = atfunc0
+    @Jack("atfunc0", priority: .low) private var _atfunc0 = atfunc0
     func atfunc0() async throws -> ReturnType { .rnd() }
 
 
-    @Jumped("func1") private var _func1 = func1
+    @Jack("func1") private var _func1 = func1
     func func1(i0: A) -> ReturnType { cast(i0) }
 
-    @Jumped("tfunc1") private var _tfunc1 = tfunc1
+    @Jack("tfunc1") private var _tfunc1 = tfunc1
     func tfunc1(i0: A) throws -> ReturnType { cast(i0)  }
 
-    @Jumped("atfunc1", priority: .low) private var _atfunc1 = atfunc1
+    @Jack("atfunc1", priority: .low) private var _atfunc1 = atfunc1
     func atfunc1(i0: A) async throws -> ReturnType { cast(i0)  }
 
 
-    @Jumped("func2") private var _func2 = func2
+    @Jack("func2") private var _func2 = func2
     func func2(i0: A, i1: A) -> ReturnType { cast(i1)  }
 
-    @Jumped("tfunc2") private var _tfunc2 = tfunc2
+    @Jack("tfunc2") private var _tfunc2 = tfunc2
     func tfunc2(i0: A, i1: A) throws -> ReturnType { cast(i1)  }
 
-    @Jumped("atfunc2", priority: .low) private var _atfunc2 = atfunc2
+    @Jack("atfunc2", priority: .low) private var _atfunc2 = atfunc2
     func atfunc2(i0: A, i1: A) async throws -> ReturnType { cast(i1)  }
 
 
-    @Jumped("func3") private var _func3 = func3
+    @Jack("func3") private var _func3 = func3
     func func3(i0: A, i1: A, i2: A) -> ReturnType { cast(i2)  }
 
-    @Jumped("tfunc3") private var _tfunc3 = tfunc3
+    @Jack("tfunc3") private var _tfunc3 = tfunc3
     func tfunc3(i0: A, i1: A, i2: A) throws -> ReturnType { cast(i2)  }
 
-    @Jumped("atfunc3", priority: .low) private var _atfunc3 = atfunc3
+    @Jack("atfunc3", priority: .low) private var _atfunc3 = atfunc3
     func atfunc3(i0: A, i1: A, i2: A) async throws -> ReturnType { cast(i2)  }
 
 
-    @Jumped("func4") private var _func4 = func4
+    @Jack("func4") private var _func4 = func4
     func func4(i0: A, i1: A, i2: A, i3: A) -> ReturnType { cast(i3)  }
 
-    @Jumped("tfunc4") private var _tfunc4 = tfunc4
+    @Jack("tfunc4") private var _tfunc4 = tfunc4
     func tfunc4(i0: A, i1: A, i2: A, i3: A) throws -> ReturnType { cast(i3)  }
 
-    @Jumped("atfunc4", priority: .low) private var _atfunc4 = atfunc4
+    @Jack("atfunc4", priority: .low) private var _atfunc4 = atfunc4
     func atfunc4(i0: A, i1: A, i2: A, i3: A) async throws -> ReturnType { cast(i3)  }
 
 
-    @Jumped("func5") private var _func5 = func5
+    @Jack("func5") private var _func5 = func5
     func func5(i0: A, i1: A, i2: A, i3: A, i4: A) -> ReturnType { cast(i4)  }
 
-    @Jumped("tfunc5") private var _tfunc5 = tfunc5
+    @Jack("tfunc5") private var _tfunc5 = tfunc5
     func tfunc5(i0: A, i1: A, i2: A, i3: A, i4: A) throws -> ReturnType { cast(i4)  }
 
-    @Jumped("atfunc5", priority: .low) private var _atfunc5 = atfunc5
+    @Jack("atfunc5", priority: .low) private var _atfunc5 = atfunc5
     func atfunc5(i0: A, i1: A, i2: A, i3: A, i4: A) async throws -> ReturnType { cast(i4)  }
 
 
-    @Jumped("func6") private var _func6 = func6
+    @Jack("func6") private var _func6 = func6
     func func6(i0: A, i1: A, i2: A, i3: A, i4: A, i5: A) -> ReturnType { cast(i5)  }
 
-    @Jumped("tfunc6") private var _tfunc6 = tfunc6
+    @Jack("tfunc6") private var _tfunc6 = tfunc6
     func tfunc6(i0: A, i1: A, i2: A, i3: A, i4: A, i5: A) throws -> ReturnType { cast(i5)  }
 
-    @Jumped("atfunc6", priority: .low) private var _atfunc6 = atfunc6
+    @Jack("atfunc6", priority: .low) private var _atfunc6 = atfunc6
     func atfunc6(i0: A, i1: A, i2: A, i3: A, i4: A, i5: A) async throws -> ReturnType { cast(i5)  }
 
 
-    @Jumped("func7") private var _func7 = func7
+    @Jack("func7") private var _func7 = func7
     func func7(i0: A, i1: A, i2: A, i3: A, i4: A, i5: A, i6: A) -> ReturnType { cast(i6)  }
 
-    @Jumped("tfunc7") private var _tfunc7 = tfunc7
+    @Jack("tfunc7") private var _tfunc7 = tfunc7
     func tfunc7(i0: A, i1: A, i2: A, i3: A, i4: A, i5: A, i6: A) throws -> ReturnType { cast(i6)  }
 
-    @Jumped("atfunc7", priority: .low) private var _atfunc7 = atfunc7
+    @Jack("atfunc7", priority: .low) private var _atfunc7 = atfunc7
     func atfunc7(i0: A, i1: A, i2: A, i3: A, i4: A, i5: A, i6: A) async throws -> ReturnType { cast(i6)  }
 
 
-    @Jumped("func8") private var _func8 = func8
+    @Jack("func8") private var _func8 = func8
     func func8(i0: A, i1: A, i2: A, i3: A, i4: A, i5: A, i6: A, i7: A) -> ReturnType { cast(i7)  }
 
-    @Jumped("tfunc8") private var _tfunc8 = tfunc8
+    @Jack("tfunc8") private var _tfunc8 = tfunc8
     func tfunc8(i0: A, i1: A, i2: A, i3: A, i4: A, i5: A, i6: A, i7: A) throws -> ReturnType { cast(i7)  }
 
-    @Jumped("atfunc8", priority: .low) private var _atfunc8 = atfunc8
+    @Jack("atfunc8", priority: .low) private var _atfunc8 = atfunc8
     func atfunc8(i0: A, i1: A, i2: A, i3: A, i4: A, i5: A, i6: A, i7: A) async throws -> ReturnType { cast(i7)  }
 
 
-    @Jumped("func9") private var _func9 = func9
+    @Jack("func9") private var _func9 = func9
     func func9(i0: A, i1: A, i2: A, i3: A, i4: A, i5: A, i6: A, i7: A, i8: A) -> ReturnType { cast(i8)  }
 
-    @Jumped("tfunc9") private var _tfunc9 = tfunc9
+    @Jack("tfunc9") private var _tfunc9 = tfunc9
     func tfunc9(i0: A, i1: A, i2: A, i3: A, i4: A, i5: A, i6: A, i7: A, i8: A) throws -> ReturnType { cast(i8)  }
 
-    @Jumped("atfunc9", priority: .low) private var _atfunc9 = atfunc9
+    @Jack("atfunc9", priority: .low) private var _atfunc9 = atfunc9
     func atfunc9(i0: A, i1: A, i2: A, i3: A, i4: A, i5: A, i6: A, i7: A, i8: A) async throws -> ReturnType { cast(i8)  }
 
 
-    @Jumped("func10") private var _func10 = func10
+    @Jack("func10") private var _func10 = func10
     func func10(i0: A, i1: A, i2: A, i3: A, i4: A, i5: A, i6: A, i7: A, i8: A, i9: A) -> ReturnType { cast(i9)  }
 
-    @Jumped("tfunc10") private var _tfunc10 = tfunc10
+    @Jack("tfunc10") private var _tfunc10 = tfunc10
     func tfunc10(i0: A, i1: A, i2: A, i3: A, i4: A, i5: A, i6: A, i7: A, i8: A, i9: A) throws -> ReturnType { cast(i9)  }
 
-    @Jumped("atfunc10", priority: .low) private var _atfunc10 = atfunc10
+    @Jack("atfunc10", priority: .low) private var _atfunc10 = atfunc10
     func atfunc10(i0: A, i1: A, i2: A, i3: A, i4: A, i5: A, i6: A, i7: A, i8: A, i9: A) async throws -> ReturnType { cast(i9)  }
 
 
-    @Jumped("func11") private var _func11 = func11
+    @Jack("func11") private var _func11 = func11
     func func11(i0: A, i1: A, i2: A, i3: A, i4: A, i5: A, i6: A, i7: A, i8: A, i9: A, i10: A) -> ReturnType { cast(i9)  }
 
-    @Jumped("tfunc11") private var _tfunc11 = tfunc11
+    @Jack("tfunc11") private var _tfunc11 = tfunc11
     func tfunc11(i0: A, i1: A, i2: A, i3: A, i4: A, i5: A, i6: A, i7: A, i8: A, i9: A, i10: A) throws -> ReturnType { cast(i9)  }
 
-    @Jumped("atfunc11", priority: .low) private var _atfunc11 = atfunc11
+    @Jack("atfunc11", priority: .low) private var _atfunc11 = atfunc11
     func atfunc11(i0: A, i1: A, i2: A, i3: A, i4: A, i5: A, i6: A, i7: A, i8: A, i9: A, i10: A) async throws -> ReturnType { cast(i9)  }
 
     lazy var jxc = jack().env

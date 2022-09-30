@@ -8,8 +8,8 @@ enabling your app to provide scriptable extensions.
 import Jack
 
 class AppleJack : JackedObject { 
-    @Jacked var name: String // exports the property to JS and acts as Combine.Published 
-    @Jacked var age: Int
+    @Stack var name: String // exports the property to JS and acts as Combine.Published 
+    @Stack var age: Int
 
     /// An embedded `JXKit` script context that has access to the jacked properties and jumped functions
     lazy var jxc = jack().env
@@ -20,7 +20,7 @@ class AppleJack : JackedObject {
     }
 
     /// Functions are exported as method properties, and can be re-named for export
-    @Jumped("haveBirthday") var _haveBirthday = haveBirthday
+    @Jack("haveBirthday") var _haveBirthday = haveBirthday
     func haveBirthday() -> Int {
         age += 1
         return age
@@ -59,33 +59,33 @@ envrionment.
 Jack provides the following property wrappers that can be
 used within a ``JackedObject``.
 
-### @Tracked
+### @Track
 
-A ``Tracked`` property is the equivalent to the ``Published``
+A ``Track`` property is the equivalent to the ``Published``
 property for the ``ObservableObject`` conformance of a ``JackedObject``.
 Note that it is not possible to use ``Published`` in ``JackedObject``,
-so ``Tracked`` provides equivalent functionality and works transparently
+so ``Track`` provides equivalent functionality and works transparently
 as an ``ObservableObject``, such as in a SwiftUI ``EnvironmentObject``.
 
-### @Jacked
+### @Stack
 
-A ``Jacked`` propery is published (like the ``Tracked`` wrapped), and it is
+A ``Stack`` propery is published (like the ``Track`` wrapper), and it is
 additionally exposed to the [JXContext] as a property. Properties
 can be get and set from within JavaScript as if they were regular
 properties of objects.
 
 The conforming types are numbers, strings, and booleans.
 For general support for other codable value types,
-use ``Coded``.
+use ``Pack``.
 
-### @Coded
+### @Pack
 
-A ``Coded`` property is similar to ``Jacked``, but it passes objects
+A ``Pack`` property is similar to ``Stack``, but it passes objects
 back and forth between Swift and JavaScript by encoding its values.
 
-### @Jumped
+### @Jack
 
-A ``Jumped`` proeprty applies to closure properties as a means
+A ``Jack`` property applies to closure properties as a means
 of exposing Swift functions to the JavaScript environment.
 
 
