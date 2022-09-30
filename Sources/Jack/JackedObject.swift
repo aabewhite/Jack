@@ -86,27 +86,57 @@ import OpenCombineFoundation
 public protocol JackedObject : ObservableObject {
 }
 
-
 public extension JackedObject {
+    /// The lazy list of all props in the hierarchy
+    fileprivate func props() -> LazySequence<FlattenSequence<LazyMapSequence<UnfoldSequence<Mirror, (Mirror?, Bool)>, Mirror.Children>.Elements>> {
+        sequence(first: Mirror(reflecting: self), next: \.superclassMirror).lazy.map(\.children).joined()
+    }
+
     /// Jack into the given context, exposing all this instance's `@Jacked` properties into the given `JXContext`.
     ///
     /// - Parameters:
-    ///   - into context: the context to jack into; will create a new context if needed
-    ///   - as key: a key to use to create an object for the key
-    /// - Returns: the context
+    ///   - context: the context to jack into; will create a new context if needed
+    ///   - key: a key to use to create an object for the key
+    ///
+    /// - Returns: the instance that was jacked into the context
     @discardableResult func jack(into context: JXContext = JXContext(), as key: String? = nil) -> JXValue {
         var object = context.global
 
         if let key = key {
-            object = context.object()
             do {
+                // TODO: should be permit multi-jacking objects if they already exist in the key?
+                object = try context.global[key]
+                if !object.isObject {
+                    object = context.object()
+                }
                 try context.global.setProperty(key, object)
             } catch {
                 fatalError("ERROR: unable to set propery for object '\(key)': \(error)")
             }
         }
 
+        do {
+            try inject(into: object)
+        } catch {
+            fatalError("ERROR: unable to inject into object for '\(key)': \(error)")
+        }
+
+        //try! object.seal()
+        return object
+    }
+
+    /// Inject all this instance's `@Jacked` and `@Jumped` properties into the JXValue object.
+    /// The resuling object will have properties created for each of the corresponding property
+    /// wrappers in the `JackedObject`.
+    ///
+    /// - Parameters:
+    ///   - into context: the context to jack into; will create a new context if needed
+    ///   - for object: the JXObject to inject into
+    @discardableResult func inject(into object: JXValue) throws -> [JXProperty] {
         var addedProps: Set<String> = []
+
+        let ctx = object.env
+        var added: [JXProperty] = []
 
         for (label, prop) in props() {
             guard let prop = prop as? _JackableProperty else {
@@ -126,24 +156,91 @@ public extension JackedObject {
             }
 
             let jprop = JXProperty(
-                getter: { [weak self] this in try prop[in: context, self] },
-                setter: { [weak self] this, newValue in try prop.setValue(newValue, in: context, owner: self) }
+                getter: { [weak self, ctx] this in try prop[in: ctx, self] },
+                setter: { [weak self, ctx] this, newValue in try prop.setValue(newValue, in: ctx, owner: self) }
             )
 
-            do {
-                try object.defineProperty(key, jprop)
-            } catch {
-                fatalError("ERROR: error when setting property '\(key)': \(error)")
+            if let symbolPrefix = prop.bindingPrefix {
+                let symbol = object.env.symbol(key)
+                try object.defineProperty(symbol, jprop)
+                let symbolKey = symbolPrefix + key
+                try object.setProperty(symbolKey, symbol)
+            } else {
+                try object.defineProperty(object.env.string(key), jprop)
             }
+            added.append(jprop)
         }
-        return object
-    }
 
-    /// The lazy list of all props in the hierarchy
-    private func props() -> LazySequence<FlattenSequence<LazyMapSequence<UnfoldSequence<Mirror, (Mirror?, Bool)>, Mirror.Children>.Elements>> {
-        sequence(first: Mirror(reflecting: self), next: \.superclassMirror).lazy.map(\.children).joined()
+        return added
     }
 }
+
+public protocol JXReferenceable : JXConvertible {
+//    init()
+
+    /// The corresponding peer object for this instance on the JavaScript side.
+    var peer: JXValue? { get nonmutating set }
+}
+
+extension JXReferenceable where Self : JackedObject {
+    /// `JXConvertible` implementation for `JackedObject`,
+    public static func makeJX(from value: JXValue) throws -> Self {
+        guard let obj = value.env.peer(for: value) else {
+            throw JackError.invalidReferenceContext(value, .init(context: value.env))
+        }
+
+        guard let jobj = obj as? Self else { // TODO: what if some already conveyed this to a different wrapper type?
+            print("### bad type obj:", wip(obj), type(of: Self.self))
+            throw JackError.invalidReferenceType(value, .init(context: value.env))
+        }
+
+        return jobj
+    }
+
+    public func getJX(from context: JXContext) throws -> JXValue {
+        if let obj = self.peer { // do we already have a counterpart on the JX side?
+            return obj
+        }
+
+        let obj = context.object(peer: self) // create a new object in the context // TODO: should we set a class name on the type?
+        try inject(into: obj)
+        self.peer = obj
+        return obj
+    }
+}
+
+/// A `JackedReference` is a concrete base class implementation of `JackedObject`
+/// that tracks the instance's native peer.
+///
+/// A `JackedReference` can only ever be associated with a single `JXContext`.
+open class JackedReference : JackedObject, JXReferenceable {
+    // TODO: store peer as private data in the object and access with `JSObjectGetPrivate` instead
+
+    /// The counterpart JXValue for a given context
+    public weak var peer: JXValue? = nil
+
+    public init() {
+        
+    }
+//
+//    public required init() {
+//    }
+
+//    deinit {
+//        //print("deini", wip(self), "peer:", self.peer)
+//
+//        for (label, prop) in props() {
+//            guard let prop = prop as? _JackableProperty else {
+//                continue
+//            }
+//            print("### clearing prop:", label, prop)
+//            prop.clear() // TODO: clear all properties?
+//        }
+//
+//        self.peer = nil
+//    }
+}
+
 
 #if canImport(SwiftUI)
 import protocol SwiftUI.DynamicProperty
@@ -163,11 +260,21 @@ internal protocol _TrackableProperty : _ObservableObjectProperty {
 }
 
 internal protocol _JackableProperty : _ObservableObjectProperty {
+    /// The key name for the instance
     var exportedKey: String? { get }
+
+    /// A string to prefix the symbol name for bound properties
+    var bindingPrefix: String? { get }
 
     subscript(in context: JXContext, owner: AnyObject?) -> JXValue { get throws }
 
     func setValue(_ newValue: JXValue, in context: JXContext, owner: AnyObject?) throws
+}
+
+extension _JackableProperty {
+    var bindingPrefix: String? {
+        wip(nil) // TODO: fill this into types other than Jacked
+    }
 }
 
 extension Published: _ObservableObjectProperty {

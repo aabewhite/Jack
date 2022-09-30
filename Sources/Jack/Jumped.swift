@@ -56,7 +56,7 @@ private extension JXContext {
     }
 
     func jarg<J: JXConvertible>(_ index: Int, _ args: [JXValue]) throws -> J {
-        try J.makeJX(from: args.dropFirst(index).first ?? self.null(), in: self)
+        try J.makeJX(from: args.dropFirst(index).first ?? self.null())
     }
 }
 
@@ -68,7 +68,7 @@ private extension JXContext {
 // 4. asynchronous JXConvertible return
 
 extension Jumped {
-    
+
     fileprivate static func createFunction<J: JXConvertible>(block: @escaping (JXContext, AnyObject?, [JXValue]) throws -> J) -> JumpFunc {
         { context, owner in
             JXValue(newFunctionIn: context) { ctx, this, args in
@@ -126,9 +126,15 @@ extension Jumped {
     }
 }
 
+
 // MARK: Jumped Arity 0
 
 extension Jumped {
+    /// The default priority for async function execution.
+    public static var defaultAsyncTaskPriority: TaskPriority? {
+        nil
+    }
+
     public init(wrappedValue f: @escaping (O) -> () throws -> U, _ key: String? = nil) where U : JXConvertible {
         self.function = Self.createFunction() { ctx, owner, args in
             try f(ctx.casting(owner))()
@@ -143,14 +149,14 @@ extension Jumped {
         self.exportedKey = key
     }
 
-    public init(wrappedValue f: @escaping (O) -> () async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U == Void {
+    public init(wrappedValue f: @escaping (O) -> () async throws -> U, _ key: String? = nil, priority: TaskPriority? = defaultAsyncTaskPriority) where U == Void {
         self.function = Self.createFunctionAsyncVoid(priority: priority) { ctx, owner, args in
             try await f(ctx.casting(owner))()
         }
         self.exportedKey = key
     }
 
-    public init(wrappedValue f: @escaping (O) -> () async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U : JXConvertible {
+    public init(wrappedValue f: @escaping (O) -> () async throws -> U, _ key: String? = nil, priority: TaskPriority? = defaultAsyncTaskPriority) where U : JXConvertible {
         self.function = Self.createFunctionAsync(priority: priority) { ctx, owner, args in
             try await f(ctx.casting(owner))()
         }
@@ -175,14 +181,14 @@ extension Jumped {
         self.exportedKey = key
     }
 
-    public init<X1: JXConvertible>(wrappedValue f: @escaping (O) -> (X1) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U == Void {
+    public init<X1: JXConvertible>(wrappedValue f: @escaping (O) -> (X1) async throws -> U, _ key: String? = nil, priority: TaskPriority? = defaultAsyncTaskPriority) where U == Void {
         self.function = Self.createFunctionAsyncVoid(priority: priority) { ctx, owner, args in
             try await f(ctx.casting(owner))(ctx.jarg(0, args))
         }
         self.exportedKey = key
     }
 
-    public init<X1: JXConvertible>(wrappedValue f: @escaping (O) -> (X1) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U : JXConvertible {
+    public init<X1: JXConvertible>(wrappedValue f: @escaping (O) -> (X1) async throws -> U, _ key: String? = nil, priority: TaskPriority? = defaultAsyncTaskPriority) where U : JXConvertible {
         self.function = Self.createFunctionAsync(priority: priority) { ctx, owner, args in
             try await f(ctx.casting(owner))(ctx.jarg(0, args))
         }
@@ -207,14 +213,14 @@ extension Jumped {
         self.exportedKey = key
     }
 
-    public init<X1: JXConvertible, X2: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U == Void {
+    public init<X1: JXConvertible, X2: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2) async throws -> U, _ key: String? = nil, priority: TaskPriority? = defaultAsyncTaskPriority) where U == Void {
         self.function = Self.createFunctionAsyncVoid(priority: priority) { ctx, owner, args in
             try await f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args))
         }
         self.exportedKey = key
     }
 
-    public init<X1: JXConvertible, X2: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U : JXConvertible {
+    public init<X1: JXConvertible, X2: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2) async throws -> U, _ key: String? = nil, priority: TaskPriority? = defaultAsyncTaskPriority) where U : JXConvertible {
         self.function = Self.createFunctionAsync(priority: priority) { ctx, owner, args in
             try await f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args))
         }
@@ -239,14 +245,14 @@ extension Jumped {
         self.exportedKey = key
     }
 
-    public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U == Void {
+    public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3) async throws -> U, _ key: String? = nil, priority: TaskPriority? = defaultAsyncTaskPriority) where U == Void {
         self.function = Self.createFunctionAsyncVoid(priority: priority) { ctx, owner, args in
             try await f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args))
         }
         self.exportedKey = key
     }
 
-    public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U : JXConvertible {
+    public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3) async throws -> U, _ key: String? = nil, priority: TaskPriority? = defaultAsyncTaskPriority) where U : JXConvertible {
         self.function = Self.createFunctionAsync(priority: priority) { ctx, owner, args in
             try await f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args))
         }
@@ -271,14 +277,14 @@ extension Jumped {
         self.exportedKey = key
     }
 
-    public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible, X4: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U == Void {
+    public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible, X4: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4) async throws -> U, _ key: String? = nil, priority: TaskPriority? = defaultAsyncTaskPriority) where U == Void {
         self.function = Self.createFunctionAsyncVoid(priority: priority) { ctx, owner, args in
             try await f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args))
         }
         self.exportedKey = key
     }
 
-    public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible, X4: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U : JXConvertible {
+    public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible, X4: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4) async throws -> U, _ key: String? = nil, priority: TaskPriority? = defaultAsyncTaskPriority) where U : JXConvertible {
         self.function = Self.createFunctionAsync(priority: priority) { ctx, owner, args in
             try await f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args))
         }
@@ -303,14 +309,14 @@ extension Jumped {
         self.exportedKey = key
     }
 
-    public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible, X4: JXConvertible, X5: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U == Void {
+    public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible, X4: JXConvertible, X5: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5) async throws -> U, _ key: String? = nil, priority: TaskPriority? = defaultAsyncTaskPriority) where U == Void {
         self.function = Self.createFunctionAsyncVoid(priority: priority) { ctx, owner, args in
             try await f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args), ctx.jarg(4, args))
         }
         self.exportedKey = key
     }
 
-    public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible, X4: JXConvertible, X5: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U : JXConvertible {
+    public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible, X4: JXConvertible, X5: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5) async throws -> U, _ key: String? = nil, priority: TaskPriority? = defaultAsyncTaskPriority) where U : JXConvertible {
         self.function = Self.createFunctionAsync(priority: priority) { ctx, owner, args in
             try await f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args), ctx.jarg(4, args))
         }
@@ -335,14 +341,14 @@ extension Jumped {
         self.exportedKey = key
     }
 
-    public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible, X4: JXConvertible, X5: JXConvertible, X6: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U == Void {
+    public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible, X4: JXConvertible, X5: JXConvertible, X6: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6) async throws -> U, _ key: String? = nil, priority: TaskPriority? = defaultAsyncTaskPriority) where U == Void {
         self.function = Self.createFunctionAsyncVoid(priority: priority) { ctx, owner, args in
             try await f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args), ctx.jarg(4, args), ctx.jarg(5, args))
         }
         self.exportedKey = key
     }
 
-    public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible, X4: JXConvertible, X5: JXConvertible, X6: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U : JXConvertible {
+    public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible, X4: JXConvertible, X5: JXConvertible, X6: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6) async throws -> U, _ key: String? = nil, priority: TaskPriority? = defaultAsyncTaskPriority) where U : JXConvertible {
         self.function = Self.createFunctionAsync(priority: priority) { ctx, owner, args in
             try await f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args), ctx.jarg(4, args), ctx.jarg(5, args))
         }
@@ -367,14 +373,14 @@ extension Jumped {
         self.exportedKey = key
     }
 
-    public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible, X4: JXConvertible, X5: JXConvertible, X6: JXConvertible, X7: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U == Void {
+    public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible, X4: JXConvertible, X5: JXConvertible, X6: JXConvertible, X7: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7) async throws -> U, _ key: String? = nil, priority: TaskPriority? = defaultAsyncTaskPriority) where U == Void {
         self.function = Self.createFunctionAsyncVoid(priority: priority) { ctx, owner, args in
             try await f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args), ctx.jarg(4, args), ctx.jarg(5, args), ctx.jarg(6, args))
         }
         self.exportedKey = key
     }
 
-    public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible, X4: JXConvertible, X5: JXConvertible, X6: JXConvertible, X7: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U : JXConvertible {
+    public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible, X4: JXConvertible, X5: JXConvertible, X6: JXConvertible, X7: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7) async throws -> U, _ key: String? = nil, priority: TaskPriority? = defaultAsyncTaskPriority) where U : JXConvertible {
         self.function = Self.createFunctionAsync(priority: priority) { ctx, owner, args in
             try await f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args), ctx.jarg(4, args), ctx.jarg(5, args), ctx.jarg(6, args))
         }
@@ -399,14 +405,14 @@ extension Jumped {
         self.exportedKey = key
     }
 
-    public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible, X4: JXConvertible, X5: JXConvertible, X6: JXConvertible, X7: JXConvertible, X8: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7, X8) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U == Void {
+    public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible, X4: JXConvertible, X5: JXConvertible, X6: JXConvertible, X7: JXConvertible, X8: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7, X8) async throws -> U, _ key: String? = nil, priority: TaskPriority? = defaultAsyncTaskPriority) where U == Void {
         self.function = Self.createFunctionAsyncVoid(priority: priority) { ctx, owner, args in
             try await f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args), ctx.jarg(4, args), ctx.jarg(5, args), ctx.jarg(6, args), ctx.jarg(7, args))
         }
         self.exportedKey = key
     }
 
-    public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible, X4: JXConvertible, X5: JXConvertible, X6: JXConvertible, X7: JXConvertible, X8: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7, X8) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U : JXConvertible {
+    public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible, X4: JXConvertible, X5: JXConvertible, X6: JXConvertible, X7: JXConvertible, X8: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7, X8) async throws -> U, _ key: String? = nil, priority: TaskPriority? = defaultAsyncTaskPriority) where U : JXConvertible {
         self.function = Self.createFunctionAsync(priority: priority) { ctx, owner, args in
             try await f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args), ctx.jarg(4, args), ctx.jarg(5, args), ctx.jarg(6, args), ctx.jarg(7, args))
         }
@@ -431,14 +437,14 @@ extension Jumped {
         self.exportedKey = key
     }
 
-    public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible, X4: JXConvertible, X5: JXConvertible, X6: JXConvertible, X7: JXConvertible, X8: JXConvertible, X9: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7, X8, X9) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U == Void {
+    public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible, X4: JXConvertible, X5: JXConvertible, X6: JXConvertible, X7: JXConvertible, X8: JXConvertible, X9: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7, X8, X9) async throws -> U, _ key: String? = nil, priority: TaskPriority? = defaultAsyncTaskPriority) where U == Void {
         self.function = Self.createFunctionAsyncVoid(priority: priority) { ctx, owner, args in
             try await f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args), ctx.jarg(4, args), ctx.jarg(5, args), ctx.jarg(6, args), ctx.jarg(7, args), ctx.jarg(8, args))
         }
         self.exportedKey = key
     }
 
-    public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible, X4: JXConvertible, X5: JXConvertible, X6: JXConvertible, X7: JXConvertible, X8: JXConvertible, X9: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7, X8, X9) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U : JXConvertible {
+    public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible, X4: JXConvertible, X5: JXConvertible, X6: JXConvertible, X7: JXConvertible, X8: JXConvertible, X9: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7, X8, X9) async throws -> U, _ key: String? = nil, priority: TaskPriority? = defaultAsyncTaskPriority) where U : JXConvertible {
         self.function = Self.createFunctionAsync(priority: priority) { ctx, owner, args in
             try await f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args), ctx.jarg(4, args), ctx.jarg(5, args), ctx.jarg(6, args), ctx.jarg(7, args), ctx.jarg(8, args))
         }
@@ -463,14 +469,14 @@ extension Jumped {
         self.exportedKey = key
     }
 
-    public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible, X4: JXConvertible, X5: JXConvertible, X6: JXConvertible, X7: JXConvertible, X8: JXConvertible, X9: JXConvertible, X10: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7, X8, X9, X10) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U == Void {
+    public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible, X4: JXConvertible, X5: JXConvertible, X6: JXConvertible, X7: JXConvertible, X8: JXConvertible, X9: JXConvertible, X10: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7, X8, X9, X10) async throws -> U, _ key: String? = nil, priority: TaskPriority? = defaultAsyncTaskPriority) where U == Void {
         self.function = Self.createFunctionAsyncVoid(priority: priority) { ctx, owner, args in
             try await f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args), ctx.jarg(4, args), ctx.jarg(5, args), ctx.jarg(6, args), ctx.jarg(7, args), ctx.jarg(8, args), ctx.jarg(9, args))
         }
         self.exportedKey = key
     }
 
-    public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible, X4: JXConvertible, X5: JXConvertible, X6: JXConvertible, X7: JXConvertible, X8: JXConvertible, X9: JXConvertible, X10: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7, X8, X9, X10) async throws -> U, _ key: String? = nil, priority: TaskPriority? = nil) where U : JXConvertible {
+    public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible, X4: JXConvertible, X5: JXConvertible, X6: JXConvertible, X7: JXConvertible, X8: JXConvertible, X9: JXConvertible, X10: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7, X8, X9, X10) async throws -> U, _ key: String? = nil, priority: TaskPriority? = defaultAsyncTaskPriority) where U : JXConvertible {
         self.function = Self.createFunctionAsync(priority: priority) { ctx, owner, args in
             try await f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args), ctx.jarg(4, args), ctx.jarg(5, args), ctx.jarg(6, args), ctx.jarg(7, args), ctx.jarg(8, args), ctx.jarg(9, args))
         }
@@ -478,3 +484,34 @@ extension Jumped {
     }
 }
 
+// MARK: Jumped Arity 11
+
+extension Jumped {
+    public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible, X4: JXConvertible, X5: JXConvertible, X6: JXConvertible, X7: JXConvertible, X8: JXConvertible, X9: JXConvertible, X10: JXConvertible, X11: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7, X8, X9, X10, X11) throws -> U, _ key: String? = nil) where U : JXConvertible {
+        self.function = Self.createFunction() { ctx, owner, args in
+            try f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args), ctx.jarg(4, args), ctx.jarg(5, args), ctx.jarg(6, args), ctx.jarg(7, args), ctx.jarg(8, args), ctx.jarg(9, args), ctx.jarg(10, args))
+        }
+        self.exportedKey = key
+    }
+
+    public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible, X4: JXConvertible, X5: JXConvertible, X6: JXConvertible, X7: JXConvertible, X8: JXConvertible, X9: JXConvertible, X10: JXConvertible, X11: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7, X8, X9, X10, X11) throws -> U, _ key: String? = nil) where U == Void {
+        self.function = Self.createFunctionVoid() { ctx, owner, args in
+            try f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args), ctx.jarg(4, args), ctx.jarg(5, args), ctx.jarg(6, args), ctx.jarg(7, args), ctx.jarg(8, args), ctx.jarg(9, args), ctx.jarg(10, args))
+        }
+        self.exportedKey = key
+    }
+
+    public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible, X4: JXConvertible, X5: JXConvertible, X6: JXConvertible, X7: JXConvertible, X8: JXConvertible, X9: JXConvertible, X10: JXConvertible, X11: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7, X8, X9, X10, X11) async throws -> U, _ key: String? = nil, priority: TaskPriority? = defaultAsyncTaskPriority) where U == Void {
+        self.function = Self.createFunctionAsyncVoid(priority: priority) { ctx, owner, args in
+            try await f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args), ctx.jarg(4, args), ctx.jarg(5, args), ctx.jarg(6, args), ctx.jarg(7, args), ctx.jarg(8, args), ctx.jarg(9, args), ctx.jarg(10, args))
+        }
+        self.exportedKey = key
+    }
+
+    public init<X1: JXConvertible, X2: JXConvertible, X3: JXConvertible, X4: JXConvertible, X5: JXConvertible, X6: JXConvertible, X7: JXConvertible, X8: JXConvertible, X9: JXConvertible, X10: JXConvertible, X11: JXConvertible>(wrappedValue f: @escaping (O) -> (X1, X2, X3, X4, X5, X6, X7, X8, X9, X10, X11) async throws -> U, _ key: String? = nil, priority: TaskPriority? = defaultAsyncTaskPriority) where U : JXConvertible {
+        self.function = Self.createFunctionAsync(priority: priority) { ctx, owner, args in
+            try await f(ctx.casting(owner))(ctx.jarg(0, args), ctx.jarg(1, args), ctx.jarg(2, args), ctx.jarg(3, args), ctx.jarg(4, args), ctx.jarg(5, args), ctx.jarg(6, args), ctx.jarg(7, args), ctx.jarg(8, args), ctx.jarg(9, args), ctx.jarg(10, args))
+        }
+        self.exportedKey = key
+    }
+}

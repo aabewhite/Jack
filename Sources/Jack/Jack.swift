@@ -54,6 +54,9 @@ public enum JackError : Error {
         //public let underlyingError: Error?
 
         public let context: JXContext
+        public init(context: JXContext) {
+            self.context = context
+        }
     }
 
     /// An indication that a value of the given type could not be decoded because
@@ -77,9 +80,14 @@ public enum JackError : Error {
 
     case dataElementOutOfRange(_ index: Int, _ value: JXValue, Context)
 
-    /// The context for a @Jump was invalid or deallocated.
-
+    /// Functions can only be initialized from the Swift side and cannot be changed.
     case functionPropertyReadOnly(_ value: JXValue, Context)
+
+    /// A `JXValue` mapped to a `JackedObject` could not be found.
+    case invalidReferenceContext(_ value: JXValue, Context)
+
+    /// A `JXValue` mapped to a `JackedObject` was of the wrong type.
+    case invalidReferenceType(_ value: JXValue, Context)
 }
 
 

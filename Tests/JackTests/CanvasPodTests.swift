@@ -784,13 +784,12 @@ class CanvasPodTest : XCTestCase {
 
         func metrics(_ string: String) throws -> CoreGraphicsCanvasPod.TextMetrics {
             try jxc.global.setProperty("txt", jxc.string(string))
-            return try jxc.eval("canvas.measureText(txt)").convey(in: jxc)
+            return try jxc.eval("canvas.measureText(txt)").convey()
         }
 
         XCTAssertEqual(24, try metrics("ABC").width, accuracy: 1.0)
         XCTAssertEqual(99, try metrics("this is a long string").width, accuracy: 1.0)
         XCTAssertEqual(99, try metrics("this is a long string\nwith a newline").width, accuracy: 1.0) // not naïve
-
     }
     #endif
 

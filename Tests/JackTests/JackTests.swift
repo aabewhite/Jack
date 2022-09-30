@@ -118,9 +118,13 @@ final class JackTests: XCTestCase {
     }
 
     func testBridgingEnhanced() throws {
-        enum Relation : String, JXConvertible {
+        enum Relation : String, Codable, JXConvertible {
             // string cases are auto-exported to Java via coding
             case friend, relative, neighbor, coworker
+
+            // Both Codable and RawRepresentable implement JXConvertible, so we need to manually dis-ambiguate
+            static func makeJX(from value: JXValue) throws -> Self { try makeJXRaw(from: value) }
+            func getJX(from context: JXContext) throws -> JXValue { try getJXRaw(from: context) }
         }
 
         class BridgedProperties : JackedObject {
@@ -220,7 +224,7 @@ final class JackTests: XCTestCase {
 #endif
     }
 
-    func testPingPongPerformance() {
+    func XXXtestPingPongPerformance() {
         measure {
             try? testPingPongExample()
         }
@@ -501,6 +505,7 @@ final class JackTests: XCTestCase {
     }
 
     func testJackedEnum() throws {
+        // enum Compass : String, Codable, Jackable { case north, south, east, west } // this would be a problem due to conflicting implementations
         enum Compass : String, Jackable { case north, south, east, west }
         enum Direction : Int, Jackable { case up, down, left, right }
 

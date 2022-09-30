@@ -221,10 +221,10 @@ final class JackedObjectTests: XCTestCase {
     private func jumpedTests<A: JXConvertible & Randomizable & JSConvertable & Equatable, R: JXConvertible & Randomizable & Equatable>(arg: A.Type, ret: R.Type) async throws {
         let obj = RandoJack<A, R>()
 
-        XCTAssertNotEqual(R.rnd(), try obj.jxc.eval("func0()").convey(in: obj.jxc))
-        XCTAssertNotEqual(R.rnd(), try obj.jxc.eval("tfunc0()").convey(in: obj.jxc))
+        XCTAssertNotEqual(R.rnd(), try obj.jxc.eval("func0()").convey())
+        XCTAssertNotEqual(R.rnd(), try obj.jxc.eval("tfunc0()").convey())
         try withExtendedLifetime(try await obj.jxc.eval("atfunc0()", priority: .low)) { x in
-            XCTAssertNotEqual(R.rnd(), try x.convey(in: obj.jxc))
+            XCTAssertNotEqual(R.rnd(), try x.convey())
         }
 
         let p: TaskPriority = TaskPriority.high
@@ -412,6 +412,42 @@ final class JackedObjectTests: XCTestCase {
         try obj.jxc.eval("byebye()")
     }
 
+    func testSimpleJack() throws {
+        @available(macOS 10.15, macCatalyst 13, iOS 13, tvOS 13, watchOS 6, *)
+        class JackDemo : JackedObject {
+            @Jacked var str = "ABC"
+            @Jacked var num = 0
+            lazy var jxc = jack().env
+        }
+
+        let jack = JackDemo()
+
+        XCTAssertEqual(true, try jack.jxc.eval("this.str").isString)
+        XCTAssertEqual("ABC", try jack.jxc.eval("this.str").stringValue)
+        XCTAssertEqual("ABC", try jack.jxc.eval("this['str']").stringValue)
+        XCTAssertEqual("ABC", try jack.jxc.eval("[str]").stringValue)
+    }
+
+    func testBoundJack() throws {
+        @available(macOS 10.15, macCatalyst 13, iOS 13, tvOS 13, watchOS 6, *)
+        class JackDemo : JackedObject {
+            @Jacked(bind: "$") var str = "ABC"
+            @Jacked(bind: "$") var num = 0
+            lazy var jxc = jack().env
+        }
+
+        let jack = JackDemo()
+
+        XCTAssertEqual(true, try jack.jxc.eval("$str").isSymbol)
+        XCTAssertEqual(false, try jack.jxc.eval("this.str").isString)
+        XCTAssertEqual(true, try jack.jxc.eval("this.str").isUndefined)
+
+        XCTAssertEqual("ABC", try jack.jxc.eval("this[$str]").stringValue)
+        XCTAssertEqual("XYZ", try jack.jxc.eval("this[$str] = 'XYZ'").stringValue)
+        XCTAssertEqual("XYZ", try jack.jxc.eval("this[$str]").stringValue)
+    }
+
+
     func testActors() async throws {
         @available(macOS 10.15, macCatalyst 13, iOS 13, tvOS 13, watchOS 6, *)
         actor ActorDemo : JackedObject {
@@ -436,6 +472,61 @@ final class JackedObjectTests: XCTestCase {
         try await actor.jxc.eval("str = 'xy' + 'z'")
         with(try await actor.jxc.eval("str").stringValue) { XCTAssertEqual("xyz", $0) }
     }
+
+    func testJackedReferences() throws {
+        class J1 : JackedReference {
+            @Jacked var j2: J2?
+
+            static var j1s = 0 // track live instances
+            override init() { Self.j1s += 1 }
+            deinit { Self.j1s -= 1; j2 = wip(nil) } // FIXME: should not be necessary to manually nil refs
+        }
+
+        class J2 : JackedReference {
+            @Jacked var x: Int? = 1 // exported as number
+
+            static var j2s = 0 // track live instances
+            override init() { Self.j2s += 1 }
+            deinit { Self.j2s -= 1 }
+        }
+
+        XCTAssertEqual(0, J1.j1s)
+        XCTAssertEqual(0, J2.j2s)
+
+        do {
+            let j1 = J1()
+            j1.j2 = J2()
+
+            XCTAssertEqual(1, J1.j1s)
+            XCTAssertEqual(1, J2.j2s)
+
+            let jxc = JXContext()
+            j1.jack(into: jxc, as: "j1")
+
+            XCTAssertEqual(1, j1.j2?.x)
+            XCTAssertEqual(2, try jxc.eval("++j1.j2.x").numberValue)
+            XCTAssertEqual(2, j1.j2?.x)
+            XCTAssertEqual(2, try jxc.eval("j1.j2.x++").numberValue)
+            XCTAssertEqual(3, j1.j2?.x)
+
+            try jxc.eval("j1.j2.x = null")
+            XCTAssertEqual(nil, j1.j2?.x)
+            try jxc.eval("j1.j2.x++")
+            XCTAssertEqual(1, j1.j2?.x, "JS null + 1 should equal 1")
+
+            let j2x: J2 = try jxc.eval("j1.j2").convey()
+            let j2y: J2 = try jxc.eval("j1.j2").convey()
+            XCTAssertIdentical(j1.j2, j2x, "reference returned from script should have been identical")
+            XCTAssertIdentical(j1.j2, j2y, "reference returned from script should have been identical")
+
+            XCTAssertEqual(1, J1.j1s)
+            XCTAssertEqual(1, J2.j2s)
+        }
+
+        XCTAssertEqual(0, J1.j1s, "reference cycle detected for J1")
+        XCTAssertEqual(wip(1), J2.j2s, "reference cycle detected for J2") // TODO: fix ref cycle
+    }
+
 }
 
 
@@ -632,6 +723,16 @@ private class RandoJack<A: JXConvertible, ReturnType: Randomizable & JXConvertib
 
     @Jumped("atfunc10", priority: .low) private var _atfunc10 = atfunc10
     func atfunc10(i0: A, i1: A, i2: A, i3: A, i4: A, i5: A, i6: A, i7: A, i8: A, i9: A) async throws -> ReturnType { cast(i9)  }
+
+
+    @Jumped("func11") private var _func11 = func11
+    func func11(i0: A, i1: A, i2: A, i3: A, i4: A, i5: A, i6: A, i7: A, i8: A, i9: A, i10: A) -> ReturnType { cast(i9)  }
+
+    @Jumped("tfunc11") private var _tfunc11 = tfunc11
+    func tfunc11(i0: A, i1: A, i2: A, i3: A, i4: A, i5: A, i6: A, i7: A, i8: A, i9: A, i10: A) throws -> ReturnType { cast(i9)  }
+
+    @Jumped("atfunc11", priority: .low) private var _atfunc11 = atfunc11
+    func atfunc11(i0: A, i1: A, i2: A, i3: A, i4: A, i5: A, i6: A, i7: A, i8: A, i9: A, i10: A) async throws -> ReturnType { cast(i9)  }
 
     lazy var jxc = jack().env
 }

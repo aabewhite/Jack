@@ -883,21 +883,23 @@ final class ThemePodTests: XCTestCase {
 
     @MainActor func testThemePod() async throws {
         let pod = ThemePod()
-        //try await pod.jxc.eval("sleep()", priority: .high)
-        XCTAssertEqual(3, try pod.jxc.eval("1+2").numberValue)
+        let jxc = pod.jack().env
 
-        try pod.jxc.global.set("c", object: CSSColor(rgb: CSSColor.RGBColor(r: 0.1, g: 0.2, b: 0.3)))
-        XCTAssertEqual(#"{"r":0.1,"g":0.2,"b":0.3}"#, try pod.jxc.eval("JSON.stringify(c)").stringValue)
+        //try await jxc.eval("sleep()", priority: .high)
+        XCTAssertEqual(3, try jxc.eval("1+2").numberValue)
 
-        try pod.jxc.global.set("c", object: CSSColor(name: CSSColor.NamedColor.aqua))
-        XCTAssertEqual(#""aqua""#, try pod.jxc.eval("JSON.stringify(c)").stringValue)
+        try jxc.global.set("c", convertible: CSSColor(rgb: CSSColor.RGBColor(r: 0.1, g: 0.2, b: 0.3)))
+        XCTAssertEqual(#"{"r":0.1,"g":0.2,"b":0.3}"#, try jxc.eval("JSON.stringify(c)").stringValue)
+
+        try jxc.global.set("c", convertible: CSSColor(name: CSSColor.NamedColor.aqua))
+        XCTAssertEqual(#""aqua""#, try jxc.eval("JSON.stringify(c)").stringValue)
 
         pod.backgroundColor = .init(.init(name: .aqua))
-        XCTAssertEqual(#""aqua""#, try pod.jxc.eval("JSON.stringify(backgroundColor)").stringValue)
+        XCTAssertEqual(#""aqua""#, try jxc.eval("JSON.stringify(backgroundColor)").stringValue)
 
         // eventually we can do this
 
-//        try pod.jxc.eval("""
+//        try jxc.eval("""
 //        var blue = 0.8;
 //
 //        navbarTint = { r: 0.5, g: 1.0, b: blue, a: 0.75 };
@@ -906,20 +908,20 @@ final class ThemePodTests: XCTestCase {
 //        """)
 
         #if canImport(UIKit)
-        XCTAssertEqual(false, try pod.jxc.eval("navBarTintColor").isUndefined)
-        XCTAssertEqual(true, try pod.jxc.eval("navBarTintColor").isNull)
+        XCTAssertEqual(false, try jxc.eval("navBarTintColor").isUndefined)
+        XCTAssertEqual(true, try jxc.eval("navBarTintColor").isNull)
 
-        XCTAssertThrowsError(try pod.jxc.eval("navBarTintColor = { X: 1.0, g: 0.5, b: 0.8, a: 1.0 };"))
+        XCTAssertThrowsError(try jxc.eval("navBarTintColor = { X: 1.0, g: 0.5, b: 0.8, a: 1.0 };"))
 
-        XCTAssertThrowsError(try pod.jxc.eval("navBarTintColor = 'not a color';"))
-        XCTAssertNoThrow(try pod.jxc.eval("navBarTintColor = 'pink';"))
+        XCTAssertThrowsError(try jxc.eval("navBarTintColor = 'not a color';"))
+        XCTAssertNoThrow(try jxc.eval("navBarTintColor = 'pink';"))
 
-        try pod.jxc.eval("navBarTintColor = { r: 1.0, g: 0.5, b: 0.8, a: 1.0 };")
+        try jxc.eval("navBarTintColor = { r: 1.0, g: 0.5, b: 0.8, a: 1.0 };")
 
-        XCTAssertEqual(false, try pod.jxc.eval("navBarTintColor").isUndefined)
-        XCTAssertEqual(false, try pod.jxc.eval("navBarTintColor").isNull)
-        XCTAssertEqual(true, try pod.jxc.eval("navBarTintColor").isObject)
-        XCTAssertEqual(#"{"r":1,"g":0.5,"b":0.8,"a":1}"#, try pod.jxc.eval("JSON.stringify(navBarTintColor)").stringValue)
+        XCTAssertEqual(false, try jxc.eval("navBarTintColor").isUndefined)
+        XCTAssertEqual(false, try jxc.eval("navBarTintColor").isNull)
+        XCTAssertEqual(true, try jxc.eval("navBarTintColor").isObject)
+        XCTAssertEqual(#"{"r":1,"g":0.5,"b":0.8,"a":1}"#, try jxc.eval("JSON.stringify(navBarTintColor)").stringValue)
 
         #endif
     }

@@ -64,8 +64,9 @@ import CoreLocation
 final class LocationPodTests: XCTestCase {
     func testLocationPod() async throws {
         let pod = CoreLocationPod()
-        //try await pod.jxc.eval("sleep()", priority: .high)
-        XCTAssertEqual(3, try pod.jxc.eval("1+2").numberValue)
+        let jxc = pod.jack().env
+        //try await jxc.eval("sleep()", priority: .high)
+        XCTAssertEqual(3, try jxc.eval("1+2").numberValue)
     }
 }
 #endif

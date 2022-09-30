@@ -37,15 +37,17 @@ final class FilePodTests: XCTestCase {
     func testFilePod() async throws {
         let pod = FilePod()
 
-        XCTAssertEqual(3, try pod.jxc.eval("1+2").numberValue)
-        XCTAssertEqual(true, try pod.jxc.eval("fileExists('/etc/hosts')").booleanValue)
+        let jxc = pod.jack().env
+
+        XCTAssertEqual(3, try jxc.eval("1+2").numberValue)
+        XCTAssertEqual(true, try jxc.eval("fileExists('/etc/hosts')").booleanValue)
 
         let tmpname = UUID().uuidString
         let tmpdir = "/tmp/testFilePod/" + tmpname
 
-        XCTAssertEqual(false, try pod.jxc.eval("fileExists('\(tmpdir)')").booleanValue)
-        try pod.jxc.eval("createDirectory('\(tmpdir)', true)")
-        XCTAssertEqual(true, try pod.jxc.eval("fileExists('\(tmpdir)')").booleanValue)
+        XCTAssertEqual(false, try jxc.eval("fileExists('\(tmpdir)')").booleanValue)
+        try jxc.eval("createDirectory('\(tmpdir)', true)")
+        XCTAssertEqual(true, try jxc.eval("fileExists('\(tmpdir)')").booleanValue)
 
     }
 }
