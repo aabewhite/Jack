@@ -2,6 +2,11 @@ import XCTest
 import Jack
 
 final class JackTests: XCTestCase {
+    func testModuleVersion() throws {
+        XCTAssertEqual("org.jectivex.Jack", JackBundleIdentifier)
+        XCTAssertLessThanOrEqual(2_000_000, JackVersionNumber, "should have been version 2.0.0 or higher")
+    }
+
     func testDemoCode() throws {
         try AppleJack.demo()
     }

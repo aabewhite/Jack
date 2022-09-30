@@ -185,7 +185,7 @@ public protocol JXReferenceable : JXConvertible {
 extension JXReferenceable where Self : JackedObject {
     /// `JXConvertible` implementation for `JackedObject`,
     public static func makeJX(from value: JXValue) throws -> Self {
-        guard let obj = value.env.peer(for: value) else {
+        guard let obj = value.peer else {
             throw JackError.invalidReferenceContext(value, .init(context: value.env))
         }
 
