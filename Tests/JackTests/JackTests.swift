@@ -649,6 +649,7 @@ final class JackTests: XCTestCase {
         XCTAssertEqual(.init(str: "abc", int: 2, extra: .init(strs: ["q", "r", "s"])), obj.info)
     }
 
+    #if canImport(Darwin)
     static var MemCheckObjectCount = 0
     func testMemoryManagement() throws {
         class MemCheckObject : JackedObject {
@@ -697,7 +698,8 @@ final class JackTests: XCTestCase {
         }
 
     }
-
+    #endif
+    
     func testJackProperties() throws {
         class JackProperties : JackedObject {
             @Jack private var f0 = hi
