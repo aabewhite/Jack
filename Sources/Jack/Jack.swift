@@ -37,13 +37,15 @@ public struct Jack<O: JackedObject, U> : _JackableProperty {
         throw JackError.functionPropertyReadOnly(newValue, .init(context: context))
     }
 
-    // swiftlint:disable let_var_whitespace
     //@available(*, unavailable, message: "@Jack is only available on properties of classes")
     public var wrappedValue: (O) -> (Any) -> U {
         get { fatalError("@Jack is only available on properties of classes") }
-        set { fatalError("@Jack is only available on properties of classes") } // swiftlint:disable:this unused_setter_value
+        set { fatalError("@Jack is only available on properties of classes") }
     }
-    // swiftlint:enable let_var_whitespace
+
+    var bindingPrefix: String? {
+        nil // functions are read-only, so binding would be pointless
+    }
 }
 
 
@@ -101,7 +103,7 @@ extension Jack {
                     }
                 }
 
-                return JXValue(env: ctx, value: promise.promise)
+                return JXValue(ctx: ctx, value: promise.promise)
             }
         }
     }
@@ -120,7 +122,7 @@ extension Jack {
                     }
                 }
 
-                return JXValue(env: ctx, value: promise.promise)
+                return JXValue(ctx: ctx, value: promise.promise)
             }
         }
     }

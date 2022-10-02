@@ -80,7 +80,7 @@ public struct Track<Value : Jackable> {
         mutating get {
             return getPublisher()
         }
-        set { // swiftlint:disable:this unused_setter_value
+        set {
             switch storage {
             case .value(let value):
                 storage = .publisher(JackPublisher(value, queue: queue))
@@ -101,13 +101,12 @@ public struct Track<Value : Jackable> {
             return publisher
         }
     }
-    // swiftlint:disable let_var_whitespace
+
     @available(*, unavailable, message: "@Track is only available on properties of classes")
     public var wrappedValue: Value {
         get { fatalError() }
-        set { fatalError() } // swiftlint:disable:this unused_setter_value
+        set { fatalError() }
     }
-    // swiftlint:enable let_var_whitespace
 
     public static subscript<EnclosingSelf: AnyObject>(
         _enclosingInstance object: EnclosingSelf,

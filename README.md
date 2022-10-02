@@ -17,9 +17,6 @@ class AppleJack : JackedObject {
     @Stack var name: String // exports the property to JS and acts as Combine.Published 
     @Stack var age: Int
 
-    /// An embedded `JXKit` script context that has access to the jacked functions and stacked properties
-    lazy var jxc = jack().env
-
     init(name: String, age: Int) {
         self.name = name
         self.age = age
@@ -34,15 +31,17 @@ class AppleJack : JackedObject {
 
     static func demo() throws {
         let aj = AppleJack(name: "Jack Appleseed", age: 24)
-
-        let namejs = try aj.jxc.eval("name").stringValue
+        
+        let jxc = try aj.jack().ctx
+        
+        let namejs = try jxc.eval("name").stringValue
         assert(namejs == aj.name)
 
-        let agejs = try aj.jxc.eval("age").numberValue
+        let agejs = try jxc.eval("age").numberValue
         assert(agejs == Double(aj.age)) // JS numbers are doubles
 
         assert(aj.haveBirthday() == 25) // direct Swift call
-        let newAge = try aj.jxc.eval("haveBirthday()").numberValue // scripted method invocation
+        let newAge = try jxc.eval("haveBirthday()").numberValue // scripted method invocation
 
         assert(newAge == 26.0)
         assert(aj.age == 26)
@@ -85,8 +84,7 @@ class PingPongNative : ObservableObject {
 // An enhanced scriptable ObservableObject
 class PingPongScripted : JackedObject {
     @Stack var score = 0
-    private lazy var jxc = jack() // a JXObject bound to this instance
-
+    
     /// - Returns: true if a point was scored
     func pong() throws -> Bool {
         // evaluate the javascript with "score" as a readable/writable property

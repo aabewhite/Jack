@@ -26,6 +26,9 @@ public struct Pack<Value : Codable> : _TrackableProperty {
     /// The key that will be used to export the instance; a nil key will prevent export.
     internal let key: String?
 
+    /// The binding prefix to use, if any
+    public let bindingPrefix: String?
+
     internal let queue: DispatchQueue?
 
     /// The key that will be used to export the instance; a nil key will prevent export.
@@ -67,8 +70,8 @@ public struct Pack<Value : Codable> : _TrackableProperty {
     ///     @Stack var lastUpdated: Date = Date()
     ///
     /// - Parameter wrappedValue: The publisher's initial value.
-    public init(initialValue: Value, _ key: String? = nil, queue: DispatchQueue? = nil, encoder: JSONEncoder? = nil) {
-        self.init(wrappedValue: initialValue, key, queue: queue, encoder: encoder)
+    public init(initialValue: Value, _ key: String? = nil, bindingPrefix: String? = nil, queue: DispatchQueue? = nil, encoder: JSONEncoder? = nil) {
+        self.init(wrappedValue: initialValue, key, bindingPrefix: bindingPrefix, queue: queue, encoder: encoder)
     }
 
     /// Creates the published instance with an initial value.
@@ -79,9 +82,10 @@ public struct Pack<Value : Codable> : _TrackableProperty {
     ///     @Stack var lastUpdated: Date = Date()
     ///
     /// - Parameter initialValue: The publisher's initial value.
-    public init(wrappedValue: Value, _ key: String? = nil, queue: DispatchQueue? = nil, encoder: JSONEncoder? = nil) {
+    public init(wrappedValue: Value, _ key: String? = nil, bindingPrefix: String? = nil, queue: DispatchQueue? = nil, encoder: JSONEncoder? = nil) {
         _storage = Box(wrappedValue: .value(wrappedValue))
         self.key = key
+        self.bindingPrefix = bindingPrefix
         self.queue = queue
         self.encoder = encoder ?? defaultEncoder
     }
@@ -93,7 +97,7 @@ public struct Pack<Value : Codable> : _TrackableProperty {
         mutating get {
             return getPublisher()
         }
-        set { // swiftlint:disable:this unused_setter_value
+        set {
             switch storage {
             case .value(let value):
                 storage = .publisher(JackPublisher(value, queue: queue))
@@ -114,13 +118,12 @@ public struct Pack<Value : Codable> : _TrackableProperty {
             return publisher
         }
     }
-    // swiftlint:disable let_var_whitespace
+
     @available(*, unavailable, message: "@Stack is only available on properties of classes")
     public var wrappedValue: Value {
         get { fatalError() }
-        set { fatalError() } // swiftlint:disable:this unused_setter_value
+        set { fatalError() }
     }
-    // swiftlint:enable let_var_whitespace
 
     public static subscript<EnclosingSelf: AnyObject>(
         _enclosingInstance object: EnclosingSelf,

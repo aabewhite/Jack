@@ -16,7 +16,7 @@ import Dispatch
 ///
 /// This type is used to constrain arument and return types that should be passed efficiently between the host Swift environment and the embedded JSC.
 ///
-/// To support for passing codable types through serialization, use ``Jugglable``
+/// To support for passing codable types through serialization, use ``Pack``
 public protocol Jackable : JXConvertible {
 }
 
@@ -133,7 +133,7 @@ public struct Stack<Value : Jackable> : _TrackableProperty {
         mutating get {
             return getPublisher()
         }
-        set { // swiftlint:disable:this unused_setter_value
+        set {
             switch storage {
             case .value(let value):
                 storage = .publisher(JackPublisher(value, queue: queue))
@@ -154,13 +154,13 @@ public struct Stack<Value : Jackable> : _TrackableProperty {
             return publisher
         }
     }
-    // swiftlint:disable let_var_whitespace
+
     @available(*, unavailable, message: "@Stack is only available on properties of classes")
     public var wrappedValue: Value {
         get { fatalError() }
-        set { fatalError() } // swiftlint:disable:this unused_setter_value
+        set { fatalError() }
     }
-    // swiftlint:enable let_var_whitespace
+    
 
     public static subscript<EnclosingSelf: AnyObject>(
         _enclosingInstance object: EnclosingSelf,
@@ -185,10 +185,6 @@ public struct Stack<Value : Jackable> : _TrackableProperty {
         }
     }
 }
-
-
-
-// This is close to the OpenCombine implementation except we handle both `*Combine.Published` and `Jack.Stack`
 
 
 // Stack is always a _TrackableProperty, but is only a _JackableProperty when the embedded type is itself `Jackable`
@@ -229,7 +225,7 @@ extension Stack: _JackableProperty where Value : Jackable {
 public extension RawRepresentable where RawValue : Jackable {
     static func makeJXRaw(from value: JXValue) throws -> Self {
         guard let newSelf = Self(rawValue: try .makeJX(from: value)) else {
-            throw JackError.rawInitializerFailed(value, .init(context: value.env))
+            throw JackError.rawInitializerFailed(value, .init(context: value.ctx))
         }
         return newSelf
     }
@@ -250,7 +246,7 @@ public extension RawRepresentable where RawValue : Jackable {
 extension Bool : Jackable {
     public static func makeJX(from value: JXValue) throws -> Self {
         guard value.isBoolean else {
-            throw JackError.valueWasNotABoolean(value, .init(context: value.env))
+            throw JackError.valueWasNotABoolean(value, .init(context: value.ctx))
         }
         return value.booleanValue
     }
@@ -274,7 +270,7 @@ extension BinaryInteger where Self : _ExpressibleByBuiltinIntegerLiteral {
     static func _makeJX(from value: JXValue) throws -> Self {
         let num = try value.numberValue
         guard !num.isNaN else {
-            throw JackError.valueWasNotANumber(value, .init(context: value.env))
+            throw JackError.valueWasNotANumber(value, .init(context: value.ctx))
         }
         return .init(integerLiteral: .init(num))
     }
@@ -391,17 +387,17 @@ extension Data : Jackable {
 
             let count = try length.numberValue
             guard length.isNumber, let max = UInt32(exactly: count) else {
-                throw JackError.valueNotArray(value, .init(context: value.env))
+                throw JackError.valueNotArray(value, .init(context: value.ctx))
             }
 
             let data: [UInt8] = try (0..<max).map { index in
                 let element = try value[.init(index)]
                 guard element.isNumber else {
-                    throw JackError.dataElementNotNumber(Int(index), value, .init(context: value.env))
+                    throw JackError.dataElementNotNumber(Int(index), value, .init(context: value.ctx))
                 }
                 let num = try element.numberValue
                 guard num <= .init(UInt8.max), num >= .init(UInt8.min), let byte = UInt8(exactly: num) else {
-                    throw JackError.dataElementOutOfRange(Int(index), value, .init(context: value.env))
+                    throw JackError.dataElementOutOfRange(Int(index), value, .init(context: value.ctx))
                 }
 
                 return byte
@@ -409,7 +405,7 @@ extension Data : Jackable {
 
             return Data(data)
         } else {
-            throw JackError.valueNotArray(value, .init(context: value.env))
+            throw JackError.valueNotArray(value, .init(context: value.ctx))
         }
     }
 

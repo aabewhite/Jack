@@ -10,35 +10,35 @@ import OpenCombineFoundation
 #endif
 #endif
 
-/// A ``JackedObject`` is an ``ObservableObject`` with the ability to share their properties automatically with a ``JXContext``.
+/// A ``JackedObject`` is an ``ObservableObject`` with the ability to share its properties automatically with a ``JXContext``.
 /// This allows an embedded JavaScript context to access the properties and invoke the functions of the containing object.
 ///
 /// This type extends from ``JackedObject``, which is a type of object with a publisher that emits before the object has changed.
 ///
 ///     class EnhancedObj : JackedObject {
 ///         @Track var x = 0 // unexported to jxc
-///         @Stack var i = 1 // exported as number
-///         @Stack("B") var b = false // exported as bool
-///         @Pack var id = UUID() // exported (via codability) as string
-///         @Jack("now") private var _now = now // exported as function
-///         func now() -> Date { Date(timeIntervalSince1970: 1_234) }
+///         @Stack var i = 1 // number exported as "i"
+///         @Stack("B") var b = false // boolean exported as "B"
+///         @Pack var id = UUID() // codable exported as "id"
 ///
-///         lazy var jxc = jack()
+///         @Jack("now") private var _now = now // function re-exported via property named "now"
+///         func now() -> Date { Date(timeIntervalSince1970: 1_234) }
 ///     }
 ///
 ///     let obj = EnhancedObj()
+///     let jxc = try obj.jack().ctx
 ///
-///     try obj.jxc.env.eval("typeof x").stringValue == "undefined"
-///     try obj.jxc.env.eval("typeof i").stringValue == "number"
+///     try jxc.eval("typeof x").stringValue == "undefined"
+///     try jxc.eval("typeof i").stringValue == "number"
 ///
-///     try obj.jxc.env.eval("typeof b").stringValue == "undefined"
-///     try obj.jxc.env.eval("typeof B").stringValue == "boolean"
+///     try jxc.eval("typeof b").stringValue == "undefined"
+///     try jxc.eval("typeof B").stringValue == "boolean"
 ///
-///     try obj.jxc.env.eval("typeof id").stringValue == "string"
+///     try jxc.eval("typeof id").stringValue == "string"
 ///
-///     try obj.jxc.env.eval("typeof now").stringValue == "function"
-///     try obj.jxc.env.eval("typeof now()").stringValue == "object"
-///     try obj.jxc.env.eval("now()").numberValue ==  1_234_000
+///     try jxc.eval("typeof now").stringValue == "function"
+///     try jxc.eval("typeof now()").stringValue == "object"
+///     try jxc.eval("now()").numberValue ==  1_234_000
 ///
 /// In addition, a `JackedObject` synthesizes an `objectWillChange` publisher that
 /// emits the changed value before any of its wrapped properties changes.
@@ -46,8 +46,6 @@ import OpenCombineFoundation
 ///      class Contact : JackedObject {
 ///          @Stack var name: String
 ///          @Stack var age: Int
-///
-///          lazy var jxc = jack()
 ///
 ///          init(name: String, age: Int) {
 ///             self.name = name
@@ -62,6 +60,7 @@ import OpenCombineFoundation
 ///      }
 ///
 ///     let john = Contact(name: "John Appleseed", age: 24)
+///     let jxc = try john.jack().ctx
 ///
 ///     var changes = 0
 ///     let cancellable = john.objectWillChange
@@ -72,7 +71,7 @@ import OpenCombineFoundation
 ///     XCTAssertEqual(25, john.haveBirthday())
 ///     XCTAssertEqual(1, changes)
 ///
-///     XCTAssertEqual(26, try john.jxc.env.eval("haveBirthday()").numberValue)
+///     XCTAssertEqual(26, try jxc.eval("haveBirthday()").numberValue)
 ///     XCTAssertEqual(2, changes)
 ///
 ///     let _ = cancellable
@@ -88,7 +87,7 @@ public protocol JackedObject : ObservableObject {
 
 public extension JackedObject {
     /// The lazy list of all props in the hierarchy
-    fileprivate func props() -> LazySequence<FlattenSequence<LazyMapSequence<UnfoldSequence<Mirror, (Mirror?, Bool)>, Mirror.Children>.Elements>> {
+    internal func props() -> LazySequence<FlattenSequence<LazyMapSequence<UnfoldSequence<Mirror, (Mirror?, Bool)>, Mirror.Children>.Elements>> {
         sequence(first: Mirror(reflecting: self), next: \.superclassMirror).lazy.map(\.children).joined()
     }
 
@@ -99,29 +98,8 @@ public extension JackedObject {
     ///   - key: a key to use to create an object for the key
     ///
     /// - Returns: the instance that was jacked into the context
-    @discardableResult func jack(into context: JXContext = JXContext(), as key: String? = nil) -> JXValue {
-        var object = context.global
-
-        if let key = key {
-            do {
-                // TODO: should be permit multi-jacking objects if they already exist in the key?
-                object = try context.global[key]
-                if !object.isObject {
-                    object = context.object()
-                }
-                try context.global.setProperty(key, object)
-            } catch {
-                fatalError("ERROR: unable to set propery for object '\(key)': \(error)")
-            }
-        }
-
-        do {
-            try inject(into: object)
-        } catch {
-            fatalError("ERROR: unable to inject into object for '\(key)': \(error)")
-        }
-
-        //try! object.seal()
+    @discardableResult func jack(into object: JXValue = JXContext().global) throws -> JXValue {
+        try inject(into: object)
         return object
     }
 
@@ -134,8 +112,6 @@ public extension JackedObject {
     ///   - for object: the JXObject to inject into
     @discardableResult func inject(into object: JXValue) throws -> [JXProperty] {
         var addedProps: Set<String> = []
-
-        let ctx = object.env
         var added: [JXProperty] = []
 
         for (label, prop) in props() {
@@ -156,17 +132,21 @@ public extension JackedObject {
             }
 
             let jprop = JXProperty(
-                getter: { [weak self, ctx] this in try prop[in: ctx, self] },
-                setter: { [weak self, ctx] this, newValue in try prop.setValue(newValue, in: ctx, owner: self) }
+                getter: { [weak self] this in
+                    try prop[in: this.ctx, self]
+                },
+                setter: { [weak self] this, newValue in
+                    try prop.setValue(newValue, in: this.ctx, owner: self)
+                }
             )
 
             if let symbolPrefix = prop.bindingPrefix {
-                let symbol = object.env.symbol(key)
+                let symbol = object.ctx.symbol(key)
                 try object.defineProperty(symbol, jprop)
                 let symbolKey = symbolPrefix + key
                 try object.setProperty(symbolKey, symbol)
             } else {
-                try object.defineProperty(object.env.string(key), jprop)
+                try object.defineProperty(object.ctx.string(key), jprop)
             }
             added.append(jprop)
         }
@@ -174,73 +154,6 @@ public extension JackedObject {
         return added
     }
 }
-
-public protocol JXReferenceable : JXConvertible {
-//    init()
-
-    /// The corresponding peer object for this instance on the JavaScript side.
-    var peer: JXValue? { get nonmutating set }
-}
-
-extension JXReferenceable where Self : JackedObject {
-    /// `JXConvertible` implementation for `JackedObject`,
-    public static func makeJX(from value: JXValue) throws -> Self {
-        guard let obj = value.peer else {
-            throw JackError.invalidReferenceContext(value, .init(context: value.env))
-        }
-
-        guard let jobj = obj as? Self else { // TODO: what if some already conveyed this to a different wrapper type?
-            print("### bad type obj:", wip(obj), type(of: Self.self))
-            throw JackError.invalidReferenceType(value, .init(context: value.env))
-        }
-
-        return jobj
-    }
-
-    public func getJX(from context: JXContext) throws -> JXValue {
-        if let obj = self.peer { // do we already have a counterpart on the JX side?
-            return obj
-        }
-
-        let obj = context.object(peer: self) // create a new object in the context // TODO: should we set a class name on the type?
-        try inject(into: obj)
-        self.peer = obj
-        return obj
-    }
-}
-
-/// A `JackedReference` is a concrete base class implementation of `JackedObject`
-/// that tracks the instance's native peer.
-///
-/// A `JackedReference` can only ever be associated with a single `JXContext`.
-open class JackedReference : JackedObject, JXReferenceable {
-    // TODO: store peer as private data in the object and access with `JSObjectGetPrivate` instead
-
-    /// The counterpart JXValue for a given context
-    public weak var peer: JXValue? = nil
-
-    public init() {
-        
-    }
-//
-//    public required init() {
-//    }
-
-//    deinit {
-//        //print("deini", wip(self), "peer:", self.peer)
-//
-//        for (label, prop) in props() {
-//            guard let prop = prop as? _JackableProperty else {
-//                continue
-//            }
-//            print("### clearing prop:", label, prop)
-//            prop.clear() // TODO: clear all properties?
-//        }
-//
-//        self.peer = nil
-//    }
-}
-
 
 #if canImport(SwiftUI)
 import protocol SwiftUI.DynamicProperty
@@ -269,12 +182,6 @@ internal protocol _JackableProperty : _ObservableObjectProperty {
     subscript(in context: JXContext, owner: AnyObject?) -> JXValue { get throws }
 
     func setValue(_ newValue: JXValue, in context: JXContext, owner: AnyObject?) throws
-}
-
-extension _JackableProperty {
-    var bindingPrefix: String? {
-        wip(nil) // TODO: fill this into types other than Jacked
-    }
 }
 
 extension Published: _ObservableObjectProperty {

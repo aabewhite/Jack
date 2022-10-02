@@ -11,9 +11,6 @@ class AppleJack : JackedObject {
     @Stack var name: String // exports the property to JS and acts as Combine.Published 
     @Stack var age: Int
 
-    /// An embedded `JXKit` script context that has access to the jacked properties and jumped functions
-    lazy var jxc = jack().env
-
     init(name: String, age: Int) {
         self.name = name
         self.age = age
@@ -29,14 +26,16 @@ class AppleJack : JackedObject {
     static func demo() throws {
         let jackApp = AppleJack(name: "Jack Appleseed", age: 24)
 
-        let namejs = try jackApp.jxc.eval("name").stringValue
+        let jxc = try jackApp.jack().ctx
+
+        let namejs = try jxc.eval("name").stringValue
         assert(namejs == jackApp.name)
 
-        let agejs = try jackApp.jxc.eval("age").numberValue
+        let agejs = try jxc.eval("age").numberValue
         assert(agejs == Double(jackApp.age)) // JS numbers are doubles
 
         assert(jackApp.haveBirthday() == 25) // direct Swift call
-        let newAge = try jackApp.jxc.eval("haveBirthday()").numberValue // script invocation
+        let newAge = try jxc.eval("haveBirthday()").numberValue // script invocation
 
         assert(newAge == 26.0)
         assert(jackApp.age == 26)
@@ -51,8 +50,7 @@ to provide a simple way to export your Swift properties
 and functions to an embedded JavaScript context.
 
 The framework is cross-platform (iOS/macOS/tvOS/Linux) and 
-can be used to export Swift instanced to a scripting
-envrionment.
+can be used to export Swift instances to a scripting envrionment.
 
 ## Property Wrappers
 
