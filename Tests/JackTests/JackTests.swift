@@ -244,7 +244,7 @@ final class JackTests: XCTestCase {
         }
     }
 
-    func testJacked() throws {
+    func testStacked() throws {
         class JackedObj : JackedObject {
             @Stack("n") var integer = 0
             @Stack("f") var float = 0.0
@@ -419,7 +419,7 @@ final class JackTests: XCTestCase {
 
     }
 
-    func testJackedArray() throws {
+    func testStackedArray() throws {
         class JackedObj : JackedObject {
             @Stack("sa") var stringArray = ["a", "b", "c"]
         }
@@ -456,7 +456,7 @@ final class JackTests: XCTestCase {
         }
     }
 
-    func testJackedDate() throws {
+    func testStackedDate() throws {
         class JackedDate : JackedObject {
             @Stack var date = Date(timeIntervalSince1970: 0)
         }
@@ -488,7 +488,7 @@ final class JackTests: XCTestCase {
         // XCTAssertEqual(Data([1, 2, 3]), obj.data)
     }
 
-    func testJackedData() throws {
+    func testStackedData() throws {
         class JackedData : JackedObject {
             @Stack var data = Data()
         }
@@ -521,7 +521,7 @@ final class JackTests: XCTestCase {
         XCTAssertEqual(oldData, obj.data, "assignment beyond bounds should have no effect")
     }
 
-    func testJackedEnum() throws {
+    func testStackedEnum() throws {
         // enum Compass : String, Codable, Jackable { case north, south, east, west } // this would be a problem due to conflicting implementations
         enum Compass : String, Jackable { case north, south, east, west }
         enum Direction : Int, Jackable { case up, down, left, right }
@@ -581,7 +581,7 @@ final class JackTests: XCTestCase {
 
     }
 
-    func testJackedNumbers() throws {
+    func testStackedNumbers() throws {
         class JackedObj : JackedObject {
             @Stack var dbl = 0.0
         }
@@ -651,6 +651,7 @@ final class JackTests: XCTestCase {
 
     #if canImport(Darwin)
     static var MemCheckObjectCount = 0
+
     func testMemoryManagement() throws {
         class MemCheckObject : JackedObject {
             @Track var a = false // modest memory growth
@@ -699,7 +700,7 @@ final class JackTests: XCTestCase {
 
     }
     #endif
-    
+
     func testJackProperties() throws {
         class JackProperties : JackedObject {
             @Jack private var f0 = hi

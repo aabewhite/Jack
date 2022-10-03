@@ -1,8 +1,35 @@
 # ``Jack``
 
-Jack is a cross-platform framework that enables you to export
-properties of your Swift classes to an embedded JavaScript environment,
+
+Jack is a cross-platform framework for exporting the properties and functions 
+of your Swift classes to an embedded JavaScript environment,
 enabling your app to provide scriptable extensions.
+
+Jack uses the pure-Swift [JXKit](https://www.jective.org/JXKit/documentation/jxkit/)
+JavaScript framework and exports your class's Swift properties
+and functions to an embedded JavaScript context, similar to 
+ [`@JSExport`](https://developer.apple.com/documentation/javascriptcore/jsexport)
+in the Objective-C world. It also enabled the tracking of properties
+as a ``Combine.ObservableObject``.
+
+The framework is cross-platform (iOS/macOS/tvOS/Linux) and 
+can be used to export Swift instances to a scripting envrionment.
+
+## Property Wrappers
+
+Jack provides the following property wrappers that can be
+used within a ``JackedObject``.
+
+Swift                       | JackedObject |   JavaScript   | Combine    |
+---------------------------:|--------------|----------------|------------|
+Any                         | @Track       | *not exported* | @Published |
+Primitive / String / RawRep | @Stack       | Property       | @Published | 
+Codable                     | @Pack        | Property       | @Published |
+Function                    | @Jack        | Method         | *none*     |
+
+
+
+### Example
 
 ```swift
 import Jack
@@ -45,25 +72,13 @@ class AppleJack : JackedObject {
 ```
 
 
-Jack uses [JXKit](https://www.jective.org/JXKit/documentation/jxkit/)
-to provide a simple way to export your Swift properties
-and functions to an embedded JavaScript context.
-
-The framework is cross-platform (iOS/macOS/tvOS/Linux) and 
-can be used to export Swift instances to a scripting envrionment.
-
-## Property Wrappers
-
-Jack provides the following property wrappers that can be
-used within a ``JackedObject``.
-
 ### @Track
 
 A ``Track`` property is the equivalent to the ``Published``
 property for the ``ObservableObject`` conformance of a ``JackedObject``.
 Note that it is not possible to use ``Published`` in ``JackedObject``,
 so ``Track`` provides equivalent functionality and works transparently
-as an ``ObservableObject``, such as in a SwiftUI ``EnvironmentObject``.
+as an ``ObservableObject``, such as in a  ``SwiftUI.EnvironmentObject``.
 
 ### @Stack
 

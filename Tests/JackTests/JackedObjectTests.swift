@@ -3,7 +3,7 @@ import Jack
 
 @available(macOS 10.15, macCatalyst 13, iOS 13, tvOS 13, watchOS 6, *)
 final class JackedObjectTests: XCTestCase {
-    func testJumpedVoidSignatures() async throws {
+    func testJackedVoidSignatures() async throws {
         class VoidReturns : JackedObject {
             @Jack("void0") private var _void0 = void0
             func void0() -> Void { }
@@ -179,19 +179,19 @@ final class JackedObjectTests: XCTestCase {
         XCTAssertThrowsError(try jxc.eval("void11(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)"))
     }
 
-    func testJumpedSignatures() async throws {
-        try await jumpedTests(arg: Int32.self, ret: Int32.self)
-        try await jumpedTests(arg: String.self, ret: String.self)
+    func testJackedSignatures() async throws {
+        try await sigtest(arg: Int32.self, ret: Int32.self)
+        try await sigtest(arg: String.self, ret: String.self)
 
-        try await jumpedTests(arg: Int32.self, ret: String.self)
-        try await jumpedTests(arg: String.self, ret: Int32.self)
+        try await sigtest(arg: Int32.self, ret: String.self)
+        try await sigtest(arg: String.self, ret: Int32.self)
 
-        try await jumpedTests(arg: UUID.self, ret: UUID.self)
-        try await jumpedTests(arg: String.self, ret: UUID.self)
+        try await sigtest(arg: UUID.self, ret: UUID.self)
+        try await sigtest(arg: String.self, ret: UUID.self)
 
-        try await jumpedTests(arg: Int32.self, ret: UUID.self)
-        try await jumpedTests(arg: UUID.self, ret: String.self)
-        try await jumpedTests(arg: UUID.self, ret: Int32.self)
+        try await sigtest(arg: Int32.self, ret: UUID.self)
+        try await sigtest(arg: UUID.self, ret: String.self)
+        try await sigtest(arg: UUID.self, ret: Int32.self)
 
         struct RandoThing : Codable, Equatable, Randomizable, JXConvertible, JSConvertable {
             let str: String
@@ -206,19 +206,19 @@ final class JackedObjectTests: XCTestCase {
             }
         }
 
-        try await jumpedTests(arg: RandoThing.self, ret: RandoThing.self)
-        try await jumpedTests(arg: RandoThing.self, ret: Int32.self)
-        try await jumpedTests(arg: Int32.self, ret: RandoThing.self)
-        try await jumpedTests(arg: RandoThing.self, ret: String.self)
-        try await jumpedTests(arg: String.self, ret: RandoThing.self)
-        try await jumpedTests(arg: RandoThing.self, ret: UUID.self)
-        try await jumpedTests(arg: UUID.self, ret: RandoThing.self)
-        try await jumpedTests(arg: UUID.self, ret: Date.self)
-        try await jumpedTests(arg: Date.self, ret: UUID.self)
-        try await jumpedTests(arg: Date.self, ret: Date.self)
+        try await sigtest(arg: RandoThing.self, ret: RandoThing.self)
+        try await sigtest(arg: RandoThing.self, ret: Int32.self)
+        try await sigtest(arg: Int32.self, ret: RandoThing.self)
+        try await sigtest(arg: RandoThing.self, ret: String.self)
+        try await sigtest(arg: String.self, ret: RandoThing.self)
+        try await sigtest(arg: RandoThing.self, ret: UUID.self)
+        try await sigtest(arg: UUID.self, ret: RandoThing.self)
+        try await sigtest(arg: UUID.self, ret: Date.self)
+        try await sigtest(arg: Date.self, ret: UUID.self)
+        try await sigtest(arg: Date.self, ret: Date.self)
     }
 
-    private func jumpedTests<A: JXConvertible & Randomizable & JSConvertable & Equatable, R: JXConvertible & Randomizable & Equatable>(arg: A.Type, ret: R.Type) async throws {
+    private func sigtest<A: JXConvertible & Randomizable & JSConvertable & Equatable, R: JXConvertible & Randomizable & Equatable>(arg: A.Type, ret: R.Type) async throws {
         let obj = RandoJack<A, R>()
         let jxc = try obj.jack().ctx
 
@@ -281,7 +281,7 @@ final class JackedObjectTests: XCTestCase {
         try await jxc.eval("atfunc10(\(a1.js), \(a2.js), \(a3.js), \(a4.js), \(a5.js), \(a6.js), \(a7.js), \(a8.js), \(a9.js), \(a10.js))", priority: p)
     }
 
-    func testJumpedAsync() async throws {
+    func testJackedAsyncFunctions() async throws {
         class JumpedObj : JackedObject {
             @Jack("promise0", priority: .background) private var _promise0 = promise0
             func promise0() async throws -> Int {
@@ -334,8 +334,8 @@ final class JackedObjectTests: XCTestCase {
         try await jxc.eval("sleepTask(0.1)", priority: .medium)
     }
 
-    func testJumpedAsyncParams() async throws {
-        class JumpedObj : JackedObject {
+    func testJackedAsyncParams() async throws {
+        class JackedObj : JackedObject {
             @Jack private var h0 = hi
             func hi() async throws -> Date { Date(timeIntervalSince1970: 1234) }
 
@@ -369,7 +369,7 @@ final class JackedObjectTests: XCTestCase {
             var num: Int?
         }
 
-        let obj = JumpedObj()
+        let obj = JackedObj()
         let jxc = try obj.jack().ctx
 
         XCTAssertEqual("function", try jxc.eval("typeof h0").stringValue)
