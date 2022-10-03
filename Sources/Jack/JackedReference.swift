@@ -44,19 +44,5 @@ open class JackedReference : JackedObject, JackPeerable {
     public init() {
         
     }
-
-//    deinit {
-//        print("deinit", wip(self), "peer:", self.peer)
-//
-//        for (label, prop) in props() {
-//            guard let prop = prop as? _JackableProperty else {
-//                continue
-//            }
-//            //print("clearing prop:", label, prop)
-//            //prop.clear() // TODO: clear all properties?
-//        }
-//
-//        self.peer = nil
-//    }
 }
 

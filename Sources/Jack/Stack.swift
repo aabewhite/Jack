@@ -69,6 +69,10 @@ public struct Stack<Value : Jackable> : _TrackableProperty {
     /// The binding prefix to use, if any
     public let bindingPrefix: String?
 
+    #warning("WIP: implement non-mutable")
+    /// If false then writing to the property will fail with an exception
+    public let mutable: Bool?
+
     /// Whether changes should be published on a certai queue
     internal let queue: DispatchQueue?
 
@@ -107,8 +111,8 @@ public struct Stack<Value : Jackable> : _TrackableProperty {
     ///     @Stack var lastUpdated: Date = Date()
     ///
     /// - Parameter wrappedValue: The publisher's initial value.
-    public init(initialValue: Value, _ key: String? = nil, bind: String? = nil, queue: DispatchQueue? = nil) {
-        self.init(wrappedValue: initialValue, key, bind: bind, queue: queue)
+    public init(initialValue: Value, _ key: String? = nil, mutable: Bool? = nil, bind: String? = nil, queue: DispatchQueue? = nil) {
+        self.init(wrappedValue: initialValue, key, mutable: mutable, bind: bind, queue: queue)
     }
 
     /// Creates the published instance with an initial value.
@@ -119,9 +123,10 @@ public struct Stack<Value : Jackable> : _TrackableProperty {
     ///     @Stack var lastUpdated: Date = Date()
     ///
     /// - Parameter initialValue: The publisher's initial value.
-    public init(wrappedValue: Value, _ key: String? = nil, bind bindingPrefix: String? = nil, queue: DispatchQueue? = nil) {
+    public init(wrappedValue: Value, _ key: String? = nil, mutable: Bool? = nil, bind bindingPrefix: String? = nil, queue: DispatchQueue? = nil) {
         _storage = Box(wrappedValue: .value(wrappedValue))
         self.key = key
+        self.mutable = mutable
         self.bindingPrefix = bindingPrefix
         self.queue = queue
     }
