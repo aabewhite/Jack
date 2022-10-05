@@ -386,7 +386,7 @@ extension Data : Jackable {
 //            #warning("TODO: array buffer")
 //            fatalError("array buffer") // TODO
 //        } else
-        if try value.isArray { // slow track
+        if value.isArray { // slow track
             // copy the array manually
             let length = try value["length"]
 

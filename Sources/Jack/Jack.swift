@@ -49,7 +49,13 @@ public struct Jack<O: JackedObject, U> : _JackableProperty {
 }
 
 
-private extension JXContext {
+extension JXContext {
+    /// Get the ``JXContext`` that is currently executing.
+    public static var currentContext: JXContext? { currentContexts.last }
+
+    /// Get the ``JXContext`` that is currently executing.
+    static var currentContexts: [JXContext] = []
+
     func casting<O>(_ value: AnyObject?) throws -> O {
         if let value = value as? O {
             return value
@@ -74,7 +80,9 @@ extension Jack {
     fileprivate static func createFunction<J: JXConvertible>(block: @escaping (JXContext, AnyObject?, [JXValue]) throws -> J) -> JumpFunc {
         { context, owner in
             JXValue(newFunctionIn: context) { ctx, this, args in
-                try block(ctx, owner, args).getJX(from: ctx)
+                JXContext.currentContexts.append(ctx)
+                defer { JXContext.currentContexts.removeLast() }
+                return try block(ctx, owner, args).getJX(from: ctx)
             }
         }
     }
@@ -82,6 +90,8 @@ extension Jack {
     fileprivate static func createFunctionVoid(block: @escaping (JXContext, AnyObject?, [JXValue]) throws -> Void) -> JumpFunc {
         { context, owner in
             JXValue(newFunctionIn: context) { ctx, this, args in
+                JXContext.currentContexts.append(ctx)
+                defer { JXContext.currentContexts.removeLast() }
                 try block(ctx, owner, args)
                 return ctx.undefined()
             }
@@ -95,6 +105,8 @@ extension Jack {
 
                 Task.detached(priority: priority) {
                     do {
+                        JXContext.currentContexts.append(ctx)
+                        defer { JXContext.currentContexts.removeLast() }
                         try await block(ctx, owner, args)
                         try promise.resolveFunction.call(withArguments: [ctx.undefined()], this: this)
                     } catch {
@@ -115,6 +127,8 @@ extension Jack {
 
                 Task.detached(priority: priority) {
                     do {
+                        JXContext.currentContexts.append(ctx)
+                        defer { JXContext.currentContexts.removeLast() }
                         let result = try await block(ctx, owner, args).getJX(from: ctx)
                         try promise.resolveFunction.call(withArguments: [result], this: this)
                     } catch {

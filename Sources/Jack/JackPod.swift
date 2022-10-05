@@ -8,11 +8,6 @@ public protocol JackPod : JackedObject {
     var metadata: JackPodMetaData { get }
 }
 
-extension JackPod {
-    /// The context for the pod.
-    //public var jxc: JXContext { pod.env }
-}
-
 /// Information about the jackpod
 public struct JackPodMetaData : Codable {
     public var homePage: URL
