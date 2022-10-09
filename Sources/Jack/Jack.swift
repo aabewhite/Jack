@@ -14,7 +14,7 @@
 ///
 ///     try obj.jsc.eval("typeof now").stringValue == "function"
 ///     try obj.jsc.eval("typeof now()").stringValue == "object"
-///     try obj.jsc.eval("now()").numberValue ==  1_234_000
+///     try obj.jsc.eval("now()").double ==  1_234_000
 ///
 /// ### See Also
 ///
@@ -64,7 +64,7 @@ extension JXContext {
     }
 
     func jarg<J: JXConvertible>(_ index: Int, _ args: [JXValue]) throws -> J {
-        try J.makeJX(from: args.dropFirst(index).first ?? self.null())
+        try J.fromJX(args.dropFirst(index).first ?? self.null())
     }
 }
 
@@ -82,7 +82,7 @@ extension Jack {
             JXValue(newFunctionIn: context) { ctx, this, args in
                 JXContext.currentContexts.append(ctx)
                 defer { JXContext.currentContexts.removeLast() }
-                return try block(ctx, owner, args).getJX(from: ctx)
+                return try block(ctx, owner, args).toJX(in: ctx)
             }
         }
     }
@@ -115,7 +115,7 @@ extension Jack {
                     }
                 }
 
-                return JXValue(ctx: ctx, value: promise.promise)
+                return JXValue(context: ctx, value: promise.promise)
             }
         }
     }
@@ -129,14 +129,14 @@ extension Jack {
                     do {
                         JXContext.currentContexts.append(ctx)
                         defer { JXContext.currentContexts.removeLast() }
-                        let result = try await block(ctx, owner, args).getJX(from: ctx)
+                        let result = try await block(ctx, owner, args).toJX(in: ctx)
                         try promise.resolveFunction.call(withArguments: [result], this: this)
                     } catch {
                         try promise.rejectFunction.call(withArguments: [ctx.error(error)], this: this)
                     }
                 }
 
-                return JXValue(ctx: ctx, value: promise.promise)
+                return JXValue(context: ctx, value: promise.promise)
             }
         }
     }

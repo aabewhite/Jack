@@ -26,7 +26,7 @@ import OpenCombineFoundation
 ///     }
 ///
 ///     let obj = EnhancedObj()
-///     let jxc = try obj.jack().ctx
+///     let jxc = try obj.jack().context
 ///
 ///     try jxc.eval("typeof x").stringValue == "undefined"
 ///     try jxc.eval("typeof i").stringValue == "number"
@@ -38,7 +38,7 @@ import OpenCombineFoundation
 ///
 ///     try jxc.eval("typeof now").stringValue == "function"
 ///     try jxc.eval("typeof now()").stringValue == "object"
-///     try jxc.eval("now()").numberValue ==  1_234_000
+///     try jxc.eval("now()").double ==  1_234_000
 ///
 /// In addition, a `JackedObject` synthesizes an `objectWillChange` publisher that
 /// emits the changed value before any of its wrapped properties changes.
@@ -60,7 +60,7 @@ import OpenCombineFoundation
 ///      }
 ///
 ///     let john = Contact(name: "John Appleseed", age: 24)
-///     let jxc = try john.jack().ctx
+///     let jxc = try john.jack().context
 ///
 ///     var changes = 0
 ///     let cancellable = john.objectWillChange
@@ -71,7 +71,7 @@ import OpenCombineFoundation
 ///     XCTAssertEqual(25, john.haveBirthday())
 ///     XCTAssertEqual(1, changes)
 ///
-///     XCTAssertEqual(26, try jxc.eval("haveBirthday()").numberValue)
+///     XCTAssertEqual(26, try jxc.eval("haveBirthday()").double)
 ///     XCTAssertEqual(2, changes)
 ///
 ///     let _ = cancellable
@@ -133,20 +133,20 @@ public extension JackedObject {
 
             let jprop = JXProperty(
                 getter: { [weak self] this in
-                    try prop[in: this.ctx, self]
+                    try prop[in: this.context, self]
                 },
                 setter: { [weak self] this, newValue in
-                    try prop.setValue(newValue, in: this.ctx, owner: self)
+                    try prop.setValue(newValue, in: this.context, owner: self)
                 }
             )
 
             if let symbolPrefix = prop.bindingPrefix {
-                let symbol = object.ctx.symbol(key)
+                let symbol = object.context.symbol(key)
                 try object.defineProperty(symbol, jprop)
                 let symbolKey = symbolPrefix + key
                 try object.setProperty(symbolKey, symbol)
             } else {
-                try object.defineProperty(object.ctx.string(key), jprop)
+                try object.defineProperty(object.context.string(key), jprop)
             }
             added.append(jprop)
         }

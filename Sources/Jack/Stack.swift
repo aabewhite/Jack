@@ -69,7 +69,8 @@ public struct Stack<Value : Jackable> : _TrackableProperty {
     /// The binding prefix to use, if any
     public let bindingPrefix: String?
 
-    #warning("WIP: implement non-mutable")
+    #warning("WIP: implement non-mutable access protection")
+
     /// If false then writing to the property will fail with an exception
     public let mutable: Bool?
 
@@ -200,9 +201,9 @@ extension Stack: _JackableProperty where Value : Jackable {
         get throws {
             switch _storage.wrappedValue {
             case .value(let value):
-                return try value.getJX(from: context)
+                return try value.toJX(in: context)
             case .publisher(let publisher):
-                return try publisher.subject.value.getJX(from: context)
+                return try publisher.subject.value.toJX(in: context)
             }
         }
     }
@@ -210,10 +211,10 @@ extension Stack: _JackableProperty where Value : Jackable {
     func setValue(_ newValue: JXValue, in context: JXContext, owner: AnyObject?) throws {
         switch _storage.wrappedValue {
         case .value(var value):
-            value = try Value.makeJX(from: newValue)
+            value = try Value.fromJX(newValue)
             storage = .publisher(JackPublisher(value, queue: queue))
         case .publisher(let publisher):
-            let jx = try Value.makeJX(from: newValue)
+            let jx = try Value.fromJX(newValue)
             if let queue = queue {
                 queue.async {
                     publisher.subject.value = jx
@@ -229,122 +230,122 @@ extension Stack: _JackableProperty where Value : Jackable {
 
 public extension RawRepresentable where RawValue : Jackable {
     static func makeJXRaw(from value: JXValue) throws -> Self {
-        guard let newSelf = Self(rawValue: try .makeJX(from: value)) else {
-            throw JackError.rawInitializerFailed(value, .init(context: value.ctx))
+        guard let newSelf = Self(rawValue: try .fromJX(value)) else {
+            throw JackError.rawInitializerFailed(value, .init(context: value.context))
         }
         return newSelf
     }
 
     func getJXRaw(from context: JXContext) throws -> JXValue {
-        try self.rawValue.getJX(from: context)
+        try self.rawValue.toJX(in: context)
     }
 
-    static func makeJX(from value: JXValue) throws -> Self {
+    static func fromJX(_ value: JXValue) throws -> Self {
         try makeJXRaw(from: value)
     }
 
-    func getJX(from context: JXContext) throws -> JXValue {
+    func toJX(in context: JXContext) throws -> JXValue {
         try getJXRaw(from: context)
     }
 }
 
 extension Bool : Jackable {
-    public static func makeJX(from value: JXValue) throws -> Self {
+    public static func fromJX(_ value: JXValue) throws -> Self {
         guard value.isBoolean else {
-            throw JackError.valueWasNotABoolean(value, .init(context: value.ctx))
+            throw JackError.valueWasNotABoolean(value, .init(context: value.context))
         }
-        return value.booleanValue
+        return value.bool
     }
 
-    public func getJX(from context: JXContext) -> JXValue {
+    public func toJX(in context: JXContext) -> JXValue {
         context.boolean(self)
     }
 }
 
 extension String : Jackable {
-    public static func makeJX(from value: JXValue) throws -> Self {
-        try value.stringValue
+    public static func fromJX(_ value: JXValue) throws -> Self {
+        try value.string
     }
 
-    public func getJX(from context: JXContext) -> JXValue {
+    public func toJX(in context: JXContext) -> JXValue {
         context.string(self)
     }
 }
 
 extension BinaryInteger where Self : _ExpressibleByBuiltinIntegerLiteral {
-    static func _makeJX(from value: JXValue) throws -> Self {
-        let num = try value.numberValue
+    static func _fromJX(_ value: JXValue) throws -> Self {
+        let num = try value.double
         guard !num.isNaN else {
-            throw JackError.valueWasNotANumber(value, .init(context: value.ctx))
+            throw JackError.valueWasNotANumber(value, .init(context: value.context))
         }
         return .init(integerLiteral: .init(num))
     }
 
-    func _getJX(from context: JXContext) -> JXValue {
+    func _toJX(in context: JXContext) -> JXValue {
         context.number(self)
     }
 }
 
 extension Int : Jackable {
-    public static func makeJX(from value: JXValue) throws -> Self { try _makeJX(from: value) }
-    public func getJX(from context: JXContext) -> JXValue { _getJX(from: context) }
+    public static func fromJX(_ value: JXValue) throws -> Self { try _fromJX(value) }
+    public func toJX(in context: JXContext) -> JXValue { _toJX(in: context) }
 }
 
 extension Int16 : Jackable {
-    public static func makeJX(from value: JXValue) throws -> Self { try _makeJX(from: value) }
-    public func getJX(from context: JXContext) -> JXValue { _getJX(from: context) }
+    public static func fromJX(_ value: JXValue) throws -> Self { try _fromJX(value) }
+    public func toJX(in context: JXContext) -> JXValue { _toJX(in: context) }
 }
 
 extension Int32 : Jackable {
-    public static func makeJX(from value: JXValue) throws -> Self { try _makeJX(from: value) }
-    public func getJX(from context: JXContext) -> JXValue { _getJX(from: context) }
+    public static func fromJX(_ value: JXValue) throws -> Self { try _fromJX(value) }
+    public func toJX(in context: JXContext) -> JXValue { _toJX(in: context) }
 }
 
 extension Int64 : Jackable {
-    public static func makeJX(from value: JXValue) throws -> Self { try _makeJX(from: value) }
-    public func getJX(from context: JXContext) -> JXValue { _getJX(from: context) }
+    public static func fromJX(_ value: JXValue) throws -> Self { try _fromJX(value) }
+    public func toJX(in context: JXContext) -> JXValue { _toJX(in: context) }
 }
 
 extension UInt : Jackable {
-    public static func makeJX(from value: JXValue) throws -> Self { try _makeJX(from: value) }
-    public func getJX(from context: JXContext) -> JXValue { _getJX(from: context) }
+    public static func fromJX(_ value: JXValue) throws -> Self { try _fromJX(value) }
+    public func toJX(in context: JXContext) -> JXValue { _toJX(in: context) }
 }
 
 extension UInt16 : Jackable {
-    public static func makeJX(from value: JXValue) throws -> Self { try _makeJX(from: value) }
-    public func getJX(from context: JXContext) -> JXValue { _getJX(from: context) }
+    public static func fromJX(_ value: JXValue) throws -> Self { try _fromJX(value) }
+    public func toJX(in context: JXContext) -> JXValue { _toJX(in: context) }
 }
 
 extension UInt32 : Jackable {
-    public static func makeJX(from value: JXValue) throws -> Self { try _makeJX(from: value) }
-    public func getJX(from context: JXContext) -> JXValue { _getJX(from: context) }
+    public static func fromJX(_ value: JXValue) throws -> Self { try _fromJX(value) }
+    public func toJX(in context: JXContext) -> JXValue { _toJX(in: context) }
 }
 
 extension UInt64 : Jackable {
-    public static func makeJX(from value: JXValue) throws -> Self { try _makeJX(from: value) }
-    public func getJX(from context: JXContext) -> JXValue { _getJX(from: context) }
+    public static func fromJX(_ value: JXValue) throws -> Self { try _fromJX(value) }
+    public func toJX(in context: JXContext) -> JXValue { _toJX(in: context) }
 }
 
 
 extension BinaryFloatingPoint where Self : ExpressibleByFloatLiteral {
-    static func _makeJX(from value: JXValue) throws -> Self {
-        Self(try value.numberValue)
+    static func _fromJX(_ value: JXValue) throws -> Self {
+        Self(try value.double)
     }
 
-    func _getJX(from context: JXContext) -> JXValue {
+    func _toJX(in context: JXContext) -> JXValue {
         context.number(self)
     }
 }
 
 
 extension Double : Jackable {
-    public static func makeJX(from value: JXValue) throws -> Self { try _makeJX(from: value) }
-    public func getJX(from context: JXContext) -> JXValue { _getJX(from: context) }
+    public static func fromJX(_ value: JXValue) throws -> Self { try _fromJX(value) }
+    public func toJX(in context: JXContext) -> JXValue { _toJX(in: context) }
 }
 
 extension Float : Jackable {
-    public static func makeJX(from value: JXValue) throws -> Self { try _makeJX(from: value) }
-    public func getJX(from context: JXContext) -> JXValue { _getJX(from: context) }
+    public static func fromJX(_ value: JXValue) throws -> Self { try _fromJX(value) }
+    public func toJX(in context: JXContext) -> JXValue { _toJX(in: context) }
 }
 
 
@@ -357,8 +358,8 @@ extension Array : Jackable where Element : JXConvertible {
 #if canImport(CoreGraphics)
 import typealias CoreGraphics.CGFloat
 extension CGFloat : Jackable {
-    public static func makeJX(from value: JXValue) throws -> Self { try _makeJX(from: value) }
-    public func getJX(from context: JXContext) -> JXValue { _getJX(from: context) }
+    public static func fromJX(_ value: JXValue) throws -> Self { try _fromJX(value) }
+    public func toJX(in context: JXContext) -> JXValue { _toJX(in: context) }
 }
 #endif
 
@@ -366,11 +367,11 @@ extension CGFloat : Jackable {
 import struct Foundation.Date
 
 extension Date : Jackable {
-    public static func makeJX(from value: JXValue) throws -> Self {
-        try value.dateValue ?? Date(timeIntervalSinceReferenceDate: 0)
+    public static func fromJX(_ value: JXValue) throws -> Self {
+        try value.date // ?? Date(timeIntervalSinceReferenceDate: 0)
     }
 
-    public func getJX(from context: JXContext) throws -> JXValue {
+    public func toJX(in context: JXContext) throws -> JXValue {
         try context.date(self)
     }
 }
@@ -381,7 +382,7 @@ extension Date : Jackable {
 import struct Foundation.Data
 
 extension Data : Jackable {
-    public static func makeJX(from value: JXValue) throws -> Self {
+    public static func fromJX(_ value: JXValue) throws -> Self {
 //        if value.isArrayBuffer { // fast track
 //            #warning("TODO: array buffer")
 //            fatalError("array buffer") // TODO
@@ -390,19 +391,19 @@ extension Data : Jackable {
             // copy the array manually
             let length = try value["length"]
 
-            let count = try length.numberValue
+            let count = try length.double
             guard length.isNumber, let max = UInt32(exactly: count) else {
-                throw JackError.valueNotArray(value, .init(context: value.ctx))
+                throw JackError.valueNotArray(value, .init(context: value.context))
             }
 
             let data: [UInt8] = try (0..<max).map { index in
                 let element = try value[.init(index)]
                 guard element.isNumber else {
-                    throw JackError.dataElementNotNumber(Int(index), value, .init(context: value.ctx))
+                    throw JackError.dataElementNotNumber(Int(index), value, .init(context: value.context))
                 }
-                let num = try element.numberValue
+                let num = try element.double
                 guard num <= .init(UInt8.max), num >= .init(UInt8.min), let byte = UInt8(exactly: num) else {
-                    throw JackError.dataElementOutOfRange(Int(index), value, .init(context: value.ctx))
+                    throw JackError.dataElementOutOfRange(Int(index), value, .init(context: value.context))
                 }
 
                 return byte
@@ -410,11 +411,11 @@ extension Data : Jackable {
 
             return Data(data)
         } else {
-            throw JackError.valueNotArray(value, .init(context: value.ctx))
+            throw JackError.valueNotArray(value, .init(context: value.context))
         }
     }
 
-    public func getJX(from context: JXContext) throws -> JXValue {
+    public func toJX(in context: JXContext) throws -> JXValue {
         var d = self
         return try d.withUnsafeMutableBytes { bytes in
             try JXValue(newArrayBufferWithBytesNoCopy: bytes,

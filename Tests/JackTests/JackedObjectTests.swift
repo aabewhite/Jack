@@ -130,7 +130,7 @@ final class JackedObjectTests: XCTestCase {
 
 
         let obj = VoidReturns()
-        let jxc = try obj.jack().ctx
+        let jxc = try obj.jack().context
 
         try jxc.eval("void0()")
         try jxc.eval("tvoid0()")
@@ -220,7 +220,7 @@ final class JackedObjectTests: XCTestCase {
 
     private func sigtest<A: JXConvertible & Randomizable & JSConvertable & Equatable, R: JXConvertible & Randomizable & Equatable>(arg: A.Type, ret: R.Type) async throws {
         let obj = RandoJack<A, R>()
-        let jxc = try obj.jack().ctx
+        let jxc = try obj.jack().context
 
         XCTAssertNotEqual(R.rnd(), try jxc.eval("func0()").convey())
         XCTAssertNotEqual(R.rnd(), try jxc.eval("tfunc0()").convey())
@@ -302,22 +302,22 @@ final class JackedObjectTests: XCTestCase {
         }
 
         let obj = JumpedObj()
-        let jxc = try obj.jack().ctx
+        let jxc = try obj.jack().context
 
         XCTAssertEqual(true, try jxc.eval("new Promise((resolve, reject) => { resolve(1) })").isPromise)
         XCTAssertEqual(true, try jxc.eval("new Promise((resolve, reject) => { resolve(1) }).then").isFunction)
-        XCTAssertEqual("[object Promise]", try jxc.eval("new Promise((resolve, reject) => { resolve(1) }).then()").stringValue)
+        XCTAssertEqual("[object Promise]", try jxc.eval("new Promise((resolve, reject) => { resolve(1) }).then()").string)
 
-        XCTAssertEqual("function", try jxc.eval("typeof promise0").stringValue)
-        XCTAssertEqual("[object CallbackObject]", try jxc.eval("promise0").stringValue)
-        XCTAssertEqual("[object Promise]", try jxc.eval("promise0()").stringValue)
+        XCTAssertEqual("function", try jxc.eval("typeof promise0").string)
+        XCTAssertEqual("[object CallbackObject]", try jxc.eval("promise0").string)
+        XCTAssertEqual("[object Promise]", try jxc.eval("promise0()").string)
 
         XCTAssertEqual(true, try jxc.eval("promise0()").isObject)
         XCTAssertEqual(false, try jxc.eval("promise0()").isFunction)
 
-        try with(await jxc.eval("promise0()", priority: .high)) { XCTAssertEqual(13, try $0.numberValue) }
-        try with(await jxc.eval("promise1(12)", priority: .high)) { XCTAssertEqual("12", try $0.stringValue) }
-        try with(await jxc.eval("(async () => { return 999 })()", priority: .high)) { XCTAssertEqual(999, try $0.numberValue) }
+        try with(await jxc.eval("promise0()", priority: .high)) { XCTAssertEqual(13, try $0.double) }
+        try with(await jxc.eval("promise1(12)", priority: .high)) { XCTAssertEqual("12", try $0.string) }
+        try with(await jxc.eval("(async () => { return 999 })()", priority: .high)) { XCTAssertEqual(999, try $0.double) }
 
         do {
             try with(await jxc.eval("999", priority: .high)) { _ in XCTFail("should not have been able to async invoke a sync function") }
@@ -328,7 +328,7 @@ final class JackedObjectTests: XCTestCase {
         do {
             try with(await jxc.eval("(async () => { throw Error('async error') })()", priority: .high)) { XCTFail("should have thrown: \($0)") }
         } catch {
-            XCTAssertEqual("Error: async error", try (error as? JXError)?.stringValue)
+            XCTAssertEqual("Error: async error", try (error as? JXEvalError)?.string)
         }
 
         try await jxc.eval("sleepTask(0.1)", priority: .medium)
@@ -370,12 +370,12 @@ final class JackedObjectTests: XCTestCase {
         }
 
         let obj = JackedObj()
-        let jxc = try obj.jack().ctx
+        let jxc = try obj.jack().context
 
-        XCTAssertEqual("function", try jxc.eval("typeof h0").stringValue)
-        XCTAssertEqual("function", try jxc.eval("typeof h1").stringValue)
-        XCTAssertEqual("undefined", try jxc.eval("typeof h2").stringValue)
-        XCTAssertEqual("function", try jxc.eval("typeof H2").stringValue)
+        XCTAssertEqual("function", try jxc.eval("typeof h0").string)
+        XCTAssertEqual("function", try jxc.eval("typeof h1").string)
+        XCTAssertEqual("undefined", try jxc.eval("typeof h2").string)
+        XCTAssertEqual("function", try jxc.eval("typeof H2").string)
 
 //        do {
 //            let x = try await jxc.eval("sleep(1)", priority: .medium).booleanValue
@@ -383,17 +383,17 @@ final class JackedObjectTests: XCTestCase {
 //        }
 
         do {
-            let x = try await jxc.eval("h0()", priority: .medium).numberValue
+            let x = try await jxc.eval("h0()", priority: .medium).double
             XCTAssertEqual(1_234_000, x)
         }
 
         do {
-            let x = try await jxc.eval("h1('x')", priority: .high).stringValue
+            let x = try await jxc.eval("h1('x')", priority: .high).string
             XCTAssertEqual("Hello x!", x)
         }
 
         do {
-            let x = try await jxc.eval("H2('x', 9)", priority: .high).stringValue
+            let x = try await jxc.eval("H2('x', 9)", priority: .high).string
             XCTAssertEqual("Happy Birthday x, you are 9!", x)
         }
 
@@ -420,12 +420,12 @@ final class JackedObjectTests: XCTestCase {
         }
 
         let jack = JackDemo()
-        let jxc = try jack.jack().ctx
+        let jxc = try jack.jack().context
 
         XCTAssertEqual(true, try jxc.eval("this.str").isString)
-        XCTAssertEqual("ABC", try jxc.eval("this.str").stringValue)
-        XCTAssertEqual("ABC", try jxc.eval("this['str']").stringValue)
-        XCTAssertEqual("ABC", try jxc.eval("[str]").stringValue)
+        XCTAssertEqual("ABC", try jxc.eval("this.str").string)
+        XCTAssertEqual("ABC", try jxc.eval("this['str']").string)
+        XCTAssertEqual("ABC", try jxc.eval("[str]").string)
     }
 
     func testBoundJack() throws {
@@ -436,15 +436,15 @@ final class JackedObjectTests: XCTestCase {
         }
 
         let jack = JackDemo()
-        let jxc = try jack.jack().ctx
+        let jxc = try jack.jack().context
 
         XCTAssertEqual(true, try jxc.eval("$str").isSymbol)
         XCTAssertEqual(false, try jxc.eval("this.str").isString)
         XCTAssertEqual(true, try jxc.eval("this.str").isUndefined)
 
-        XCTAssertEqual("ABC", try jxc.eval("this[$str]").stringValue)
-        XCTAssertEqual("XYZ", try jxc.eval("this[$str] = 'XYZ'").stringValue)
-        XCTAssertEqual("XYZ", try jxc.eval("this[$str]").stringValue)
+        XCTAssertEqual("ABC", try jxc.eval("this[$str]").string)
+        XCTAssertEqual("XYZ", try jxc.eval("this[$str] = 'XYZ'").string)
+        XCTAssertEqual("XYZ", try jxc.eval("this[$str]").string)
     }
 
 
@@ -463,13 +463,13 @@ final class JackedObjectTests: XCTestCase {
         }
 
         let actor = ActorDemo()
-        let jxc = try actor.jack().ctx
+        let jxc = try actor.jack().context
 
         // let func0: (@Sendable () -> UUID) = actor.func0 // Actor-isolated instance method 'func0()' can not be partially applied
 
-        with(try jxc.eval("str").stringValue) { XCTAssertEqual("", $0) }
+        with(try jxc.eval("str").string) { XCTAssertEqual("", $0) }
         try jxc.eval("str = 'xy' + 'z'")
-        with(try jxc.eval("str").stringValue) { XCTAssertEqual("xyz", $0) }
+        with(try jxc.eval("str").string) { XCTAssertEqual("xyz", $0) }
     }
 
     func testJackedReference() throws {
@@ -492,7 +492,7 @@ final class JackedObjectTests: XCTestCase {
             XCTAssertEqual(1, J1.j1s)
 
             let jxc = JXContext()
-            let _ = try j1.getJX(from: jxc)
+            let _ = try j1.toJX(in: jxc)
 
             XCTAssertEqual(1, J1.j1s)
         }
@@ -521,7 +521,7 @@ final class JackedObjectTests: XCTestCase {
 //            let _ = try j2.jack(into: JXContext().object())
 
             let jxc = JXContext()
-            let _ = try j2.getJX(from: jxc)
+            let _ = try j2.toJX(in: jxc)
 
             XCTAssertEqual(1, J2.j2s)
         }
@@ -579,10 +579,10 @@ final class JackedObjectTests: XCTestCase {
             XCTAssertIdentical(j1.j2, try jxc.eval("j1.j2").convey(to: J2.self))
 
 
-            XCTAssertEqual(1, try jxc.eval("j1.j2.x").numberValue)
-            XCTAssertEqual(2, try jxc.eval("++j1.j2.x").numberValue)
+            XCTAssertEqual(1, try jxc.eval("j1.j2.x").double)
+            XCTAssertEqual(2, try jxc.eval("++j1.j2.x").double)
             XCTAssertEqual(2, j1.j2?.x)
-            XCTAssertEqual(2, try jxc.eval("j1.j2.x++").numberValue)
+            XCTAssertEqual(2, try jxc.eval("j1.j2.x++").double)
             XCTAssertEqual(3, j1.j2?.x)
 
             try jxc.eval("j1.j2.x = null")

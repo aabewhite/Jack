@@ -8,20 +8,20 @@ public protocol JackPeerable : JXConvertible {
 
 extension JackPeerable where Self : JackedObject {
     /// `JXConvertible` implementation for `JackedObject`,
-    public static func makeJX(from value: JXValue) throws -> Self {
+    public static func fromJX(_ value: JXValue) throws -> Self {
         guard let obj = value.peer else {
-            throw JackError.invalidReferenceContext(value, .init(context: value.ctx))
+            throw JackError.invalidReferenceContext(value, .init(context: value.context))
         }
 
         guard let jobj = obj as? Self else { // TODO: what if some already conveyed this to a different wrapper type?
             //print("bad type obj:", wip(obj), type(of: Self.self))
-            throw JackError.invalidReferenceType(value, .init(context: value.ctx))
+            throw JackError.invalidReferenceType(value, .init(context: value.context))
         }
 
         return jobj
     }
 
-    public func getJX(from context: JXContext) throws -> JXValue {
+    public func toJX(in context: JXContext) throws -> JXValue {
         if let obj = self.peer { // do we already have a counterpart on the JX side?
             return obj
         }
