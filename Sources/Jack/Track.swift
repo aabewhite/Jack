@@ -11,6 +11,7 @@ import OpenCombineFoundation
 #endif
 
 import Dispatch
+import JXKit
 
 // MARK: Track
 
@@ -18,7 +19,7 @@ import Dispatch
 ///
 /// - `Publisher.assign(to:)`
 @propertyWrapper
-public struct Track<Value : Jackable> {
+public struct Track<Value : JXConvertible> {
     typealias Storage = JackPublisher<Value>.Storage
 
     @propertyWrapper
