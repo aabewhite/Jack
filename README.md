@@ -37,13 +37,13 @@ class AppleJack : JackedObject {
         let namejs = try jxc.eval("name").stringValue
         assert(namejs == aj.name)
 
-        let agejs = try jxc.eval("age").double
-        assert(agejs == Double(aj.age)) // JS numbers are doubles
+        let agejs = try jxc.eval("age").int
+        assert(agejs == aj.age)
 
         assert(aj.haveBirthday() == 25) // direct Swift call
-        let newAge = try jxc.eval("haveBirthday()").double // scripted method invocation
+        let newAge = try jxc.eval("haveBirthday()").int // scripted method invocation
 
-        assert(newAge == 26.0)
+        assert(newAge == 26)
         assert(aj.age == 26)
     }
 }

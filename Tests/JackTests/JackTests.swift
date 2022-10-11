@@ -131,10 +131,9 @@ final class JackTests: XCTestCase {
         enum Relation : String, Codable, JXConvertible {
             // string cases are auto-exported to Java via coding
             case friend, relative, neighbor, coworker
-
             // Both Codable and RawRepresentable implement JXConvertible, so we need to manually dis-ambiguate
-            static func fromJX(_ value: JXValue) throws -> Self { try makeJXRaw(from: value) }
-            func toJX(in context: JXContext) throws -> JXValue { try getJXRaw(from: context) }
+            static func fromJX(_ value: JXValue) throws -> Self { try fromJXRaw(value) }
+            func toJX(in context: JXContext) throws -> JXValue { try toJXRaw(in: context) }
         }
 
         class BridgedProperties : JackedObject {
@@ -523,8 +522,8 @@ final class JackTests: XCTestCase {
 
     func testStackedEnum() throws {
         // enum Compass : String, Codable, Jackable { case north, south, east, west } // this would be a problem due to conflicting implementations
-        enum Compass : String, Jackable { case north, south, east, west }
-        enum Direction : Int, Jackable { case up, down, left, right }
+        enum Compass : String, JXConvertible { case north, south, east, west }
+        enum Direction : Int, JXConvertible { case up, down, left, right }
 
         class JackedObj : JackedObject {
             @Stack("c") var stringEnum = Compass.north
@@ -636,16 +635,16 @@ final class JackTests: XCTestCase {
         XCTAssertEqual("[object Object]", try jxc.eval("var i = info; i.str = 'QRS'; info = i").string)
         XCTAssertEqual("QRS", obj.info.str)
 
-        XCTAssertEqual(0, try jxc.eval("info = { }").dictionary?.keys.count)
+        XCTAssertEqual(0, try jxc.eval("info = { }").dictionary.keys.count)
         XCTAssertEqual(.init(), obj.info)
 
-        XCTAssertEqual(1, try jxc.eval("info = { str: 'abc' }").dictionary?.keys.count)
+        XCTAssertEqual(1, try jxc.eval("info = { str: 'abc' }").dictionary.keys.count)
         XCTAssertEqual(.init(str: "abc"), obj.info)
 
-        XCTAssertEqual(2, try jxc.eval("info = { str: 'abc', int: 2 }").dictionary?.keys.count)
+        XCTAssertEqual(2, try jxc.eval("info = { str: 'abc', int: 2 }").dictionary.keys.count)
         XCTAssertEqual(.init(str: "abc", int: 2), obj.info)
 
-        XCTAssertEqual(3, try jxc.eval("info = { str: 'abc', int: 2, extra: { strs: [ 'q', 'r', 's' ] } }").dictionary?.keys.count)
+        XCTAssertEqual(3, try jxc.eval("info = { str: 'abc', int: 2, extra: { strs: [ 'q', 'r', 's' ] } }").dictionary.keys.count)
         XCTAssertEqual(.init(str: "abc", int: 2, extra: .init(strs: ["q", "r", "s"])), obj.info)
     }
 

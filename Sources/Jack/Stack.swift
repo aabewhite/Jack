@@ -11,14 +11,7 @@ import OpenCombineFoundation
 #endif
 
 import Dispatch
-
-/// A ``Jackable`` type can be passed efficiently back and forth to a ``JXContext`` without serialization.
-///
-/// This type is used to constrain arument and return types that should be passed efficiently between the host Swift environment and the embedded JSC.
-///
-/// To support for passing codable types through serialization, use ``Pack``
-public protocol Jackable : JXConvertible {
-}
+import JXKit
 
 // MARK: Stack
 
@@ -62,7 +55,7 @@ public protocol Jackable : JXConvertible {
 ///
 /// - `Publisher.assign(to:)`
 @propertyWrapper
-public struct Stack<Value : Jackable> : _TrackableProperty {
+public struct Stack<Value : JXConvertible> : _TrackableProperty {
     /// The key that will be used to export the instance; a nil key will prevent export.
     public let key: String?
 
@@ -193,8 +186,8 @@ public struct Stack<Value : Jackable> : _TrackableProperty {
 }
 
 
-// Stack is always a _TrackableProperty, but is only a _JackableProperty when the embedded type is itself `Jackable`
-extension Stack: _JackableProperty where Value : Jackable {
+// Stack is always a _TrackableProperty, but is only a _JackableProperty when the embedded type is itself `JXConvertible`
+extension Stack: _JackableProperty where Value : JXConvertible {
     var exportedKey: String? { key }
 
     subscript(in context: JXContext, owner: AnyObject?) -> JXValue {
@@ -225,206 +218,3 @@ extension Stack: _JackableProperty where Value : Jackable {
         }
     }
 }
-
-// MARK: Default Implementations
-
-public extension RawRepresentable where RawValue : Jackable {
-    static func makeJXRaw(from value: JXValue) throws -> Self {
-        guard let newSelf = Self(rawValue: try .fromJX(value)) else {
-            throw JackError.rawInitializerFailed(value, .init(context: value.context))
-        }
-        return newSelf
-    }
-
-    func getJXRaw(from context: JXContext) throws -> JXValue {
-        try self.rawValue.toJX(in: context)
-    }
-
-    static func fromJX(_ value: JXValue) throws -> Self {
-        try makeJXRaw(from: value)
-    }
-
-    func toJX(in context: JXContext) throws -> JXValue {
-        try getJXRaw(from: context)
-    }
-}
-
-extension Bool : Jackable {
-    public static func fromJX(_ value: JXValue) throws -> Self {
-        guard value.isBoolean else {
-            throw JackError.valueWasNotABoolean(value, .init(context: value.context))
-        }
-        return value.bool
-    }
-
-    public func toJX(in context: JXContext) -> JXValue {
-        context.boolean(self)
-    }
-}
-
-extension String : Jackable {
-    public static func fromJX(_ value: JXValue) throws -> Self {
-        try value.string
-    }
-
-    public func toJX(in context: JXContext) -> JXValue {
-        context.string(self)
-    }
-}
-
-extension BinaryInteger where Self : _ExpressibleByBuiltinIntegerLiteral {
-    static func _fromJX(_ value: JXValue) throws -> Self {
-        let num = try value.double
-        guard !num.isNaN else {
-            throw JackError.valueWasNotANumber(value, .init(context: value.context))
-        }
-        return .init(integerLiteral: .init(num))
-    }
-
-    func _toJX(in context: JXContext) -> JXValue {
-        context.number(self)
-    }
-}
-
-extension Int : Jackable {
-    public static func fromJX(_ value: JXValue) throws -> Self { try _fromJX(value) }
-    public func toJX(in context: JXContext) -> JXValue { _toJX(in: context) }
-}
-
-extension Int16 : Jackable {
-    public static func fromJX(_ value: JXValue) throws -> Self { try _fromJX(value) }
-    public func toJX(in context: JXContext) -> JXValue { _toJX(in: context) }
-}
-
-extension Int32 : Jackable {
-    public static func fromJX(_ value: JXValue) throws -> Self { try _fromJX(value) }
-    public func toJX(in context: JXContext) -> JXValue { _toJX(in: context) }
-}
-
-extension Int64 : Jackable {
-    public static func fromJX(_ value: JXValue) throws -> Self { try _fromJX(value) }
-    public func toJX(in context: JXContext) -> JXValue { _toJX(in: context) }
-}
-
-extension UInt : Jackable {
-    public static func fromJX(_ value: JXValue) throws -> Self { try _fromJX(value) }
-    public func toJX(in context: JXContext) -> JXValue { _toJX(in: context) }
-}
-
-extension UInt16 : Jackable {
-    public static func fromJX(_ value: JXValue) throws -> Self { try _fromJX(value) }
-    public func toJX(in context: JXContext) -> JXValue { _toJX(in: context) }
-}
-
-extension UInt32 : Jackable {
-    public static func fromJX(_ value: JXValue) throws -> Self { try _fromJX(value) }
-    public func toJX(in context: JXContext) -> JXValue { _toJX(in: context) }
-}
-
-extension UInt64 : Jackable {
-    public static func fromJX(_ value: JXValue) throws -> Self { try _fromJX(value) }
-    public func toJX(in context: JXContext) -> JXValue { _toJX(in: context) }
-}
-
-
-extension BinaryFloatingPoint where Self : ExpressibleByFloatLiteral {
-    static func _fromJX(_ value: JXValue) throws -> Self {
-        Self(try value.double)
-    }
-
-    func _toJX(in context: JXContext) -> JXValue {
-        context.number(self)
-    }
-}
-
-
-extension Double : Jackable {
-    public static func fromJX(_ value: JXValue) throws -> Self { try _fromJX(value) }
-    public func toJX(in context: JXContext) -> JXValue { _toJX(in: context) }
-}
-
-extension Float : Jackable {
-    public static func fromJX(_ value: JXValue) throws -> Self { try _fromJX(value) }
-    public func toJX(in context: JXContext) -> JXValue { _toJX(in: context) }
-}
-
-
-extension Optional : Jackable where Wrapped : JXConvertible {
-}
-
-extension Array : Jackable where Element : JXConvertible {
-}
-
-#if canImport(CoreGraphics)
-import typealias CoreGraphics.CGFloat
-extension CGFloat : Jackable {
-    public static func fromJX(_ value: JXValue) throws -> Self { try _fromJX(value) }
-    public func toJX(in context: JXContext) -> JXValue { _toJX(in: context) }
-}
-#endif
-
-#if canImport(Foundation)
-import struct Foundation.Date
-
-extension Date : Jackable {
-    public static func fromJX(_ value: JXValue) throws -> Self {
-        try value.date // ?? Date(timeIntervalSinceReferenceDate: 0)
-    }
-
-    public func toJX(in context: JXContext) throws -> JXValue {
-        try context.date(self)
-    }
-}
-#endif
-
-
-#if canImport(Foundation)
-import struct Foundation.Data
-
-extension Data : Jackable {
-    public static func fromJX(_ value: JXValue) throws -> Self {
-//        if value.isArrayBuffer { // fast track
-//            #warning("TODO: array buffer")
-//            fatalError("array buffer") // TODO
-//        } else
-        if value.isArray { // slow track
-            // copy the array manually
-            let length = try value["length"]
-
-            let count = try length.double
-            guard length.isNumber, let max = UInt32(exactly: count) else {
-                throw JackError.valueNotArray(value, .init(context: value.context))
-            }
-
-            let data: [UInt8] = try (0..<max).map { index in
-                let element = try value[.init(index)]
-                guard element.isNumber else {
-                    throw JackError.dataElementNotNumber(Int(index), value, .init(context: value.context))
-                }
-                let num = try element.double
-                guard num <= .init(UInt8.max), num >= .init(UInt8.min), let byte = UInt8(exactly: num) else {
-                    throw JackError.dataElementOutOfRange(Int(index), value, .init(context: value.context))
-                }
-
-                return byte
-            }
-
-            return Data(data)
-        } else {
-            throw JackError.valueNotArray(value, .init(context: value.context))
-        }
-    }
-
-    public func toJX(in context: JXContext) throws -> JXValue {
-        var d = self
-        return try d.withUnsafeMutableBytes { bytes in
-            try JXValue(newArrayBufferWithBytesNoCopy: bytes,
-                deallocator: { _ in
-                    //print("buffer deallocated")
-                },
-                in: context)
-        }
-    }
-}
-#endif
-
